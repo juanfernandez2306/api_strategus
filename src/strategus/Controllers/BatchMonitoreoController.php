@@ -38,6 +38,7 @@ class BatchMonitoreoController
         // Listas de control para clasificar el destino en IndexedDB
         $completados = [];          // Tienen fecha_revision -> Se borrarán del móvil
         $guardadosSinRevision = [];  // Tienen fecha_revision = null -> Cambian a sincronizacion=true
+        $duplicados = [];
 
         // Obtenemos la conexión PDO compartida desde el repositorio
         $db = $this->repository->getConnection();
@@ -61,6 +62,7 @@ class BatchMonitoreoController
                     // Es un duplicado de un punto más antiguo. Lo obviamos en MySQL central,
                     // pero lo metemos en 'completados' para que el Frontend lo borre del teléfono.
                     $completados[] = $uuid;
+                    $duplicados[] = $uuid;
                     continue; 
                 }
 
@@ -88,7 +90,7 @@ class BatchMonitoreoController
                 'message' => 'Sincronización masiva procesada de manera atómica exitosamente.',
                 'summary' => [
                     'total_enviados' => count($body),
-                    'completados_para_borrar' => count($completados),
+                    'completados_para_borrar' => (count($completados) - count($duplicados)),
                     'guardados_sin_revision' => count($guardadosSinRevision)
                 ],
                 'data' => [
