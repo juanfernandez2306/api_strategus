@@ -1,0 +1,66 @@
+.idea/
+.vscode/
+/coverage/
+/vendor/
+/logs/*
+!/logs/README.md
+.phpunit.result.cache
+
+# ==========================================
+# 1. Dependencias y Paquetes (Reconstruibles)
+# ==========================================
+# Nunca subas las librerías de terceros; se instalan con composer install / npm install
+vendor/
+node_modules/
+
+# ==========================================
+# 2. Configuración y Seguridad (CRÍTICO)
+# ==========================================
+# Archivos que contienen contraseñas de la base de datos local o llaves secretas del JWT
+.env
+.env.local
+.env.*.local
+
+# Configuración específica de subida del servidor local (XAMPP si aplica)
+config.local.php
+
+# ==========================================
+# 3. Entornos de Desarrollo / IDEs
+# ==========================================
+# Configuraciones de editores que varían según cada desarrollador
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# 4. Compilación del Frontend (TypeScript/Vite)
+# ==========================================
+# Carpetas de distribución o caché de empaquetado
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# ==========================================
+# 5. Archivos del Sistema Operativo
+# ==========================================
+# Basura que genera Windows o macOS de forma automática al navegar por carpetas
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# 6. Logs, Temporales y Caché del Servidor
+# ==========================================
+# Si guardas errores o subidas temporales en carpetas internas de la API
+*.log
+logs/
+tmp/
+var/

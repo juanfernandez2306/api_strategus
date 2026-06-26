@@ -1,0 +1,144 @@
+<?php
+namespace App\Usuarios;
+
+return [
+    'getAll' => "
+        SELECT 
+            u.id, 
+            u.nombre, 
+            u.apellido,
+            u.email,
+            u.status,
+            r.nombre AS rol 
+        FROM usuarios u 
+        LEFT JOIN roles r ON u.role_id = r.id 
+        ORDER BY u.id DESC
+    ",
+
+    "existsEmail" => "
+        SELECT id 
+        FROM usuarios 
+        WHERE email = :email
+    ",
+
+    "getAuthData" => "
+        SELECT 
+        id, 
+        nombre, 
+        password, 
+        status 
+        FROM usuarios 
+        WHERE email = :email LIMIT 1
+    ",
+
+    "create" => "
+        INSERT INTO usuarios (
+            nombre, apellido, email, password
+        ) VALUES (
+        :nombre, :apellido, :email, :password)
+    ",
+
+    "delete" => "
+        DELETE FROM usuarios WHERE id = :id
+    ",
+
+    "updateStatus" => "
+        UPDATE usuarios 
+        SET status = :status 
+        WHERE id = :id
+    ",
+
+    "storeToken" => "
+        INSERT INTO personal_access_tokens (
+            usuario_id, nombre, 
+            token, expires_at, 
+            created_at, updated_at
+        ) VALUES (
+            :usuario_id, :nombre, 
+            :token, :expires_at, 
+            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        )
+    ",
+
+    "update" => "
+        UPDATE usuarios 
+        SET 
+            nombre = :nombre, 
+            apellido = :apellido, 
+            email = :email, 
+            role_id = :role_id
+        WHERE id = :id
+    ",
+
+    "createToken" => "
+        INSERT INTO personal_access_tokens (usuario_id, 
+        nombre, token, last_used_at, created_at, updated_at) 
+        VALUES (:usuario_id, :nombre, 
+        :token, NULL, CURRENT_TIMESTAMP, 
+        CURRENT_TIMESTAMP)
+    ",
+
+    "deleteToken" => "
+        DELETE FROM personal_access_tokens 
+        WHERE token = :token
+    ",
+
+    "deleteAllTokens" => "
+        DELETE FROM personal_access_tokens 
+        WHERE usuario_id = :usuario_id
+    ",
+
+    "storeVerificationToken" => "
+        INSERT INTO password_resets (email, token, expires_at) 
+        VALUES (:email, :token, :expires_at)
+    ",
+
+    "verifyEmail" => "
+        UPDATE usuarios 
+        SET email_verified_at = CURRENT_TIMESTAMP 
+        WHERE email = :email
+    ",
+
+    "getVerificationToken" => "
+        SELECT token, expires_at 
+        FROM password_resets 
+        WHERE email = :email 
+        LIMIT 1
+    ",
+    
+    "deleteVerificationToken" => "
+        DELETE FROM password_resets 
+        WHERE email = :email
+    ",
+
+    "deletePasswordReset" => "
+        DELETE FROM password_resets 
+        WHERE email = :email
+    ",
+
+    "storePasswordReset" => "
+        INSERT INTO password_resets (email, token, expires_at) 
+        VALUES (:email, :token, :expires_at)
+    ",
+
+    "updatePassword" => "
+        UPDATE usuarios 
+        SET password = :password 
+        WHERE email = :email
+    ",
+
+    "findByEmail" => "
+        SELECT id, nombre, apellido, email, password, role_id, status 
+        FROM usuarios 
+        WHERE email = :email 
+        LIMIT 1
+    ",
+
+    "getAccessToken" => "
+        SELECT ut.usuario_id, ut.expires_at, u.role_id 
+        FROM personal_access_tokens ut
+        INNER JOIN usuarios u ON ut.usuario_id = u.id
+        WHERE ut.token = :token 
+        LIMIT 1
+    "
+];
