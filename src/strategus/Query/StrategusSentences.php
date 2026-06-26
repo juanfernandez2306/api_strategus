@@ -10,10 +10,10 @@ return [
         ) VALUES (
             :uuid, :usuario_id, ST_PointFromText(:posicion, 4326), 
             :fecha_registro, :galeria, :precision_gps, 
-            :fecha_revision
+            :fecha_revision_insert
         ) 
         ON DUPLICATE KEY UPDATE 
-            fecha_revision = :fecha_revision
+            fecha_revision = :fecha_revision_update
     ",
     
     "getExportData" => "
@@ -51,5 +51,14 @@ return [
         FROM monitoreos_strategus m
         WHERE m.fecha_registro >= NOW() - INTERVAL 30 DAY
         ORDER BY m.fecha_registro DESC
-    "
+    ",
+
+    "buscarDuplicadoEnRadio" => "
+        SELECT uuid 
+        FROM monitoreos_strategus 
+        WHERE ST_Distance_Sphere(posicion, ST_PointFromText(:posicion_WKT, 4326)) <= 4
+          AND ABS(DATEDIFF(fecha_registro, :fecha_referencia)) <= 15
+          AND (fecha_registro < :fecha_registro_1 OR (fecha_registro = :fecha_registro_2 AND uuid <> :uuid_actual))
+        LIMIT 1
+    ",
 ];

@@ -4,7 +4,7 @@ namespace App\Strategus\Validators;
 use Rakit\Validation\Validator;
 use Rakit\Validation\Validation;
 
-class MonitoreoValidator
+class StrategusValidator
 {
     private Validator $validator;
 
@@ -21,9 +21,11 @@ class MonitoreoValidator
     public function validate(array $data): Validation
     {
         $regexHora = 'regex:/^\d{2}:\d{2}:\d{2}$/'; // HH:mm:ss
+        $regexUuid = 'regex:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+
 
         return $this->validator->validate($data, [
-            'uuid'           => ['required', 'uuid'],
+            'uuid'           => ['required', $regexUuid],
             'latitud'        => ['required', 'numeric'],
             'longitud'       => ['required', 'numeric'],
             'fecha_registro' => ['required', 'date:Y-m-d'],

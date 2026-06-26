@@ -20,6 +20,11 @@ class StrategusRepository
         $this->timezone = new DateTimeZone('America/Caracas'); 
     }
 
+    public function getConnection(): PDO
+    {
+        return $this->db;
+    }
+
     /**
      * Inserta el monitoreo o actualiza únicamente su fecha de revisión si el UUID existe
      */
@@ -43,16 +48,20 @@ class StrategusRepository
         $wktPoint = "POINT(" . $item['longitud'] . " " . $item['latitud'] . ")";
 
         try {
-            $stmt = $this->db->prepare($this->queries['upsertSingle']);
+            $stmt = $this->db->prepare($this->queries['insertBatch']);
             return $stmt->execute([
                 ':uuid'           => $item['uuid'],
                 ':usuario_id'     => $usuarioId,
                 ':posicion'       => $wktPoint,
                 ':fecha_registro' => $fechaRegistro,
-                ':galeria'        => (int)$item['galeria'],
-                ':precision_gps'  => (float)$item['precision'], 
-                ':fecha_revision' => $fechaRevision
+                ':galeria'        => (int) $item['galeria'],
+                ':precision_gps'  => (float) $item['precision'], 
+                ':fecha_revision_insert' => $fechaRevision,
+                ':fecha_revision_update' => $fechaRevision
             ]);
+
+            return $stmt->rowCount() > 0;
+            
         } catch (Exception $e) {
             throw new Exception("Error al procesar el monitoreo: " . $e->getMessage());
         }
@@ -118,5 +127,27 @@ class StrategusRepository
         } catch (Exception $e) {
             throw new Exception("Error al obtener marcadores del mapa (Rango 30 días): " . $e->getMessage());
         }
+    }
+
+    public function esDuplicadoEspacial(array $item): bool
+    {
+        // Reutilizamos el formateo de coordenadas que ya tienes en tu método upsert
+        $posicionWKT = "POINT(" . $item['longitud'] . " " . $item['latitud'] . ")";
+        $stringRegistro = $item['fecha_registro'] . ' ' . $item['hora_registro'];
+        $dtRegistro = DateTime::createFromFormat('Y-m-d H:i:s', $stringRegistro, $this->timezone);
+        $fechaRegistro = $dtRegistro->format('Y-m-d H:i:s');
+
+        $stmt = $this->db->prepare($this->queries['buscarDuplicadoEnRadio']);
+        
+        $stmt->execute([
+            ':posicion_WKT'     => $posicionWKT,
+            ':fecha_referencia' => $fechaRegistro, // Fecha central para evaluar el intervalo de 15 días
+            ':fecha_registro_1' => $fechaRegistro,
+            ':fecha_registro_2' => $fechaRegistro,
+            ':uuid_actual'      => $item['uuid']
+        ]);
+
+        // Si devuelve una fila, significa que ya existe un punto más viejo o idéntico a menos de 4 metros
+        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
 }
