@@ -44,6 +44,10 @@ class AuthMiddleware implements MiddlewareInterface
             return $this->unauthorizedResponse('Token inválido o sesión expirada.');
         }
 
+        if ((int)$accessToken['status'] !== 1) {
+            return $this->unauthorizedResponse('Acceso denegado: El usuario se encuentra inactivo.');
+        }
+
         // 4. Validar si el token ya expiró en tiempo
         if (strtotime($accessToken['expires_at']) < time()) {
             return $this->unauthorizedResponse('La sesión ha expirado. Por favor, inicie sesión nuevamente.');

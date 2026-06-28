@@ -35,6 +35,7 @@ class UpdateController
         $email    = filter_var($body['email'] ?? '', FILTER_VALIDATE_EMAIL);
         // El role_id puede ser opcional o nulo, si viene lo convertimos a entero
         $roleId   = !empty($body['role_id']) ? (int) $body['role_id'] : null;
+        $status   = !empty($body['status']) ? (int) $body['status'] : 0;
 
         // -------------------------------------------------------------
         // PASO 2: Validaciones básicas antes de tocar la Base de Datos
@@ -62,7 +63,8 @@ class UpdateController
             'nombre'   => $nombre,
             'apellido' => $apellido,
             'email'    => $email,
-            'role_id'  => $roleId
+            'role_id'  => $roleId,
+            'status'    => $status,
         ];
 
         // Ejecutamos el método update que armamos y guardamos su array de respuesta

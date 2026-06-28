@@ -8,7 +8,7 @@ return [
             u.nombre, 
             u.apellido,
             u.email,
-            u.status,
+            CASE WHEN u.status = 1 THEN 'activo' ELSE 'inactivo' END AS status,
             r.nombre AS rol 
         FROM usuarios u 
         LEFT JOIN roles r ON u.role_id = r.id 
@@ -66,7 +66,8 @@ return [
             nombre = :nombre, 
             apellido = :apellido, 
             email = :email, 
-            role_id = :role_id
+            role_id = :role_id,
+            status = :status
         WHERE id = :id
     ",
 
@@ -135,7 +136,8 @@ return [
     ",
 
     "getAccessToken" => "
-        SELECT ut.usuario_id, ut.expires_at, u.role_id 
+        SELECT ut.usuario_id, ut.expires_at, 
+        u.role_id, u.status
         FROM personal_access_tokens ut
         INNER JOIN usuarios u ON ut.usuario_id = u.id
         WHERE ut.token = :token 

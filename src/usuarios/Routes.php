@@ -48,6 +48,11 @@ return function (RouteCollectorProxy $group) {
         ->add(new RoleMiddleware([1]))
         ->add(AuthMiddleware::class);
 
+    $group->put('/{id:[0-9]+}', UpdateController::class)
+        ->add(new RoleMiddleware([1]))
+        ->add(AuthMiddleware::class);
+    
+
     $group->delete('/{id:[0-9]+}', DeleteController::class)
         ->add(new RoleMiddleware([1]))
         ->add(AuthMiddleware::class);

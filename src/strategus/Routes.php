@@ -17,7 +17,7 @@ return function (RouteCollectorProxy $group) {
     $group->post('/exportar/excel', ExportExcelController::class)
         ->add(AuthMiddleware::class);
 
-    $group->post('/resumen-lotes', GetResumenPorLoteController::class)
+    $group->get('/resumen-lotes', GetResumenPorLoteController::class)
         ->add(AuthMiddleware::class);
 
     $group->get('/mapa/marcadores', GetMapMarkersController::class)

@@ -21,7 +21,7 @@ class GetResumenPorLoteController
     {
         // 1. Capturar el parámetro desde el cuerpo del POST (Form Data)
         $parsedBody = $request->getParsedBody();
-        $fechaInput = $parsedBody['fecha_input'] ?? null; // Espera formato 'YYYY-MM-DD' de Day.js
+        $fechaInput = '2026-06-27'; // Espera formato 'YYYY-MM-DD' de Day.js
 
         // Validar que se haya enviado la fecha requerida
         if (!$fechaInput) {
@@ -63,7 +63,7 @@ class GetResumenPorLoteController
      */
     private function jsonResponse(Response $response, array $data, int $status): Response
     {
-        $payload = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $payload = json_encode($data, JSON_NUMERIC_CHECK | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         $response->getBody()->write($payload);
         return $response
             ->withHeader('Content-Type', 'application/json')

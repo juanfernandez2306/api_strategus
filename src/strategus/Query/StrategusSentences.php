@@ -32,14 +32,17 @@ return [
 
     "getResumenPorLote" => "
         SELECT 
-            COALESCE(l.lote, 'S/I') AS lote,
-            SUM(CASE WHEN DATE(m.fecha_registro) = :fecha_input_1 THEN 1 ELSE 0 END) AS palmas_marcadas,
-            SUM(CASE WHEN DATE(m.fecha_revision) = :fecha_input_2 THEN 1 ELSE 0 END) AS palmas_revisadas
+            COALESCE(CONCAT('LOTE 0', l.lote), 'S/I') AS lote,
+            -- 1. Suma 1 si la fecha del registro (sin la hora) es hoy
+            SUM(CASE WHEN DATE(m.fecha_registro) = CURDATE() THEN 1 ELSE 0 END) AS palmas_marcadas,
+            -- 2. Suma 1 si la fecha de la revisión (sin la hora) es hoy
+            SUM(CASE WHEN DATE(m.fecha_revision) = CURDATE() THEN 1 ELSE 0 END) AS palmas_revisadas
         FROM monitoreos_strategus m
         LEFT JOIN lotes l ON ST_Contains(l.geometria, m.posicion)
-        WHERE DATE(m.fecha_registro) = :fecha_input_3 OR DATE(m.fecha_revision) = :fecha_input_4
+        -- 3. Filtro principal: Que el monitoreo se haya registrado hoy O revisado hoy
+        WHERE DATE(m.fecha_registro) = CURDATE() OR DATE(m.fecha_revision) = CURDATE()
         GROUP BY l.id, l.lote
-        ORDER BY l.lote ASC
+        ORDER BY l.lote ASC;
     ",
 
     "getMapMarkers" => "

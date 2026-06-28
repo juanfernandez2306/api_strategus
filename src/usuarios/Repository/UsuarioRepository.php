@@ -138,8 +138,8 @@ class UsuarioRepository
                 ':nombre'    => $data['nombre'],
                 ':apellido'  => $data['apellido'],
                 ':email'     => $data['email'],
-                // Si el rol viene vacío o no se asigna, mandamos NULL de forma segura
-                ':role_id'   => !empty($data['role_id']) ? (int)$data['role_id'] : null
+                ':role_id'   => !empty($data['role_id']) ? (int)$data['role_id'] : NULL,
+                ':status'   => !empty($data['status']) ? (int)$data['status'] : 0
             ]);
 
             // Verificamos si realmente se modificó algo o si el ID existía

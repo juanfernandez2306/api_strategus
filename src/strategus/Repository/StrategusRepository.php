@@ -87,21 +87,12 @@ class StrategusRepository
         }
     }
 
-    /**
-     * Obtiene el resumen de rendimiento real del día seleccionado (Marcadas vs Curadas históricas)
-     * @param string $fechaInput Formato 'Y-m-d'
-     * @return array
-     */
-    public function getResumenPorLote(string $fechaInput): array
+    
+    public function getResumenPorLote(): array
     {
         try {
             $stmt = $this->db->prepare($this->queries['getResumenPorLote']);
-            $stmt->execute([
-                ':fecha_input_1' => $fechaInput,
-                ':fecha_input_2' => $fechaInput,
-                ':fecha_input_3' => $fechaInput,
-                ':fecha_input_4' => $fechaInput
-            ]);
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             throw new Exception("Error al procesar el resumen analítico por lotes: " . $e->getMessage());
