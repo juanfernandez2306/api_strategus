@@ -137,7 +137,7 @@ return [
 
     "getAccessToken" => "
         SELECT ut.usuario_id, ut.expires_at, 
-        u.role_id, u.status
+        u.role_id, u.status, u.email_verified_at
         FROM personal_access_tokens ut
         INNER JOIN usuarios u ON ut.usuario_id = u.id
         WHERE ut.token = :token 

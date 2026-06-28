@@ -20,6 +20,6 @@ return function (RouteCollectorProxy $group) {
     $group->get('/resumen-lotes', GetResumenPorLoteController::class)
         ->add(AuthMiddleware::class);
 
-    $group->get('/mapa/marcadores', GetMapMarkersController::class)
+    $group->get('/mapa/ubicaciones', GetMapMarkersController::class)
         ->add(AuthMiddleware::class);
 };
