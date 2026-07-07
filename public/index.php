@@ -86,7 +86,7 @@ $app->addBodyParsingMiddleware();
 
 $app->group('/usuarios', require __DIR__ . '/../src/Usuarios/Routes.php');
 
-$app->group('/strategus', require __DIR__ . '/../src/strategus/Routes.php');
+$app->group('/strategus', require __DIR__ . '/../src/Strategus/Routes.php');
 
 // Add Error Middleware
 $errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, $logError, $logErrorDetails);
