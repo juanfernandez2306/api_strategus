@@ -20,6 +20,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.example
 
 # Configuración específica de subida del servidor local (XAMPP si aplica)
 config.local.php

@@ -21,7 +21,7 @@ class VerifyEmailController
         $emailParam = $queryParams['email'] ?? '';
 
         // URL a la que redirigirás al usuario para que inicie sesión en tu frontend
-        $loginUrl = 'http://tu-frontend.com/login'; 
+        $loginUrl = $_ENV['FRONTEND_URL']; 
 
         if (empty($tokenParam) || empty($emailParam)) {
             return $this->htmlResponse($response, [
