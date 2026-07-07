@@ -42,7 +42,11 @@ $container = $containerBuilder->build();
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-$app->setBasePath('/api-gepad');
+$basePath = $_ENV['APP_BASE_PATH'] ?? '';
+
+if (!empty($basePath)) {
+    $app->setBasePath($basePath);
+}
 
 
 $callableResolver = $app->getCallableResolver();
