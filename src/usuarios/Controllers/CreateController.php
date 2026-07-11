@@ -33,6 +33,13 @@ class CreateController
         // -------------------------------------------------------------
         $errores = $this->validator->validate($body);
 
+        $errores = $this->validator->validate($body, [
+            'nombre' => 'El nombre debe tener al menos 3 caracteres y contener solo letras.',
+            'apellido' => 'El apellido debe tener al menos 3 caracteres y contener solo letras.',
+            'password_confirm:same' => 'Las contraseñas ingresadas no coinciden.',
+            'password:regex' => 'La contraseña debe tener al menos 6 caracteres e incluir letras, números y un carácter especial (ej. @, #, $, !).'
+        ]);
+
         if (!empty($errores)) {
             return $this->jsonResponse($response, [
                 'success' => false,
