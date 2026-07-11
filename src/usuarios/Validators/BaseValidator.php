@@ -26,17 +26,17 @@ abstract class BaseValidator
     abstract protected function rules(): array;
 
     /**
-     * Ejecuta la validación y devuelve los errores (si los hay) o un array vacío.
+     * Permitimos un segundo parámetro opcional para mensajes específicos
      */
-    public function validate(array $data): array
+    public function validate(array $data, array $customMessages = []): array
     {
-        $validation = $this->validator->validate($data, $this->rules());
+        // Si hay mensajes específicos, se los pasamos a la validación actual
+        $validation = $this->validator->validate($data, $this->rules(), $customMessages);
 
         if ($validation->fails()) {
-            // Retorna solo el primer error de cada campo fallido
             return $validation->errors()->firstOfAll();
         }
 
-        return []; // Todo limpio, cero errores
+        return [];
     }
 }

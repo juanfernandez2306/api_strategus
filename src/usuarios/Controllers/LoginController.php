@@ -21,7 +21,12 @@ class LoginController
         $body = $request->getParsedBody() ?? [];
 
         $validator = new LoginValidator();
+
         $errors = $validator->validate($body);
+
+        $errors = $validator->validate($body, [
+            'password:regex' => 'La contraseña debe tener al menos 6 caracteres e incluir letras, números y un carácter especial (ej. @, #, $, !).'
+        ]);
         
         if (!empty($errors)) {
             return $this->jsonResponse($response, [
