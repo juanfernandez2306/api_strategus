@@ -1,6 +1,8 @@
 <?php
 namespace App\Usuarios\Validators;
 
+use App\Usuarios\Validators\RegexPatterns;
+
 class CreateValidator extends BaseValidator
 {
     /**
@@ -9,13 +11,22 @@ class CreateValidator extends BaseValidator
     protected function rules(): array
     {
         $regexSoloLetras = 'regex:/^[a-zA-ZÑñ]+$/';
-        $regexNumerosLetras = 'regex:/^[a-zA-Z0-9]+$/';
 
         return [
-            'nombre'           => ['required', 'min:3', 'max:50', $regexSoloLetras],
-            'apellido'         => ['required', 'min:3', 'max:50', $regexSoloLetras],
+            'nombre'           => [
+                                    'required', 
+                                    'max:50', 
+                                    'regex:' . RegexPatterns::NOMBRE
+                                ],
+            'apellido'         => [
+                                    'required',
+                                    'max:50', 
+                                    'regex:' . RegexPatterns::NOMBRE],
             'email'            => ['required', 'email'],
-            'password'         => ['required', 'min:6', $regexNumerosLetras],
+            'password'         => [
+                                    'required', 
+                                    'regex:' . RegexPatterns::PASSWORD
+                                ],
             'password_confirm' => ['required', 'same:password']
         ];
     }
