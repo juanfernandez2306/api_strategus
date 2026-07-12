@@ -64,8 +64,7 @@ return [
         UPDATE usuarios 
         SET 
             nombre = :nombre, 
-            apellido = :apellido, 
-            email = :email, 
+            apellido = :apellido,  
             role_id = :role_id,
             status = :status
         WHERE id = :id

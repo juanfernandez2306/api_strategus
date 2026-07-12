@@ -137,7 +137,6 @@ class UsuarioRepository
                 ':id'        => $id,
                 ':nombre'    => $data['nombre'],
                 ':apellido'  => $data['apellido'],
-                ':email'     => $data['email'],
                 ':role_id'   => !empty($data['role_id']) ? (int)$data['role_id'] : NULL,
                 ':status'   => !empty($data['status']) ? (int)$data['status'] : 0
             ]);
@@ -156,14 +155,7 @@ class UsuarioRepository
             ];
 
         } catch (\PDOException $e) {
-            // El código SQLSTATE '23000' con error 1062 en MariaDB significa "Entrada duplicada"
-            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1062) {
-                return [
-                    'status' => false,
-                    'msg'    => 'El correo electrónico ingresado ya está siendo utilizado por otro usuario.'
-                ];
-            }
-
+            
             // Captura si el admin intenta asignar un role_id que NO existe en la tabla roles (Error 1452)
             if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1452) {
                 return [

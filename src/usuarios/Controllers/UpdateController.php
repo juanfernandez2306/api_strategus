@@ -32,8 +32,8 @@ class UpdateController
         // Limpiamos los textos quitando espacios vacíos accidentales al inicio/final
         $nombre   = trim($body['nombre'] ?? '');
         $apellido = trim($body['apellido'] ?? '');
-        $email    = filter_var($body['email'] ?? '', FILTER_VALIDATE_EMAIL);
-        // El role_id puede ser opcional o nulo, si viene lo convertimos a entero
+       
+        
         $roleId   = !empty($body['role_id']) ? (int) $body['role_id'] : null;
         $status   = !empty($body['status']) ? (int) $body['status'] : 0;
 
@@ -47,13 +47,7 @@ class UpdateController
             ], 400); // 400 = Bad Request (Petición incorrecta)
         }
 
-        if (!$email) {
-            return $this->jsonResponse($response, [
-                'success' => false,
-                'message' => 'Debes proporcionar un correo electrónico válido.'
-            ], 400);
-        }
-
+       
         // -------------------------------------------------------------
         // PASO 3: Llamar al Repositorio y procesar el resultado
         // -------------------------------------------------------------
@@ -62,7 +56,6 @@ class UpdateController
         $datosParaActualizar = [
             'nombre'   => $nombre,
             'apellido' => $apellido,
-            'email'    => $email,
             'role_id'  => $roleId,
             'status'    => $status,
         ];
