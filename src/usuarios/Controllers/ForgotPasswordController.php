@@ -44,7 +44,7 @@ class ForgotPasswordController
         $this->repository->storePasswordResetToken($email, $resetToken);
 
         // 4. Construir URL dinámica usando el .env
-        $baseUrl = $_ENV['APP_URL'] ?? 'http://localhost/api-gepad';
+        $baseUrl = $_ENV['APP_URL'];
         $enlaceRecuperacion = $baseUrl . "/usuarios/reset-password?token=" . $resetToken . "&email=" . urlencode($email);
 
         // 5. Cargar plantilla HTML externa

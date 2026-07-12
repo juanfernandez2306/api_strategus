@@ -37,7 +37,7 @@ return function (RouteCollectorProxy $group) {
 
     $group->post('/forgot-password', ForgotPasswordController::class);
 
-    $group->post('/reset-password', ResetPasswordController::class);
+    $group->map(['GET', 'POST'], '/reset-password', ResetPasswordController::class);
 
     // -------------------------------------------------------------
     // 🔒 RUTAS PROTEGIDAS (Requieren pasar por el AuthMiddleware)
