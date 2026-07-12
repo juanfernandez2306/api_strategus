@@ -5,46 +5,49 @@ namespace App\Strategus\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Strategus\Services\ExportExcelService;
+use App\Strategus\Validators\ExportExcelValidator;
 use Slim\Psr7\Stream;
 
 class ExportExcelController
 {
     private ExportExcelService $excelService;
+    private ExportExcelValidator $validator;
 
-    // PHP-DI inyectará automáticamente el Servicio aquí
-    public function __construct(ExportExcelService $excelService)
+    public function __construct(ExportExcelService $excelService, ExportExcelValidator $validator)
     {
         $this->excelService = $excelService;
+        $this->validator = $validator;
     }
 
     public function __invoke(Request $request, Response $response): Response
     {
-        // 1. Capturar parámetros desde el cuerpo del POST (Form Data)
-        $parsedBody = $request->getParsedBody();
+        $parsedBody = $request->getParsedBody() ?? [];
         
-        $fechaInicioParam = $parsedBody['fecha_inicio'] ?? null;
-        $fechaFinParam = $parsedBody['fecha_fin'] ?? null;
+        // 1. Validar el rango de fechas y deltas
+        $errores = $this->validator->validate($parsedBody);
 
-        // Validar que ambos campos vengan en el Form Data
-        if (!$fechaInicioParam || !$fechaFinParam) {
+        if (!empty($errores)) {
+            $primerError = reset($errores);
+            
             $response->getBody()->write(json_encode([
                 'statusCode' => 400,
                 'error' => [
-                    'type' => 'BAD_REQUEST',
-                    'description' => 'Los campos de formulario fecha_inicio y fecha_fin son requeridos en el cuerpo del POST.'
+                    'type' => 'VALIDATION_ERROR',
+                    'description' => $primerError
                 ]
             ], JSON_UNESCAPED_UNICODE));
+            
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
-        try {
-            // 2. Delegar la generación del Excel al archivo de Servicio
-            $stream = $this->excelService->generateMonitoreosExcel($fechaInicioParam, $fechaFinParam);
+        $fechaInicioParam = $parsedBody['fecha_inicio'];
+        $fechaFinParam = $parsedBody['fecha_fin'];
 
-            // Nombre dinámico para el archivo descargable
+        try {
+            // 2. Intentar generar el Excel
+            $stream = $this->excelService->generateMonitoreosExcel($fechaInicioParam, $fechaFinParam);
             $filename = "monitoreos_{$fechaInicioParam}_al_{$fechaFinParam}.xlsx";
             
-            // 3. Responder con el flujo binario nativo directo de Slim
             return $response
                 ->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
@@ -52,6 +55,21 @@ class ExportExcelController
                 ->withBody(new Stream($stream));
 
         } catch (\Exception $e) {
+        // 3. CAPTURA OPTIMIZADA: Cambiar obligatoriamente a HTTP status 400
+            if ($e->getMessage() === 'NO_ROWS_FOUND') {
+                $response->getBody()->write(json_encode([
+                    'statusCode' => 400,
+                    'error' => [
+                        'type' => 'NO_ROWS_FOUND',
+                        'description' => 'No se encontraron registros en el rango de fechas seleccionado.'
+                    ]
+                ], JSON_UNESCAPED_UNICODE));
+                
+                // CORREGIDO: Ahora retorna un código de error 400 real al navegador
+                return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            // Errores críticos de la biblioteca o base de datos (Status 500)
             $response->getBody()->write(json_encode([
                 'statusCode' => 500,
                 'error' => [
