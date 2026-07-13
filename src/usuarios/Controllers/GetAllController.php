@@ -25,13 +25,26 @@ class GetAllController
         // Ejecuta el método getAll() que corregimos (el que trae id, nombre, email y el nombre del rol)
         $usuarios = $this->repository->getAll();
 
+        $usuariosFormateados = array_map(function ($user) {
+            
+            // Verificamos que existan las llaves para evitar un "Undefined array key"
+            if (isset($user['nombre'])) {
+                $user['nombre'] = mb_convert_case($user['nombre'], MB_CASE_TITLE, "UTF-8");
+            }
+            if (isset($user['apellido'])) {
+                $user['apellido'] = mb_convert_case($user['apellido'], MB_CASE_TITLE, "UTF-8");
+            }
+            
+            return $user;
+        }, $usuarios);
+
         // -------------------------------------------------------------
         // PASO 2: Estructurar la respuesta para el Frontend
         // -------------------------------------------------------------
         // Armamos un array con una estructura clara: un indicador de éxito y la lista de datos
         $responseData = [
             'success' => true,
-            'data'    => $usuarios
+            'data'    => $usuariosFormateados
         ];
 
         // -------------------------------------------------------------
