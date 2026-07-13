@@ -49,9 +49,19 @@ class CreateController
         }
 
         // Si pasa la validación, limpiamos los datos para la base de datos
-        $nombre   = trim($body['nombre']);
-        $apellido = trim($body['apellido']);
-        $email    = trim($body['email']);
+        if (isset($body['nombre'])) {
+            $body['nombre'] = mb_strtolower(trim($body['nombre']), "UTF-8");
+        }
+        if (isset($body['apellido'])) {
+            $body['apellido'] = mb_strtolower(trim($body['apellido']), "UTF-8");
+        }
+        if (isset($body['email'])) {
+            $body['email'] = mb_strtolower(trim($body['email']), "UTF-8");
+        }
+
+        $nombre   = $body['nombre'];
+        $apellido = $body['apellido'];
+        $email    = $body['email'];
         $password = $body['password'];
 
         // -------------------------------------------------------------
