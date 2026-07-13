@@ -1,94 +1,96 @@
 <?php
 namespace App\Usuarios\Controllers;
 
-// Importamos las interfaces estándar para manejar peticiones y respuestas HTTP (PSR-7)
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Usuarios\Repository\UsuarioRepository;
+use App\Usuarios\Validators\UpdateValidator;
 
 class UpdateController
 {
     private UsuarioRepository $repository;
+    private UpdateValidator $validator;
 
-    // Inyectamos el repositorio que ya tiene toda la lógica de la base de datos
-    public function __construct(UsuarioRepository $repository)
+    
+    public function __construct(
+        UsuarioRepository $repository, 
+        UpdateValidator $validator)
     {
         $this->repository = $repository;
+        $this->validator = $validator;
     }
 
-    // Este método se ejecuta automáticamente cuando Slim apunta a esta clase
     public function __invoke(Request $request, Response $response, array $args): Response
     {
-        // -------------------------------------------------------------
-        // PASO 1: Capturar los datos que vienen desde el Frontend/Cliente
-        // -------------------------------------------------------------
-        
-        // El ID del usuario viaja en la URL (ej: /usuarios/5), Slim lo guarda en $args
         $id = (int) $args['id']; 
+        $body = $request->getParsedBody() ?? [];
 
-        // Los datos del formulario (JSON o Post) viajan en el cuerpo de la petición
-        $body = $request->getParsedBody();
+        // -------------------------------------------------------------
+        // PASO 1: Normalización segura en minúsculas (UTF-8)
+        // -------------------------------------------------------------
+        $nombreRaw   = $body['nombre'] ?? '';
+        $apellidoRaw = $body['apellido'] ?? '';
 
-        // Limpiamos los textos quitando espacios vacíos accidentales al inicio/final
-        $nombre   = trim($body['nombre'] ?? '');
-        $apellido = trim($body['apellido'] ?? '');
-       
+        $body['nombre']   = mb_strtolower(trim($nombreRaw), "UTF-8");
+        $body['apellido'] = mb_strtolower(trim($apellidoRaw), "UTF-8");
         
-        $roleId   = !empty($body['role_id']) ? (int) $body['role_id'] : null;
-        $status   = !empty($body['status']) ? (int) $body['status'] : 0;
-
-        // -------------------------------------------------------------
-        // PASO 2: Validaciones básicas antes de tocar la Base de Datos
-        // -------------------------------------------------------------
-        if (empty($nombre) || empty($apellido)) {
-            return $this->jsonResponse($response, [
-                'success' => false,
-                'message' => 'El nombre y el apellido son obligatorios.'
-            ], 400); // 400 = Bad Request (Petición incorrecta)
+        // Convertimos a tipos nativos para que Rakit valide correctamente tipos numéricos
+        if (isset($body['role_id'])) {
+            $body['role_id'] = (int) $body['role_id'];
+        }
+        if (isset($body['status'])) {
+            $body['status'] = (int) $body['status'];
         }
 
-       
         // -------------------------------------------------------------
-        // PASO 3: Llamar al Repositorio y procesar el resultado
+        // PASO 2: Validación formal con Rakit
         // -------------------------------------------------------------
+        $errores = $this->validator->validate($body, [
+            'nombre'   => 'El nombre debe tener al menos 3 caracteres y contener solo letras.',
+            'apellido' => 'El apellido debe tener al menos 3 caracteres y contener solo letras.',
+            'role_id'  => 'Debe seleccionar un rol válido para el usuario.',
+            'status'   => 'El estado del usuario no es válido.'
+        ]);
+
+        // Si la validación falla, disparamos el código de error controlado
+        if ($errores) {
+            return $this->jsonResponse($response, [
+                'success' => false,
+                'errors'  => $errores
+            ], 420); // Código 420 adaptado a tus respuestas de validación
+        }
         
-        // Preparamos el array estructurado que el repositorio espera recibir
+        // -------------------------------------------------------------
+        // PASO 3: Ejecutar la actualización en el Repositorio
+        // -------------------------------------------------------------
         $datosParaActualizar = [
-            'nombre'   => $nombre,
-            'apellido' => $apellido,
-            'role_id'  => $roleId,
-            'status'    => $status,
+            'nombre'   => $body['nombre'],
+            'apellido' => $body['apellido'],
+            'role_id'  => $body['role_id'],
+            'status'   => $body['status'],
         ];
 
-        // Ejecutamos el método update que armamos y guardamos su array de respuesta
         $result = $this->repository->update($id, $datosParaActualizar);
 
         // -------------------------------------------------------------
-        // PASO 4: Responder al Frontend según lo que pasó en la BD
+        // PASO 4: Responder al Frontend
         // -------------------------------------------------------------
-        
-        // Si el repositorio devolvió status = false (hubo un error de correo duplicado o rol inválido)
         if (!$result['status']) {
             return $this->jsonResponse($response, [
                 'success' => false,
-                'message' => $result['msg'] // "El correo ya está en uso" o "El rol no existe"
-            ], 409); // 409 = Conflict (Conflicto de datos en el servidor)
+                'message' => $result['msg']
+            ], 409);
         }
 
-        // Si llegó aquí, todo salió perfecto (Hubo cambios o los datos eran idénticos, pero no hubo errores)
         return $this->jsonResponse($response, [
             'success' => true,
-            'message' => $result['msg'] // "Datos actualizados con éxito" o "No se realizaron cambios"
-        ], 200); // 200 = OK (Operación exitosa)
+            'message' => $result['msg']
+        ], 200);
     }
 
-    /**
-     * Función auxiliar para estructurar respuestas JSON de forma ultra legible y limpia
-     */
     private function jsonResponse(Response $response, array $data, int $statusCode): Response
     {
         $response->getBody()->write(json_encode($data, JSON_UNESCAPED_UNICODE));
-        
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($statusCode);
