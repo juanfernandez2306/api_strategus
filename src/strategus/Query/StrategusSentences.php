@@ -64,4 +64,36 @@ return [
           AND (fecha_registro < :fecha_registro_1 OR (fecha_registro = :fecha_registro_2 AND uuid <> :uuid_actual))
         LIMIT 1
     ",
+
+    "getGraficoSemanal" => "
+        SELECT 
+            d.fecha,
+            COALESCE(SUM(m.marcada), 0) AS palmas_marcadas,
+            COALESCE(SUM(m.revisada), 0) AS palmas_revisadas
+        FROM (
+            SELECT CURDATE() AS fecha UNION ALL
+            SELECT CURDATE() - INTERVAL 1 DAY UNION ALL
+            SELECT CURDATE() - INTERVAL 2 DAY UNION ALL
+            SELECT CURDATE() - INTERVAL 3 DAY UNION ALL
+            SELECT CURDATE() - INTERVAL 4 DAY UNION ALL
+            SELECT CURDATE() - INTERVAL 5 DAY UNION ALL
+            SELECT CURDATE() - INTERVAL 6 DAY
+        ) d
+        LEFT JOIN (
+            -- Subconsulta para unificar eventos de registro y revisión por su respectiva fecha
+            SELECT DATE(fecha_registro) AS fecha, 1 AS marcada, 0 AS revisada 
+            FROM monitoreos_strategus
+            WHERE fecha_registro >= CURDATE() - INTERVAL 6 DAY
+            
+            UNION ALL
+            
+            SELECT DATE(fecha_revision) AS fecha, 0 AS marcada, 1 AS revisada 
+            FROM monitoreos_strategus 
+            WHERE fecha_revision IS NOT NULL 
+              AND fecha_revision >= CURDATE() - INTERVAL 6 DAY
+        ) m ON d.fecha = m.fecha
+        GROUP BY d.fecha
+        ORDER BY d.fecha ASC;
+    "
+
 ];

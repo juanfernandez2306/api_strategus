@@ -7,6 +7,7 @@ use App\Middleware\RoleMiddleware;
 use App\Strategus\Controllers\ExportExcelController;
 use App\Strategus\Controllers\GetResumenPorLoteController;
 use App\Strategus\Controllers\GetMapMarkersController;
+use App\Strategus\Controllers\GetRegistroSemanalStrategusController;
 
 return function (RouteCollectorProxy $group) {
     
@@ -18,6 +19,9 @@ return function (RouteCollectorProxy $group) {
         ->add(AuthMiddleware::class);
 
     $group->get('/resumen-lotes', GetResumenPorLoteController::class)
+        ->add(AuthMiddleware::class);
+
+    $group->get('/resumen-semanal', GetRegistroSemanalStrategusController::class)
         ->add(AuthMiddleware::class);
 
     $group->get('/mapa/ubicaciones', GetMapMarkersController::class)
