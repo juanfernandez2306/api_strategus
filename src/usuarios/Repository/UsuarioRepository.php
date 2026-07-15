@@ -348,24 +348,4 @@ class UsuarioRepository
         return $result ? $result : null;
     }
 
-    public function obtenerDatosGraficoSemanal(): array
-    {
-        try {
-            $stmt = $this->db->prepare($this->queries['getGraficoSemanal']);
-            $stmt->execute();
-
-            // Mapeamos los resultados para asegurar tipos nativos correctos (int) en el JSON
-            return array_map(function ($row) {
-                return [
-                    'fecha'            => $row['fecha'],
-                    'palmas_marcadas'  => (int) $row['palmas_marcadas'],
-                    'palmas_revisadas' => (int) $row['palmas_revisadas']
-                ];
-            }, $stmt->fetchAll(PDO::FETCH_ASSOC));
-
-        } catch (Exception $e) {
-            throw new Exception("Error al obtener datos del gráfico semanal: " . $e->getMessage());
-        }
-    }
-
 };
