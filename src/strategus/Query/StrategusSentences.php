@@ -94,6 +94,13 @@ return [
         ) m ON d.fecha = m.fecha
         GROUP BY d.fecha
         ORDER BY d.fecha ASC;
-    "
+    ",
+
+    "validarPuntoEnLote" => "
+        SELECT 1 
+        FROM lotes 
+        WHERE ST_Contains(geometria, ST_PointFromText(:posicion_WKT, 4326))
+        LIMIT 1
+    ",
 
 ];

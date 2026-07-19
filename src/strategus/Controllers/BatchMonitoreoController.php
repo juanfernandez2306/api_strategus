@@ -39,6 +39,7 @@ class BatchMonitoreoController
         $completados = [];          // Tienen fecha_revision -> Se borrarán del móvil
         $guardadosSinRevision = [];  // Tienen fecha_revision = null -> Cambian a sincronizacion=true
         $duplicados = [];
+        $fueraDeLote = [];          // Puntos que no pertenecen a ningun lote geografico
 
         // Obtenemos la conexión PDO compartida desde el repositorio
         $db = $this->repository->getConnection();
@@ -56,6 +57,13 @@ class BatchMonitoreoController
                     // Si un solo registro falla la validación, abortamos TODO el lote lanzando una excepción
                     $erroresValidacion = json_encode($validation->errors()->firstOfAll());
                     throw new Exception("Error de validación en el elemento con UUID [{$uuid}]: {$erroresValidacion}");
+                }
+
+                if (!$this->repository->esPuntoDentroDeLote($item)){
+                    // Si está fuera, lo ignoramos para MySQL, pero ordenamos al móvil borrarlo para limpiar datos corruptos
+                    $completados[] = $uuid;
+                    $fueraDeLote[] = $uuid;
+                    continue;
                 }
 
                 if ($this->repository->esDuplicadoEspacial($item)) {
@@ -90,7 +98,9 @@ class BatchMonitoreoController
                 'message' => 'Sincronización masiva procesada de manera atómica exitosamente.',
                 'summary' => [
                     'total_enviados' => count($body),
-                    'completados_para_borrar' => (count($completados) - count($duplicados)),
+                    'completados_para_borrar' => (
+                        count($completados) - count($duplicados) - count($fueraDeLote)
+                        ),
                     'guardados_sin_revision' => count($guardadosSinRevision)
                 ],
                 'data' => [

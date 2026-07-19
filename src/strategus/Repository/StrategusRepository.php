@@ -142,6 +142,25 @@ class StrategusRepository
         return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
 
+    
+    public function esPuntoDentroDeLote(array $item): bool
+    {
+        try {
+            $posicionWKT = "POINT(" . $item['longitud'] . " " . $item['latitud'] . ")";
+            
+            $stmt = $this->db->prepare($this->queries['validarPuntoEnLote']);
+            $stmt->execute([
+                ':posicion_WKT' => $posicionWKT
+            ]);
+            
+            // Retorna true si encontró coincidencia, o false si el punto está fuera de los polígonos
+            return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+            
+        } catch (Exception $e) {
+            throw new Exception("Error al validar si el punto se encuentra dentro de la capa de lotes: " . $e->getMessage());
+        }
+    }
+
     public function obtenerDatosGraficoSemanal(): array
     {
         try {
