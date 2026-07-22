@@ -8,6 +8,7 @@ use App\Strategus\Controllers\ExportExcelController;
 use App\Strategus\Controllers\GetResumenPorLoteController;
 use App\Strategus\Controllers\GetMapMarkersController;
 use App\Strategus\Controllers\GetRegistroSemanalStrategusController;
+use App\Strategus\Controllers\GetExportRecordsController;
 
 return function (RouteCollectorProxy $group) {
     
@@ -16,6 +17,10 @@ return function (RouteCollectorProxy $group) {
         ->add(AuthMiddleware::class);
 
     $group->post('/exportar/excel', ExportExcelController::class)
+        ->add(AuthMiddleware::class);
+
+    $group->post('/registros/exportar', GetExportRecordsController::class)
+        ->add(new RoleMiddleware([2, 3]))
         ->add(AuthMiddleware::class);
 
     $group->get('/resumen-lotes', GetResumenPorLoteController::class)
