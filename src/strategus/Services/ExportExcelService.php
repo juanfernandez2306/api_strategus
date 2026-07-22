@@ -43,15 +43,15 @@ class ExportExcelService
         $sheet->setTitle('Monitoreos Strategus');
 
         // Encabezados
-        $headers = ['Latitud', 'Longitud', 'Lote', 'Precisión', 'Fecha Registro', 'Fecha Revisión'];
+        $headers = ['Latitud', 'Longitud', 'Lote', 'Precisión','Galeria',  'Fecha Registro', 'Fecha Revisión'];
         $sheet->fromArray($headers, NULL, 'A1');
-        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
 
         // 3. Volcar datos obtenidos
         $sheet->fromArray($data, NULL, 'A2');
 
         // Auto-ajustar el tamaño de las columnas automáticamente
-        foreach (range('A', 'F') as $col) {
+        foreach (range('A', 'G') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

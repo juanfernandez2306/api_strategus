@@ -22,6 +22,7 @@ return [
             ST_X(m.posicion) AS longitud,
             COALESCE(l.lote, 'S/I') AS lote,
             m.precision_gps AS `precision`,
+            m.galeria,
             m.fecha_registro,
             m.fecha_revision
         FROM monitoreos_strategus m
@@ -59,7 +60,7 @@ return [
     "buscarDuplicadoEnRadio" => "
         SELECT uuid 
         FROM monitoreos_strategus 
-        WHERE ST_Distance_Sphere(posicion, ST_PointFromText(:posicion_WKT, 4326)) <= 4
+        WHERE ST_Distance_Sphere(posicion, ST_PointFromText(:posicion_WKT, 4326)) <= 3
           AND ABS(DATEDIFF(fecha_registro, :fecha_referencia)) <= 15
           AND (fecha_registro < :fecha_registro_1 OR (fecha_registro = :fecha_registro_2 AND uuid <> :uuid_actual))
         LIMIT 1
