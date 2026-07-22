@@ -60,7 +60,7 @@ return [
     "buscarDuplicadoEnRadio" => "
         SELECT uuid 
         FROM monitoreos_strategus 
-        WHERE ST_Distance_Sphere(posicion, ST_PointFromText(:posicion_WKT, 4326)) <= 3
+        WHERE ST_Distance_Sphere(posicion, ST_PointFromText(:posicion_WKT, 4326)) <= 2
           AND ABS(DATEDIFF(fecha_registro, :fecha_referencia)) <= 15
           AND (fecha_registro < :fecha_registro_1 OR (fecha_registro = :fecha_registro_2 AND uuid <> :uuid_actual))
         LIMIT 1
