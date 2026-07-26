@@ -19,7 +19,7 @@ return function (RouteCollectorProxy $group) {
     $group->post('/exportar/excel', ExportExcelController::class)
         ->add(AuthMiddleware::class);
 
-    $group->post('/registros/exportar', GetExportRecordsController::class)
+    $group->get('/registros/exportar', GetExportRecordsController::class)
         ->add(new RoleMiddleware([2, 3]))
         ->add(AuthMiddleware::class);
 

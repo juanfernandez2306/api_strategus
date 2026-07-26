@@ -25,10 +25,10 @@ class GetExportRecordsController
     {
         try {
             // 1. Obtener los datos del body (POST)
-            $parsedBody = $request->getParsedBody() ?? [];
+            $queryParams = $request->getQueryParams();
 
             // 2. Ejecutar la validación con Rakit mediante ExportExcelValidator
-            $errors = $this->validator->validate($parsedBody);
+            $errors = $this->validator->validate($queryParams);
 
             if (!empty($errors)) {
                 $payload = json_encode([
@@ -47,8 +47,8 @@ class GetExportRecordsController
             }
 
             // 3. Preparar las fechas con la hora correspondiente para la consulta SQL
-            $fechaInicio = $parsedBody['fecha_inicio'] . ' 00:00:00';
-            $fechaFin = $parsedBody['fecha_fin'] . ' 23:59:59';
+            $fechaInicio = $queryParams['fecha_inicio'] . ' 00:00:00';
+            $fechaFin = $queryParams['fecha_fin'] . ' 23:59:59';
 
             // 4. Consultar el repositorio
             $records = $this->repository->getExportRecords($fechaInicio, $fechaFin);
