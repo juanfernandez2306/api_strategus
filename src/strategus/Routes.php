@@ -23,10 +23,10 @@ return function (RouteCollectorProxy $group) {
         ->add(new RoleMiddleware([2, 3]))
         ->add(AuthMiddleware::class);
 
-    $group->get('/resumen-lotes', GetResumenPorLoteController::class)
+    $group->get('/resumen/lotes', GetResumenPorLoteController::class)
         ->add(AuthMiddleware::class);
 
-    $group->get('/resumen-semanal', GetRegistroSemanalStrategusController::class)
+    $group->get('/resumen/semanal', GetRegistroSemanalStrategusController::class)
         ->add(AuthMiddleware::class);
 
     $group->get('/mapa/ubicaciones', GetMapMarkersController::class)
