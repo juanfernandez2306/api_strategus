@@ -17,7 +17,7 @@ class IndexController
             'organization' => 'Agropecuaria Guaikinima',
             'version' => '1.0.0',
             'status'  => 'online',
-            'description' => 'Servicio espacial y alfanumérico para el monitoreo agronómico, gestión de parcelas y control de plagas.',
+            'description' => 'Servicio espacial y alfanumérico para el monitoreo agronómico y control de plagas.',
             
             'support' => [
                 'email' => 'fincaguaikinima@gmail.com'
