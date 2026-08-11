@@ -11,6 +11,17 @@ CREATE TABLE roles (
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
+-- Inserción de Roles Básicos
+-- -----------------------------------------------------
+INSERT INTO roles (id, nombre, descripcion) VALUES 
+(1, 'administrador', 'Acceso total al sistema, gestión de usuarios'),
+(2, 'topografía',    'Gestión completa de las capas del mapa y administración de la tabla de negocio.'),
+(3, 'operador',      'Personal de campo. Permiso exclusivo para registrar posiciones (POST/PUT) en la tabla de negocio.'),
+(4, 'supervisor',    'Control y monitoreo de campo. Permiso para visualizar estadísticas, mapas y exportar datos.'),
+(5, 'visitante',     'Acceso de solo lectura externo. Diseñado para clientes o auditores que solo requieren ver estadísticas y descargar reportes.');
+
+
+-- -----------------------------------------------------
 -- 2. TABLA: usuarios
 -- -----------------------------------------------------
 CREATE TABLE usuarios (
@@ -22,9 +33,13 @@ CREATE TABLE usuarios (
     password VARCHAR(255) NOT NULL,
     status BOOLEAN DEFAULT 1,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
+    INDEX (email),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_usuarios_roles FOREIGN KEY (role_id) REFERENCES roles(id) 
+    ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
 
 -- -----------------------------------------------------
 -- 3. TABLA: personal_access_tokens
@@ -38,9 +53,11 @@ CREATE TABLE personal_access_tokens (
     expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (token),
     CONSTRAINT fk_tokens_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
 
 -- -----------------------------------------------------
 -- 4. TABLA: password_resets
@@ -88,8 +105,8 @@ CREATE TABLE monitoreos_strategus (
 -- -----------------------------------------------------
 -- Índices para Optimización Geográfica y Temporal
 -- -----------------------------------------------------
-CREATE INDEX idx_usuarios_email ON usuarios(email);
-CREATE INDEX idx_tokens_token ON personal_access_tokens(token);
+
+
 CREATE INDEX idx_strategus_fecha_reg ON monitoreos_strategus(fecha_registro);
 CREATE INDEX idx_strategus_fecha_rev ON monitoreos_strategus(fecha_revision);
 CREATE SPATIAL INDEX idx_strategus_posicion ON monitoreos_strategus(posicion);
@@ -116,17 +133,6 @@ CREATE TABLE lotes (
 CREATE SPATIAL INDEX idx_lotes_geometria ON lotes(geometria);
 
 
--- -----------------------------------------------------
--- Inserción de Roles Básicos
--- -----------------------------------------------------
-INSERT INTO roles (id, nombre, descripcion) VALUES 
-(1, 'administrador', 'Acceso total al sistema, gestión de usuarios'),
-(2, 'topografía',    'Gestión completa de las capas del mapa y administración de la tabla de negocio.'),
-(3, 'operador',      'Personal de campo. Permiso exclusivo para registrar posiciones (POST/PUT) en la tabla de negocio.'),
-(4, 'supervisor',    'Control y monitoreo de campo. Permiso para visualizar estadísticas, mapas y exportar datos.'),
-(5, 'visitante',     'Acceso de solo lectura externo. Diseñado para clientes o auditores que solo requieren ver estadísticas y descargar reportes.');
-
-
 INSERT INTO lotes (lote, cantidad_palmas, geometria)
 VALUES
 (8, 598, ST_GeomFromText('Polygon ((-72.7001 9.8542, -72.6988 9.8535, -72.6988 9.8534, -72.6992 9.8533, -72.6993 9.8531, -72.6994 9.8532, -72.6995 9.8531, -72.6994 9.8530, -72.6994 9.8527, -72.6994 9.8526, -72.6994 9.8525, -72.6992 9.8524, -72.6991 9.8525, -72.6991 9.8526, -72.6988 9.8532, -72.6987 9.8533, -72.6986 9.8534, -72.6982 9.8534, -72.6981 9.8533, -72.6981 9.8527, -72.6982 9.8526, -72.6982 9.8525, -72.6984 9.8523, -72.6985 9.8523, -72.6987 9.8522, -72.6988 9.8522, -72.6989 9.8521, -72.6989 9.8518, -72.6990 9.8517, -72.6992 9.8516, -72.6992 9.8515, -72.6985 9.8518, -72.6984 9.8518, -72.6984 9.8517, -72.6987 9.8513, -72.6987 9.8512, -72.6989 9.8508, -72.6993 9.8505, -72.6995 9.8506, -72.6996 9.8508, -72.6995 9.8512, -72.6999 9.8512, -72.7001 9.8511, -72.7003 9.8512, -72.7004 9.8513, -72.7003 9.8518, -72.7002 9.8518, -72.6993 9.8519, -72.6991 9.8520, -72.6991 9.8522, -72.6992 9.8520, -72.6993 9.8519, -72.6999 9.8519, -72.7003 9.8520, -72.7003 9.8526, -72.7000 9.8530, -72.7000 9.8533, -72.7002 9.8532, -72.7003 9.8533, -72.7003 9.8536, -72.7001 9.8538, -72.7002 9.8539, -72.7001 9.8542, -72.7001 9.8542))')),
@@ -139,3 +145,78 @@ VALUES
 (4, 2263, ST_GeomFromText('Polygon ((-72.7046 9.8665, -72.7046 9.8667, -72.7046 9.8670, -72.7050 9.8676, -72.7050 9.8677, -72.7050 9.8681, -72.7050 9.8682, -72.7048 9.8685, -72.7047 9.8686, -72.7047 9.8723, -72.7047 9.8724, -72.7032 9.8732, -72.7031 9.8732, -72.7024 9.8721, -72.7024 9.8718, -72.7024 9.8717, -72.7024 9.8707, -72.7024 9.8706, -72.7024 9.8704, -72.7023 9.8703, -72.7023 9.8698, -72.7025 9.8694, -72.7027 9.8693, -72.7027 9.8692, -72.7024 9.8690, -72.7024 9.8689, -72.7024 9.8687, -72.7024 9.8686, -72.7024 9.8684, -72.7024 9.8683, -72.7026 9.8683, -72.7026 9.8678, -72.7027 9.8677, -72.7026 9.8676, -72.7026 9.8673, -72.7028 9.8672, -72.7029 9.8672, -72.7030 9.8671, -72.7030 9.8666, -72.7045 9.8666, -72.7046 9.8665))')),
 (3, 1566, ST_GeomFromText('Polygon ((-72.7032 9.8732, -72.7047 9.8724, -72.7047 9.8723, -72.7047 9.8686, -72.7048 9.8685, -72.7050 9.8682, -72.7050 9.8681, -72.7050 9.8677, -72.7050 9.8676, -72.7046 9.8670, -72.7046 9.8667, -72.7046 9.8665, -72.7047 9.8665, -72.7049 9.8663, -72.7050 9.8663, -72.7060 9.8658, -72.7060 9.8666, -72.7061 9.8667, -72.7061 9.8672, -72.7061 9.8673, -72.7061 9.8680, -72.7062 9.8681, -72.7062 9.8688, -72.7063 9.8689, -72.7062 9.8700, -72.7060 9.8702, -72.7060 9.8705, -72.7058 9.8709, -72.7053 9.8712, -72.7056 9.8712, -72.7057 9.8714, -72.7062 9.8716, -72.7062 9.8717, -72.7064 9.8718, -72.7064 9.8722, -72.7063 9.8723, -72.7058 9.8726, -72.7056 9.8726, -72.7055 9.8727, -72.7055 9.8728, -72.7052 9.8730, -72.7051 9.8731, -72.7041 9.8736, -72.7039 9.8736, -72.7039 9.8734, -72.7038 9.8735, -72.7037 9.8735, -72.7037 9.8736, -72.7036 9.8737, -72.7034 9.8736, -72.7032 9.8732, -72.7032 9.8732))'));
 
+
+-- =============================================================================
+-- 7. TABLA DE NEGOCIO: rutas_gps (Consolidado Diario por Usuario)
+-- =============================================================================
+CREATE TABLE rutas_gps (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNSIGNED NOT NULL,
+    
+    -- Marcas de tiempo del primer y último punto registrado en el día
+    fecha_inicio DATETIME NOT NULL,
+    fecha_fin DATETIME NOT NULL,
+    
+    -- Geometría continua del recorrido en WGS 84
+    trayectoria LINESTRING NOT NULL SRID 4326,
+    
+    -- Trazabilidad de la sincronización desde el almacenamiento local de la App
+    sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Garantiza una sola ruta por usuario/día y previene duplicados por reintentos de red
+    CONSTRAINT uk_usuario_jornada UNIQUE (usuario_id, fecha_jornada),
+    CONSTRAINT fk_rutas_usuario FOREIGN KEY (usuario_id) 
+        REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE SPATIAL INDEX idx_rutas_trayectoria ON rutas_gps(trayectoria);
+
+-- =============================================================================
+-- 8. TABLA DE NEGOCIO: pausas_trayectoria (Eventos Estacionarios / Pausas)
+-- =============================================================================
+CREATE TABLE pausas_trayectoria (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNSIGNED NOT NULL,
+    
+    -- Intervalo exacto de la pausa (cuando no superó los 9 m por el umbral de tiempo)
+    fecha_inicio_pausa DATETIME NOT NULL,
+    fecha_fin_pausa DATETIME NOT NULL,
+    
+    -- Coordenada central (Punto Ancla) donde se registró la pausa
+    posicion POINT NOT NULL SRID 4326,
+    
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+        
+    -- Relación con el usuario para facilitar análisis directo por operador
+    CONSTRAINT fk_pausas_usuario FOREIGN KEY (usuario_id) 
+        REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+
+
+CREATE SPATIAL INDEX idx_pausas_posicion ON pausas_trayectoria(posicion);
+
+-- Índices B-Tree para acelerar la API y reportes por usuario/fecha
+CREATE INDEX idx_rutas_jornada ON rutas_gps(usuario_id, fecha_jornada);
+CREATE INDEX idx_pausas_fecha ON pausas_trayectoria(usuario_id, fecha_inicio);
+
+
+CREATE TABLE `api_rate_limits` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `identifier` VARCHAR(100) NOT NULL COMMENT 'Token del usuario o IP si es público',
+  `endpoint` VARCHAR(150) NOT NULL COMMENT 'Ej: /api/lotes/posiciones o NULL para limite global',
+  `rate_key` VARCHAR(100) NOT NULL COMMENT 'Hash o string del bloque temporal (Ej: 202608101200 para el minuto actual)',
+  `hits` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de peticiones realizadas en la ventana',
+  `reset_at` DATETIME NOT NULL COMMENT 'Fecha/Hora en que vence esta ventana de tiempo',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  -- Índice compuesto crucial para que la validación en cada request sea ultra rápida (<1ms)
+  UNIQUE KEY `uk_identifier_endpoint_key` (`identifier`, `endpoint`, `rate_key`),
+  KEY `idx_reset_at` (`reset_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
