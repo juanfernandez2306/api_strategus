@@ -1,4 +1,3 @@
-
 -- -----------------------------------------------------
 -- 1. TABLA: roles
 -- -----------------------------------------------------
@@ -8,7 +7,7 @@ CREATE TABLE roles (
     descripcion VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- Inserción de Roles Básicos
@@ -37,7 +36,7 @@ CREATE TABLE usuarios (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuarios_roles FOREIGN KEY (role_id) REFERENCES roles(id) 
     ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- -----------------------------------------------------
@@ -54,7 +53,7 @@ CREATE TABLE personal_access_tokens (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_tokens_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- -----------------------------------------------------
@@ -69,52 +68,18 @@ CREATE TABLE password_resets (
     INDEX (token),
     CONSTRAINT fk_resets_usuario FOREIGN KEY (email) 
         REFERENCES usuarios(email) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-
-
--- -----------------------------------------------------
--- 6. TABLA: lotes (Geometría Tipo Polígono)
--- -----------------------------------------------------
-CREATE TABLE lotes (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    lote INT UNSIGNED NOT NULL UNIQUE,       -- Número o identificador numérico del lote
-    cantidad_palmas INT UNSIGNED NOT NULL,  -- Densidad o población de palmas en ese lote
-    
-    -- Geometría nativa tipo Polígono (SRID 4326 = WGS 84)
-    geometria POLYGON NOT NULL,
-    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
--- -----------------------------------------------------
--- Índice Espacial R-Tree para los Polígonos
--- -----------------------------------------------------
-CREATE SPATIAL INDEX idx_lotes_geometria ON lotes(geometria);
-
-
-INSERT INTO lotes (lote, cantidad_palmas, geometria)
-VALUES
-(8, 598, ST_GeomFromText('Polygon ((-72.7001 9.8542, -72.6988 9.8535, -72.6988 9.8534, -72.6992 9.8533, -72.6993 9.8531, -72.6994 9.8532, -72.6995 9.8531, -72.6994 9.8530, -72.6994 9.8527, -72.6994 9.8526, -72.6994 9.8525, -72.6992 9.8524, -72.6991 9.8525, -72.6991 9.8526, -72.6988 9.8532, -72.6987 9.8533, -72.6986 9.8534, -72.6982 9.8534, -72.6981 9.8533, -72.6981 9.8527, -72.6982 9.8526, -72.6982 9.8525, -72.6984 9.8523, -72.6985 9.8523, -72.6987 9.8522, -72.6988 9.8522, -72.6989 9.8521, -72.6989 9.8518, -72.6990 9.8517, -72.6992 9.8516, -72.6992 9.8515, -72.6985 9.8518, -72.6984 9.8518, -72.6984 9.8517, -72.6987 9.8513, -72.6987 9.8512, -72.6989 9.8508, -72.6993 9.8505, -72.6995 9.8506, -72.6996 9.8508, -72.6995 9.8512, -72.6999 9.8512, -72.7001 9.8511, -72.7003 9.8512, -72.7004 9.8513, -72.7003 9.8518, -72.7002 9.8518, -72.6993 9.8519, -72.6991 9.8520, -72.6991 9.8522, -72.6992 9.8520, -72.6993 9.8519, -72.6999 9.8519, -72.7003 9.8520, -72.7003 9.8526, -72.7000 9.8530, -72.7000 9.8533, -72.7002 9.8532, -72.7003 9.8533, -72.7003 9.8536, -72.7001 9.8538, -72.7002 9.8539, -72.7001 9.8542, -72.7001 9.8542))')),
-(5, 1872, ST_GeomFromText('Polygon ((-72.6972 9.8637, -72.6984 9.8637, -72.6988 9.8638, -72.7001 9.8638, -72.7000 9.8639, -72.7002 9.8640, -72.7005 9.8640, -72.7007 9.8641, -72.7009 9.8647, -72.7011 9.8648, -72.7012 9.8649, -72.7013 9.8650, -72.7013 9.8651, -72.7013 9.8653, -72.7016 9.8655, -72.7017 9.8654, -72.7019 9.8656, -72.7019 9.8658, -72.7018 9.8659, -72.7015 9.8657, -72.7016 9.8658, -72.7017 9.8660, -72.7016 9.8661, -72.7018 9.8662, -72.7018 9.8663, -72.7017 9.8665, -72.7016 9.8667, -72.7013 9.8669, -72.7013 9.8671, -72.7011 9.8671, -72.7010 9.8671, -72.7009 9.8671, -72.7009 9.8677, -72.7009 9.8677, -72.7009 9.8679, -72.7011 9.8679, -72.7011 9.8680, -72.7011 9.8682, -72.7011 9.8688, -72.7010 9.8689, -72.7010 9.8691, -72.7011 9.8691, -72.7011 9.8696, -72.7011 9.8697, -72.7011 9.8699, -72.7010 9.8699, -72.7008 9.8696, -72.7008 9.8695, -72.7006 9.8693, -72.6996 9.8676, -72.6995 9.8676, -72.6986 9.8661, -72.6986 9.8658, -72.6985 9.8657, -72.6981 9.8652, -72.6981 9.8650, -72.6979 9.8649, -72.6975 9.8643, -72.6974 9.8642, -72.6974 9.8640, -72.6972 9.8639, -72.6972 9.8638, -72.6972 9.8637))')),
-(9, 1391, ST_GeomFromText('Polygon ((-72.7036 9.8573, -72.7035 9.8573, -72.7035 9.8572, -72.7033 9.8572, -72.7032 9.8572, -72.7031 9.8572, -72.7030 9.8571, -72.7031 9.8569, -72.7033 9.8568, -72.7034 9.8566, -72.7029 9.8567, -72.7028 9.8566, -72.7028 9.8565, -72.7023 9.8563, -72.7019 9.8564, -72.7017 9.8563, -72.7016 9.8561, -72.7015 9.8560, -72.7015 9.8559, -72.7013 9.8556, -72.7014 9.8555, -72.7013 9.8554, -72.7011 9.8553, -72.7010 9.8553, -72.7008 9.8552, -72.7008 9.8550, -72.7010 9.8548, -72.7008 9.8545, -72.7009 9.8539, -72.7010 9.8539, -72.7014 9.8543, -72.7014 9.8544, -72.7019 9.8548, -72.7020 9.8546, -72.7024 9.8544, -72.7022 9.8542, -72.7026 9.8540, -72.7024 9.8538, -72.7024 9.8537, -72.7025 9.8536, -72.7024 9.8531, -72.7025 9.8530, -72.7025 9.8527, -72.7022 9.8526, -72.7019 9.8527, -72.7016 9.8525, -72.7014 9.8522, -72.7014 9.8517, -72.7013 9.8515, -72.7013 9.8513, -72.7015 9.8512, -72.7017 9.8512, -72.7018 9.8513, -72.7018 9.8515, -72.7023 9.8512, -72.7024 9.8513, -72.7024 9.8514, -72.7027 9.8516, -72.7029 9.8520, -72.7029 9.8522, -72.7032 9.8527, -72.7032 9.8529, -72.7034 9.8531, -72.7035 9.8535, -72.7037 9.8538, -72.7037 9.8541, -72.7036 9.8542, -72.7036 9.8542, -72.7038 9.8541, -72.7039 9.8541, -72.7039 9.8544, -72.7040 9.8545, -72.7041 9.8546, -72.7041 9.8548, -72.7042 9.8549, -72.7042 9.8552, -72.7043 9.8552, -72.7044 9.8554, -72.7045 9.8556, -72.7043 9.8559, -72.7040 9.8561, -72.7039 9.8570, -72.7039 9.8571, -72.7036 9.8571, -72.7036 9.8573))')),
-(6, 1097, ST_GeomFromText('Polygon ((-72.6989 9.8613, -72.6990 9.8613, -72.6994 9.8610, -72.6995 9.8610, -72.6997 9.8610, -72.7009 9.8610, -72.7009 9.8610, -72.7009 9.8613, -72.7008 9.8614, -72.7008 9.8618, -72.7004 9.8620, -72.7002 9.8620, -72.7002 9.8619, -72.6998 9.8616, -72.6998 9.8617, -72.6996 9.8619, -72.6994 9.8622, -72.6993 9.8623, -72.6994 9.8623, -72.6996 9.8623, -72.6997 9.8622, -72.6999 9.8622, -72.6999 9.8624, -72.6998 9.8626, -72.6999 9.8626, -72.6999 9.8629, -72.7001 9.8631, -72.7001 9.8638, -72.6988 9.8638, -72.6984 9.8637, -72.6972 9.8637, -72.6970 9.8636, -72.6965 9.8630, -72.6965 9.8628, -72.6965 9.8627, -72.6965 9.8626, -72.6967 9.8625, -72.6968 9.8625, -72.6967 9.8624, -72.6967 9.8623, -72.6975 9.8619, -72.6976 9.8620, -72.6976 9.8623, -72.6978 9.8623, -72.6979 9.8623, -72.6980 9.8617, -72.6981 9.8616, -72.6982 9.8616, -72.6986 9.8614, -72.6987 9.8614, -72.6989 9.8613, -72.6989 9.8613))')),
-(7, 2837, ST_GeomFromText('Polygon ((-72.6988 9.8535, -72.7001 9.8542, -72.7002 9.8544, -72.7002 9.8546, -72.6988 9.8551, -72.6987 9.8554, -72.6983 9.8556, -72.6983 9.8558, -72.6982 9.8560, -72.6984 9.8559, -72.6985 9.8559, -72.6993 9.8559, -72.6995 9.8555, -72.6997 9.8554, -72.6998 9.8554, -72.6999 9.8554, -72.7002 9.8555, -72.7003 9.8555, -72.7005 9.8556, -72.7007 9.8559, -72.7007 9.8568, -72.7007 9.8569, -72.7006 9.8572, -72.7004 9.8574, -72.7003 9.8578, -72.7002 9.8580, -72.7002 9.8582, -72.7004 9.8581, -72.7006 9.8581, -72.7007 9.8582, -72.7008 9.8583, -72.7008 9.8586, -72.7009 9.8587, -72.7008 9.8588, -72.7008 9.8592, -72.7008 9.8593, -72.7009 9.8595, -72.7007 9.8597, -72.7008 9.8598, -72.7008 9.8601, -72.7010 9.8602, -72.7010 9.8603, -72.7008 9.8604, -72.7008 9.8606, -72.7009 9.8608, -72.7009 9.8610, -72.7009 9.8610, -72.6997 9.8610, -72.6995 9.8610, -72.6994 9.8610, -72.6990 9.8613, -72.6989 9.8613, -72.6983 9.8609, -72.6982 9.8607, -72.6982 9.8605, -72.6980 9.8603, -72.6980 9.8600, -72.6978 9.8598, -72.6978 9.8595, -72.6983 9.8592, -72.6985 9.8593, -72.6985 9.8593, -72.6987 9.8592, -72.6989 9.8592, -72.6993 9.8591, -72.6996 9.8593, -72.6997 9.8592, -72.6998 9.8593, -72.7000 9.8592, -72.7001 9.8592, -72.7002 9.8592, -72.7000 9.8589, -72.7001 9.8584, -72.6999 9.8587, -72.6999 9.8590, -72.6998 9.8591, -72.6997 9.8591, -72.6995 9.8592, -72.6992 9.8590, -72.6991 9.8591, -72.6989 9.8591, -72.6985 9.8590, -72.6982 9.8591, -72.6980 9.8591, -72.6978 9.8590, -72.6976 9.8590, -72.6975 9.8589, -72.6976 9.8588, -72.6976 9.8587, -72.6973 9.8585, -72.6973 9.8579, -72.6972 9.8578, -72.6972 9.8577, -72.6973 9.8575, -72.6975 9.8576, -72.6975 9.8575, -72.6976 9.8574, -72.6978 9.8572, -72.6980 9.8573, -72.6980 9.8570, -72.6981 9.8570, -72.6982 9.8568, -72.6983 9.8568, -72.6984 9.8565, -72.6984 9.8565, -72.6982 9.8565, -72.6981 9.8565, -72.6979 9.8565, -72.6977 9.8564, -72.6978 9.8565, -72.6978 9.8568, -72.6976 9.8573, -72.6974 9.8574, -72.6973 9.8574, -72.6971 9.8573, -72.6971 9.8567, -72.6971 9.8566, -72.6971 9.8560, -72.6972 9.8559, -72.6974 9.8554, -72.6975 9.8552, -72.6975 9.8551, -72.6979 9.8548, -72.6979 9.8547, -72.6980 9.8546, -72.6981 9.8544, -72.6984 9.8542, -72.6985 9.8536, -72.6986 9.8536, -72.6988 9.8537, -72.6989 9.8536, -72.6988 9.8535, -72.6988 9.8535))')),
-(1, 1165, ST_GeomFromText('Polygon ((-72.7056 9.8605, -72.7046 9.8611, -72.7044 9.8610, -72.7029 9.8610, -72.7029 9.8610, -72.7029 9.8608, -72.7029 9.8601, -72.7031 9.8600, -72.7031 9.8598, -72.7030 9.8597, -72.7030 9.8595, -72.7031 9.8594, -72.7030 9.8593, -72.7030 9.8575, -72.7032 9.8573, -72.7032 9.8573, -72.7032 9.8572, -72.7033 9.8572, -72.7035 9.8572, -72.7035 9.8573, -72.7036 9.8573, -72.7036 9.8573, -72.7038 9.8574, -72.7039 9.8575, -72.7044 9.8578, -72.7044 9.8579, -72.7047 9.8580, -72.7050 9.8585, -72.7051 9.8585, -72.7053 9.8589, -72.7053 9.8590, -72.7053 9.8591, -72.7053 9.8592, -72.7054 9.8593, -72.7054 9.8596, -72.7055 9.8597, -72.7055 9.8599, -72.7055 9.8600, -72.7055 9.8604, -72.7056 9.8605))')),
-(2, 2428, ST_GeomFromText('Polygon ((-72.7060 9.8658, -72.7050 9.8663, -72.7049 9.8663, -72.7047 9.8665, -72.7046 9.8665, -72.7045 9.8666, -72.7030 9.8666, -72.7030 9.8665, -72.7029 9.8662, -72.7029 9.8660, -72.7030 9.8660, -72.7030 9.8656, -72.7030 9.8655, -72.7030 9.8651, -72.7030 9.8650, -72.7030 9.8644, -72.7029 9.8643, -72.7029 9.8642, -72.7028 9.8640, -72.7028 9.8633, -72.7029 9.8630, -72.7029 9.8628, -72.7029 9.8627, -72.7029 9.8625, -72.7028 9.8624, -72.7028 9.8622, -72.7027 9.8621, -72.7027 9.8611, -72.7029 9.8610, -72.7044 9.8610, -72.7046 9.8611, -72.7056 9.8605, -72.7057 9.8609, -72.7057 9.8634, -72.7056 9.8634, -72.7054 9.8633, -72.7054 9.8636, -72.7053 9.8637, -72.7052 9.8638, -72.7049 9.8638, -72.7048 9.8639, -72.7048 9.8639, -72.7050 9.8643, -72.7050 9.8644, -72.7053 9.8646, -72.7056 9.8645, -72.7058 9.8645, -72.7059 9.8646, -72.7059 9.8652, -72.7059 9.8652, -72.7059 9.8654, -72.7056 9.8656, -72.7056 9.8657, -72.7059 9.8657, -72.7060 9.8658, -72.7060 9.8658))')),
-(4, 2263, ST_GeomFromText('Polygon ((-72.7046 9.8665, -72.7046 9.8667, -72.7046 9.8670, -72.7050 9.8676, -72.7050 9.8677, -72.7050 9.8681, -72.7050 9.8682, -72.7048 9.8685, -72.7047 9.8686, -72.7047 9.8723, -72.7047 9.8724, -72.7032 9.8732, -72.7031 9.8732, -72.7024 9.8721, -72.7024 9.8718, -72.7024 9.8717, -72.7024 9.8707, -72.7024 9.8706, -72.7024 9.8704, -72.7023 9.8703, -72.7023 9.8698, -72.7025 9.8694, -72.7027 9.8693, -72.7027 9.8692, -72.7024 9.8690, -72.7024 9.8689, -72.7024 9.8687, -72.7024 9.8686, -72.7024 9.8684, -72.7024 9.8683, -72.7026 9.8683, -72.7026 9.8678, -72.7027 9.8677, -72.7026 9.8676, -72.7026 9.8673, -72.7028 9.8672, -72.7029 9.8672, -72.7030 9.8671, -72.7030 9.8666, -72.7045 9.8666, -72.7046 9.8665))')),
-(3, 1566, ST_GeomFromText('Polygon ((-72.7032 9.8732, -72.7047 9.8724, -72.7047 9.8723, -72.7047 9.8686, -72.7048 9.8685, -72.7050 9.8682, -72.7050 9.8681, -72.7050 9.8677, -72.7050 9.8676, -72.7046 9.8670, -72.7046 9.8667, -72.7046 9.8665, -72.7047 9.8665, -72.7049 9.8663, -72.7050 9.8663, -72.7060 9.8658, -72.7060 9.8666, -72.7061 9.8667, -72.7061 9.8672, -72.7061 9.8673, -72.7061 9.8680, -72.7062 9.8681, -72.7062 9.8688, -72.7063 9.8689, -72.7062 9.8700, -72.7060 9.8702, -72.7060 9.8705, -72.7058 9.8709, -72.7053 9.8712, -72.7056 9.8712, -72.7057 9.8714, -72.7062 9.8716, -72.7062 9.8717, -72.7064 9.8718, -72.7064 9.8722, -72.7063 9.8723, -72.7058 9.8726, -72.7056 9.8726, -72.7055 9.8727, -72.7055 9.8728, -72.7052 9.8730, -72.7051 9.8731, -72.7041 9.8736, -72.7039 9.8736, -72.7039 9.8734, -72.7038 9.8735, -72.7037 9.8735, -72.7037 9.8736, -72.7036 9.8737, -72.7034 9.8736, -72.7032 9.8732, -72.7032 9.8732))'));
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- -----------------------------------------------------
--- 5. TABLA DE NEGOCIO: monitoreos_strategus (Específica de la Plaga)
+-- 5. TABLA DE NEGOCIO: monitoreos_strategus (Sin dependencia de FK lotes)
 -- -----------------------------------------------------
 CREATE TABLE monitoreos_strategus (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     uuid VARCHAR(36) NOT NULL UNIQUE,
     usuario_id INT UNSIGNED NOT NULL,
 
+    -- Se mantiene la columna para guardar la referencia al ID del lote
     lote_id INT UNSIGNED DEFAULT NULL,
     
     -- Tipo espacial nativo para mapas vectoriales e índices R-Tree
@@ -134,36 +99,28 @@ CREATE TABLE monitoreos_strategus (
     sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_strategus_usuario FOREIGN KEY (usuario_id) 
-    REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+        REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-    -- Apuntando correctamente a lotes(lote)
-    CONSTRAINT fk_strategus_lote FOREIGN KEY (lote_id) 
-        REFERENCES lotes(lote) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-
+-- Índices de consulta rápida
+CREATE INDEX idx_strategus_lote_id ON monitoreos_strategus(lote_id);
 CREATE INDEX idx_strategus_fecha_reg ON monitoreos_strategus(fecha_registro);
 CREATE INDEX idx_strategus_fecha_rev ON monitoreos_strategus(fecha_revision);
 CREATE SPATIAL INDEX idx_strategus_posicion ON monitoreos_strategus(posicion);
 
--- =============================================================================
--- 7. TABLA DE NEGOCIO: rutas_gps (Consolidado Diario por Usuario)
--- =============================================================================
 
+-- -----------------------------------------------------
+-- 6. TABLA DE NEGOCIO: rutas_gps (Consolidado Diario por Usuario)
+-- -----------------------------------------------------
 CREATE TABLE rutas_gps (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- Identificador único generado por la App para control de reintentos de red
     uuid_tramo VARCHAR(36) NOT NULL UNIQUE,
     usuario_id INT UNSIGNED NOT NULL,
     
-    -- Fecha de la jornada (permite agrupar todos los tramos del día rápidamente)
     fecha_jornada DATE NOT NULL,
-    
-    -- Horas exactas en que inició y terminó este tramo específico
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
     
-    -- Geometría continua del tramo (sin interpolaciones falsas)
     trayectoria LINESTRING NOT NULL,
     
     sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -172,32 +129,24 @@ CREATE TABLE rutas_gps (
     
     CONSTRAINT fk_rutas_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Índice espacial para renderizar en el visor web/GIS
 CREATE SPATIAL INDEX idx_rutas_trayectoria ON rutas_gps(trayectoria);
-
--- Índice compuesto para recuperar todos los tramos de un usuario en un día ordenados por hora
 CREATE INDEX idx_rutas_usuario_jornada ON rutas_gps(usuario_id, fecha_jornada, hora_inicio);
 
--- =============================================================================
--- 8. TABLA DE NEGOCIO: pausas_trayectoria (Eventos Estacionarios / Pausas)
--- =============================================================================
 
+-- -----------------------------------------------------
+-- 7. TABLA DE NEGOCIO: pausas_trayectoria (Eventos Estacionarios / Pausas)
+-- -----------------------------------------------------
 CREATE TABLE pausas_trayectoria (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    -- UUID generado por la app para prevenir duplicados por reintentos de conexión
     uuid_pausa VARCHAR(36) NOT NULL UNIQUE,
     usuario_id INT UNSIGNED NOT NULL,
     
-    -- Fecha de la jornada en que ocurre la pausa
     fecha_pausa DATE NOT NULL,
-    
-    -- Horas exactas del intervalo de detención
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
     
-    -- Coordenada central (Punto Ancla) donde se registró la pausa
     posicion POINT NOT NULL,
     
     sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -206,26 +155,25 @@ CREATE TABLE pausas_trayectoria (
     
     CONSTRAINT fk_pausas_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Índices de optimización
 CREATE SPATIAL INDEX idx_pausas_posicion ON pausas_trayectoria(posicion);
 CREATE INDEX idx_pausas_usuario_fecha ON pausas_trayectoria(usuario_id, fecha_pausa, hora_inicio);
 
 
-
-
-CREATE TABLE `api_rate_limits` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `identifier` VARCHAR(100) NOT NULL COMMENT 'Token del usuario o IP si es público',
-  `endpoint` VARCHAR(150) NOT NULL COMMENT 'Ej: /api/lotes/posiciones o NULL para limite global',
-  `rate_key` VARCHAR(100) NOT NULL COMMENT 'Hash o string del bloque temporal (Ej: 202608101200 para el minuto actual)',
-  `hits` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de peticiones realizadas en la ventana',
-  `reset_at` DATETIME NOT NULL COMMENT 'Fecha/Hora en que vence esta ventana de tiempo',
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  -- Índice compuesto crucial para que la validación en cada request sea ultra rápida (<1ms)
-  UNIQUE KEY `uk_identifier_endpoint_key` (`identifier`, `endpoint`, `rate_key`),
-  KEY `idx_reset_at` (`reset_at`)
+-- -----------------------------------------------------
+-- 8. TABLA: api_rate_limits
+-- -----------------------------------------------------
+CREATE TABLE api_rate_limits (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  identifier VARCHAR(100) NOT NULL COMMENT 'Token del usuario o IP si es público',
+  endpoint VARCHAR(150) NOT NULL COMMENT 'Ej: /api/lotes/posiciones o NULL para limite global',
+  rate_key VARCHAR(100) NOT NULL COMMENT 'Hash o string del bloque temporal',
+  hits INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de peticiones realizadas en la ventana',
+  reset_at DATETIME NOT NULL COMMENT 'Fecha/Hora en que vence esta ventana de tiempo',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_identifier_endpoint_key (identifier, endpoint, rate_key),
+  KEY idx_reset_at (reset_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
