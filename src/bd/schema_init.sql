@@ -33,7 +33,6 @@ CREATE TABLE usuarios (
     password VARCHAR(255) NOT NULL,
     status BOOLEAN DEFAULT 1,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
-    INDEX (email),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuarios_roles FOREIGN KEY (role_id) REFERENCES roles(id) 
@@ -53,7 +52,6 @@ CREATE TABLE personal_access_tokens (
     expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX (token),
     CONSTRAINT fk_tokens_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
@@ -73,43 +71,6 @@ CREATE TABLE password_resets (
         REFERENCES usuarios(email) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
-
--- -----------------------------------------------------
--- 5. TABLA DE NEGOCIO: monitoreos_strategus (Específica de la Plaga)
--- -----------------------------------------------------
-CREATE TABLE monitoreos_strategus (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    uuid VARCHAR(36) NOT NULL UNIQUE,
-    usuario_id INT UNSIGNED NOT NULL,
-    
-    -- Tipo espacial nativo para mapas vectoriales e índices R-Tree
-    posicion POINT NOT NULL,
-    
-    -- Fecha y hora local unificada del registro capturado en campo
-    fecha_registro DATETIME NOT NULL, 
-    
-    -- Variable de daño (túneles en estípite)
-    galeria INT NOT NULL,
-    precision_gps DECIMAL(5, 2) NOT NULL,
-    
-    -- Estado de revisión implícito (NULL = Sin revisar, DATETIME = Revisada/Tratada)
-    fecha_revision DATETIME NULL DEFAULT NULL, 
-    
-    -- Registro de inserción en el servidor (Sincronización de IndexedDB)
-    sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_strategus_usuario FOREIGN KEY (usuario_id) 
-    REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
--- -----------------------------------------------------
--- Índices para Optimización Geográfica y Temporal
--- -----------------------------------------------------
-
-
-CREATE INDEX idx_strategus_fecha_reg ON monitoreos_strategus(fecha_registro);
-CREATE INDEX idx_strategus_fecha_rev ON monitoreos_strategus(fecha_revision);
-CREATE SPATIAL INDEX idx_strategus_posicion ON monitoreos_strategus(posicion);
 
 
 -- -----------------------------------------------------
@@ -146,64 +107,112 @@ VALUES
 (3, 1566, ST_GeomFromText('Polygon ((-72.7032 9.8732, -72.7047 9.8724, -72.7047 9.8723, -72.7047 9.8686, -72.7048 9.8685, -72.7050 9.8682, -72.7050 9.8681, -72.7050 9.8677, -72.7050 9.8676, -72.7046 9.8670, -72.7046 9.8667, -72.7046 9.8665, -72.7047 9.8665, -72.7049 9.8663, -72.7050 9.8663, -72.7060 9.8658, -72.7060 9.8666, -72.7061 9.8667, -72.7061 9.8672, -72.7061 9.8673, -72.7061 9.8680, -72.7062 9.8681, -72.7062 9.8688, -72.7063 9.8689, -72.7062 9.8700, -72.7060 9.8702, -72.7060 9.8705, -72.7058 9.8709, -72.7053 9.8712, -72.7056 9.8712, -72.7057 9.8714, -72.7062 9.8716, -72.7062 9.8717, -72.7064 9.8718, -72.7064 9.8722, -72.7063 9.8723, -72.7058 9.8726, -72.7056 9.8726, -72.7055 9.8727, -72.7055 9.8728, -72.7052 9.8730, -72.7051 9.8731, -72.7041 9.8736, -72.7039 9.8736, -72.7039 9.8734, -72.7038 9.8735, -72.7037 9.8735, -72.7037 9.8736, -72.7036 9.8737, -72.7034 9.8736, -72.7032 9.8732, -72.7032 9.8732))'));
 
 
+-- -----------------------------------------------------
+-- 5. TABLA DE NEGOCIO: monitoreos_strategus (Específica de la Plaga)
+-- -----------------------------------------------------
+CREATE TABLE monitoreos_strategus (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    usuario_id INT UNSIGNED NOT NULL,
+
+    lote_id INT UNSIGNED DEFAULT NULL,
+    
+    -- Tipo espacial nativo para mapas vectoriales e índices R-Tree
+    posicion POINT NOT NULL,
+    
+    -- Fecha y hora local unificada del registro capturado en campo
+    fecha_registro DATETIME NOT NULL, 
+    
+    -- Variable de daño (túneles en estípite)
+    galeria INT NOT NULL,
+    precision_gps DECIMAL(5, 2) NOT NULL,
+    
+    -- Estado de revisión implícito (NULL = Sin revisar, DATETIME = Revisada/Tratada)
+    fecha_revision DATETIME NULL DEFAULT NULL, 
+    
+    -- Registro de inserción en el servidor (Sincronización de IndexedDB)
+    sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_strategus_usuario FOREIGN KEY (usuario_id) 
+    REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+
+    -- Apuntando correctamente a lotes(lote)
+    CONSTRAINT fk_strategus_lote FOREIGN KEY (lote_id) 
+        REFERENCES lotes(lote) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+
+CREATE INDEX idx_strategus_fecha_reg ON monitoreos_strategus(fecha_registro);
+CREATE INDEX idx_strategus_fecha_rev ON monitoreos_strategus(fecha_revision);
+CREATE SPATIAL INDEX idx_strategus_posicion ON monitoreos_strategus(posicion);
+
 -- =============================================================================
 -- 7. TABLA DE NEGOCIO: rutas_gps (Consolidado Diario por Usuario)
 -- =============================================================================
+
 CREATE TABLE rutas_gps (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- Identificador único generado por la App para control de reintentos de red
+    uuid_tramo VARCHAR(36) NOT NULL UNIQUE,
     usuario_id INT UNSIGNED NOT NULL,
     
-    -- Marcas de tiempo del primer y último punto registrado en el día
-    fecha_inicio DATETIME NOT NULL,
-    fecha_fin DATETIME NOT NULL,
+    -- Fecha de la jornada (permite agrupar todos los tramos del día rápidamente)
+    fecha_jornada DATE NOT NULL,
     
-    -- Geometría continua del recorrido en WGS 84
-    trayectoria LINESTRING NOT NULL SRID 4326,
+    -- Horas exactas en que inició y terminó este tramo específico
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
     
-    -- Trazabilidad de la sincronización desde el almacenamiento local de la App
+    -- Geometría continua del tramo (sin interpolaciones falsas)
+    trayectoria LINESTRING NOT NULL,
+    
     sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    -- Garantiza una sola ruta por usuario/día y previene duplicados por reintentos de red
-    CONSTRAINT uk_usuario_jornada UNIQUE (usuario_id, fecha_jornada),
     CONSTRAINT fk_rutas_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Índice espacial para renderizar en el visor web/GIS
 CREATE SPATIAL INDEX idx_rutas_trayectoria ON rutas_gps(trayectoria);
+
+-- Índice compuesto para recuperar todos los tramos de un usuario en un día ordenados por hora
+CREATE INDEX idx_rutas_usuario_jornada ON rutas_gps(usuario_id, fecha_jornada, hora_inicio);
 
 -- =============================================================================
 -- 8. TABLA DE NEGOCIO: pausas_trayectoria (Eventos Estacionarios / Pausas)
 -- =============================================================================
+
 CREATE TABLE pausas_trayectoria (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    -- UUID generado por la app para prevenir duplicados por reintentos de conexión
+    uuid_pausa VARCHAR(36) NOT NULL UNIQUE,
     usuario_id INT UNSIGNED NOT NULL,
     
-    -- Intervalo exacto de la pausa (cuando no superó los 9 m por el umbral de tiempo)
-    fecha_inicio_pausa DATETIME NOT NULL,
-    fecha_fin_pausa DATETIME NOT NULL,
+    -- Fecha de la jornada en que ocurre la pausa
+    fecha_pausa DATE NOT NULL,
+    
+    -- Horas exactas del intervalo de detención
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
     
     -- Coordenada central (Punto Ancla) donde se registró la pausa
-    posicion POINT NOT NULL SRID 4326,
+    posicion POINT NOT NULL,
     
-    
+    sincronizado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-        
-    -- Relación con el usuario para facilitar análisis directo por operador
     CONSTRAINT fk_pausas_usuario FOREIGN KEY (usuario_id) 
         REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
-
+-- Índices de optimización
 CREATE SPATIAL INDEX idx_pausas_posicion ON pausas_trayectoria(posicion);
+CREATE INDEX idx_pausas_usuario_fecha ON pausas_trayectoria(usuario_id, fecha_pausa, hora_inicio);
 
--- Índices B-Tree para acelerar la API y reportes por usuario/fecha
-CREATE INDEX idx_rutas_jornada ON rutas_gps(usuario_id, fecha_jornada);
-CREATE INDEX idx_pausas_fecha ON pausas_trayectoria(usuario_id, fecha_inicio);
+
 
 
 CREATE TABLE `api_rate_limits` (
