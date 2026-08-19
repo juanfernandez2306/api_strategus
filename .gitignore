@@ -65,3 +65,5 @@ Desktop.ini
 logs/
 tmp/
 var/
+/var/cache/*
+!/var/cache/.gitignore
