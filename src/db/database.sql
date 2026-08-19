@@ -100,6 +100,7 @@ INSERT INTO oil_palm_growing_areas (growing_area_code, palm_count, boundary) VAL
 
 CREATE TABLE growing_area_interventions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
     growing_area_code INT UNSIGNED NOT NULL,
     cured_palms_count INT UNSIGNED NOT NULL DEFAULT 0,
     captures_count INT UNSIGNED NOT NULL DEFAULT 0,
@@ -107,6 +108,10 @@ CREATE TABLE growing_area_interventions (
     end_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_growing_area_intervention_user 
+        FOREIGN KEY (user_id) REFERENCES users(id) 
+        ON DELETE RESTRICT ON UPDATE CASCADE,
 
     CONSTRAINT fk_interventions_growing_area 
         FOREIGN KEY (growing_area_code) REFERENCES oil_palm_growing_areas(growing_area_code) 
