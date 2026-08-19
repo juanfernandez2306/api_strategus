@@ -10,6 +10,11 @@ use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
+use App\Middleware\RateLimitMiddleware;
+use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Psr16Cache;
+
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
 
@@ -48,5 +53,20 @@ return function (ContainerBuilder $containerBuilder) {
 
             return $logger;
         },
+
+        CacheInterface::class => function () {
+            $cachePath = __DIR__ . '/../var/cache';
+            $psr6Adapter = new FilesystemAdapter('api_limits', 0, $cachePath);
+            return new Psr16Cache($psr6Adapter);
+        },
+
+        RateLimitMiddleware::class => function (ContainerInterface $c) {
+            return new RateLimitMiddleware(
+                $c->get(CacheInterface::class),
+                40, // Límite de peticiones
+                60  // Ventana de segundos
+            );
+        },
+
     ]);
 };
