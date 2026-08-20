@@ -63,21 +63,6 @@ CREATE TABLE password_resets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE TABLE api_rate_limits (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  identifier VARCHAR(100) NOT NULL COMMENT 'Token del usuario o IP si es público',
-  endpoint VARCHAR(150) NOT NULL COMMENT 'Ej: /api/lotes/posiciones o NULL para limite global',
-  rate_key VARCHAR(100) NOT NULL COMMENT 'Hash o string del bloque temporal',
-  hits INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Cantidad de peticiones realizadas en la ventana',
-  reset_at DATETIME NOT NULL COMMENT 'Fecha/Hora en que vence esta ventana de tiempo',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uk_identifier_endpoint_key (identifier, endpoint, rate_key),
-  KEY idx_reset_at (reset_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
 CREATE TABLE oil_palm_growing_areas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     growing_area_code INT UNSIGNED NOT NULL UNIQUE,
