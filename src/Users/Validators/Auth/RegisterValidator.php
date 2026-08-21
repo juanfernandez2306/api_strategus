@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
-use App\Users\Repositories\Auth\UserRepositoryInterface;
+use App\Users\Repositories\Auth\InterfaceUserRepository;
 use App\Users\Validators\Rules\UniqueEmailRule;
 
 class RegisterValidator extends AuthBaseValidator
 {
+    public function __construct(InterfaceUserRepository $userRepository)
+    {
+        parent::__construct();
+
+        $this->validator->addValidator('unique_email', new UniqueEmailRule($userRepository));
+    }
+
     protected function rules(): array
     {
         return [
             'first_name'            => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
             'last_name'             => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
-            'email'                 => 'required|email|max:150',
+            'email'                 => 'required|email|max:150|unique_email',
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password'
         ];

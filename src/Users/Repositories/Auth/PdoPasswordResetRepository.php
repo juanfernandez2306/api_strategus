@@ -6,7 +6,7 @@ namespace App\Users\Repositories\Auth;
 
 use PDO;
 
-class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
+class PdoPasswordResetRepository implements InterfacePasswordResetRepository
 {
     private PDO $pdo;
 

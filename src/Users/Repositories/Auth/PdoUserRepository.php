@@ -6,7 +6,7 @@ namespace App\Users\Repositories\Auth;
 
 use PDO;
 
-class PdoUserRepository implements UserRepositoryInterface
+class PdoUserRepository implements InterfaceUserRepository
 {
     private PDO $pdo;
 
