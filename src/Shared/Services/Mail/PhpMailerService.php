@@ -14,8 +14,10 @@ class PhpMailerService implements InterfaceMailService
     private array $config;
     private LoggerInterface $logger;
 
-    public function __construct(?array $config = null)
+    public function __construct(LoggerInterface $logger, ?array $config = null)
     {
+        $this->logger = $logger;
+        
         $this->config = $config ?? [
             'host'       => $_ENV['MAIL_HOST'],
             'port'       => (int) ($_ENV['MAIL_PORT']),
