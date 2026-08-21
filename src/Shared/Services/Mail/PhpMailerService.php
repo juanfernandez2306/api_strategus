@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Shared\Services\Mail;
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class PhpMailerService implements InterfaceMailService
 {
@@ -17,15 +17,39 @@ class PhpMailerService implements InterfaceMailService
     public function __construct(LoggerInterface $logger, ?array $config = null)
     {
         $this->logger = $logger;
-        
-        $this->config = $config ?? [
+        $this->config = $config ?? $this->loadEnvironmentConfig();
+    }
+
+    
+    private function loadEnvironmentConfig(): array
+    {
+        $requiredKeys = [
+            'MAIL_HOST',
+            'MAIL_PORT',
+            'MAIL_USER',
+            'MAIL_PASSWORD',
+            'MAIL_FROM_ADDRESS',
+            'MAIL_FROM_NAME'
+        ];
+
+        foreach ($requiredKeys as $key) {
+            if (empty($_ENV[$key])) {
+                $errorMessage = "Error de configuración: La variable de entorno '{$key}' no está definida o está vacía.";
+                
+                $this->logger->critical($errorMessage);
+                
+                throw new RuntimeException($errorMessage);
+            }
+        }
+
+        return [
             'host'       => $_ENV['MAIL_HOST'],
-            'port'       => (int) ($_ENV['MAIL_PORT']),
+            'port'       => (int) $_ENV['MAIL_PORT'],
             'username'   => $_ENV['MAIL_USER'],
             'password'   => $_ENV['MAIL_PASSWORD'],
             'from'       => $_ENV['MAIL_FROM_ADDRESS'],
             'from_name'  => $_ENV['MAIL_FROM_NAME'],
-            'encryption' => $_ENV['MAIL_ENCRYPTION']
+            'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? PHPMailer::ENCRYPTION_STARTTLS
         ];
     }
 
@@ -54,8 +78,9 @@ class PhpMailerService implements InterfaceMailService
             $mail->Body    = $bodyHTML;
 
             return $mail->send();
-        } catch (Exception $e) {
-            
+
+        } catch (PHPMailerException $e) {
+
             $this->logger->error("Error al enviar email a {$toEmail}: " . $e->getMessage(), [
                 'recipient' => $toEmail,
                 'subject'   => $subject,
