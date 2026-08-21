@@ -16,7 +16,6 @@ abstract class BaseValidator
         
         $this->validator->setMessages([
             'required' => 'El campo :attribute es obligatorio.',
-            'email'    => 'El correo electrónico no es válido.',
             'min'      => 'El campo :attribute debe tener al menos :min caracteres.',
             'max'      => 'El campo :attribute no debe superar los :max caracteres.',
             'same'     => 'Los campos :attribute y :to deben coincidir.'
@@ -40,6 +39,11 @@ abstract class BaseValidator
 
         $validation->validate();
 
-        return $validation->fails() ? $validation->errors()->firstOfAll() : [];
+        if ($validation->fails()) {
+            $errors = $validation->errors()->firstOfAll();
+            throw new \InvalidArgumentException(json_encode($errors));
+        }
+
+        return $validation->getValidData();
     }
 }

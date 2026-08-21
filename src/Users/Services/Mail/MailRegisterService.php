@@ -22,7 +22,7 @@ class MailRegisterService implements InterfaceMailRegister
     ) {
         $this->mailService = $mailService;
         $this->logger = $logger;
-        $this->templatePath = dirname(__DIR__, 1) . '/Views/Mail/VerifyEmail.html';
+        $this->templatePath = dirname(__DIR__, 2) . '/Views/Emails/VerifyEmail.html';
         $this->frontendUrl = $this->loadFrontendUrl($frontendUrl);
     }
 

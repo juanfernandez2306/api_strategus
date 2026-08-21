@@ -15,8 +15,31 @@ use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Psr16Cache;
 
+
+use App\Users\Repositories\Auth\InterfaceUserRepository;
+use App\Users\Repositories\Auth\PdoUserRepository;
+use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
+use App\Users\Repositories\Crud\PdoUserCrudRepository;
+use App\Users\Repositories\Auth\InterfacePasswordResetRepository;
+use App\Users\Repositories\Auth\PdoPasswordResetRepository;
+
+use App\Shared\Services\Mail\InterfaceMailService;
+use App\Shared\Services\Mail\PhpMailerService;
+
+use App\Users\Services\Mail\InterfaceMailRegister;
+use App\Users\Services\Mail\MailRegisterService;
+
+use function DI\autowire;
+
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
+
+        InterfaceMailService::class  => autowire(PhpMailerService::class),
+        InterfaceMailRegister::class => autowire(MailRegisterService::class),
+
+        InterfaceUserRepository::class           => autowire(PdoUserRepository::class),
+        UserCrudRepositoryInterface::class       => autowire(PdoUserCrudRepository::class),
+        InterfacePasswordResetRepository::class => autowire(PdoPasswordResetRepository::class),
 
         PDO::class => function (ContainerInterface $c) {
             /** @var SettingsInterface $settingsInstance */
