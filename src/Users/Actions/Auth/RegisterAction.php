@@ -51,7 +51,6 @@ class RegisterAction
             $userId = $this->userCrudRepo->create($validatedData);
 
             ($userId <= 0) && throw new RuntimeException("No se pudo obtener el ID del usuario recién creado.");
-
             
             $tokenPlain = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
@@ -79,7 +78,6 @@ class RegisterAction
             $tokenPlain
         );
 
-        // 8. Responder cliente
         $payload = json_encode([
             'status'  => 'success',
             'message' => 'Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.',
