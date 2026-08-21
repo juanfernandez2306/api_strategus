@@ -7,9 +7,12 @@ namespace App\Shared\Services\Mail;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+use Psr\Log\LoggerInterface;
+
 class PhpMailerService implements InterfaceMailService
 {
     private array $config;
+    private LoggerInterface $logger;
 
     public function __construct(?array $config = null)
     {
@@ -50,7 +53,13 @@ class PhpMailerService implements InterfaceMailService
 
             return $mail->send();
         } catch (Exception $e) {
-            error_log("Error al enviar email a {$toEmail}: " . $e->getMessage());
+            
+            $this->logger->error("Error al enviar email a {$toEmail}: " . $e->getMessage(), [
+                'recipient' => $toEmail,
+                'subject'   => $subject,
+                'exception' => $e
+            ]);
+
             return false;
         }
     }
