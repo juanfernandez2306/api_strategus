@@ -1,0 +1,97 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Users\Actions\Auth;
+
+use App\Users\Validators\Auth\RegisterValidator;
+use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
+use App\Users\Repositories\Auth\InterfacePasswordResetRepository;
+use App\Users\Services\Mail\InterfaceMailRegister;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use PDO;
+use Exception;
+use RuntimeException;
+
+class RegisterAction
+{
+    private PDO $pdo;
+    private RegisterValidator $validator;
+    private UserCrudRepositoryInterface $userCrudRepo;
+    private InterfacePasswordResetRepository $passwordResetRepo;
+    private InterfaceMailRegister $mailRegisterService;
+
+    public function __construct(
+        PDO $pdo,
+        RegisterValidator $validator,
+        UserCrudRepositoryInterface $userCrudRepo,
+        InterfacePasswordResetRepository $passwordResetRepo,
+        InterfaceMailRegister $mailRegisterService
+    ) {
+        $this->pdo = $pdo;
+        $this->validator = $validator;
+        $this->userCrudRepo = $userCrudRepo;
+        $this->passwordResetRepo = $passwordResetRepo;
+        $this->mailRegisterService = $mailRegisterService;
+    }
+
+    public function __invoke(Request $request, Response $response): Response
+    {
+        $data = (array) ($request->getParsedBody() ?? []);
+
+        
+        $validatedData = $this->validator->validate($data);
+
+        
+        $this->pdo->beginTransaction();
+
+        try {
+            
+            $userId = $this->userCrudRepo->create($validatedData);
+
+            ($userId <= 0) && throw new RuntimeException("No se pudo obtener el ID del usuario recién creado.");
+
+            
+            $tokenPlain = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+            
+            $savedToken = $this->passwordResetRepo->save($userId, $tokenPlain, $expiresAt);
+
+            (!$savedToken) && throw new RuntimeException("Error al registrar el token de verificación del usuario.");
+
+            
+            $this->pdo->commit();
+
+        } catch (Exception $e) {
+            
+            $this->pdo->rollBack();
+            throw $e;
+        }
+
+        
+        $fullName = ucfirst($validatedData['first_name']) . ' ' . ucfirst($validatedData['last_name']);
+
+        $this->mailRegisterService->send(
+            $validatedData['email'],
+            $fullName,
+            $tokenPlain
+        );
+
+        // 8. Responder cliente
+        $payload = json_encode([
+            'status'  => 'success',
+            'message' => 'Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.',
+            'data'    => [
+                'user_id' => $userId
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+
+        $response->getBody()->write($payload);
+
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(201);
+    }
+}
