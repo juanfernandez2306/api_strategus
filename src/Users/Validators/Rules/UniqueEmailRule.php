@@ -10,7 +10,7 @@ use Rakit\Validation\Rule;
 class UniqueEmailRule extends Rule
 {
     protected $message = "El correo electrónico ya se encuentra registrado.";
-    
+
     private InterfaceUserRepository $userRepository;
 
     public function __construct(InterfaceUserRepository $userRepository)

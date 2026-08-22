@@ -13,7 +13,7 @@ abstract class BaseValidator
     public function __construct()
     {
         $this->validator = new Validator();
-        
+
         $this->validator->setMessages([
             'required' => 'El campo :attribute es obligatorio.',
             'min'      => 'El campo :attribute debe tener al menos :min caracteres.',

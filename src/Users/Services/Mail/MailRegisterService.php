@@ -60,7 +60,6 @@ class MailRegisterService implements InterfaceMailRegister
                 'Verifica tu cuenta - GESTIÓN DE PALMA DIGITAL',
                 $htmlBody
             );
-
         } catch (RuntimeException $e) {
             $this->logger->error("No se encontró la plantilla de correo de verificación para {$toEmail}: " . $e->getMessage());
             throw $e;

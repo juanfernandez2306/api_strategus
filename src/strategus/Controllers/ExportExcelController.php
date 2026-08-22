@@ -22,13 +22,13 @@ class ExportExcelController
     public function __invoke(Request $request, Response $response): Response
     {
         $parsedBody = $request->getParsedBody() ?? [];
-        
+
         // 1. Validar el rango de fechas y deltas
         $errores = $this->validator->validate($parsedBody);
 
         if (!empty($errores)) {
             $primerError = reset($errores);
-            
+
             $response->getBody()->write(json_encode([
                 'statusCode' => 400,
                 'error' => [
@@ -36,7 +36,7 @@ class ExportExcelController
                     'description' => $primerError
                 ]
             ], JSON_UNESCAPED_UNICODE));
-            
+
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
@@ -47,13 +47,12 @@ class ExportExcelController
             // 2. Intentar generar el Excel
             $stream = $this->excelService->generateMonitoreosExcel($fechaInicioParam, $fechaFinParam);
             $filename = "monitoreos_{$fechaInicioParam}_al_{$fechaFinParam}.xlsx";
-            
+
             return $response
                 ->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
                 ->withHeader('Cache-Control', 'max-age=0')
                 ->withBody(new Stream($stream));
-
         } catch (\Exception $e) {
         // 3. CAPTURA OPTIMIZADA: Cambiar obligatoriamente a HTTP status 400
             if ($e->getMessage() === 'NO_ROWS_FOUND') {
@@ -64,7 +63,7 @@ class ExportExcelController
                         'description' => 'No se encontraron registros en el rango de fechas seleccionado.'
                     ]
                 ], JSON_UNESCAPED_UNICODE));
-                
+
                 // CORREGIDO: Ahora retorna un código de error 400 real al navegador
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             }
@@ -73,7 +72,7 @@ class ExportExcelController
             $response->getBody()->write(json_encode([
                 'statusCode' => 500,
                 'error' => [
-                    'type' => 'EXCEL_ERROR', 
+                    'type' => 'EXCEL_ERROR',
                     'description' => $e->getMessage()
                 ]
             ], JSON_UNESCAPED_UNICODE));

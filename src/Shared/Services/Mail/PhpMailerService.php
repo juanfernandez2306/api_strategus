@@ -20,7 +20,7 @@ class PhpMailerService implements InterfaceMailService
         $this->config = $config ?? $this->loadEnvironmentConfig();
     }
 
-    
+
     private function loadEnvironmentConfig(): array
     {
         $requiredKeys = [
@@ -35,9 +35,9 @@ class PhpMailerService implements InterfaceMailService
         foreach ($requiredKeys as $key) {
             if (empty($_ENV[$key])) {
                 $errorMessage = "Error de configuración: La variable de entorno '{$key}' no está definida o está vacía.";
-                
+
                 $this->logger->critical($errorMessage);
-                
+
                 throw new RuntimeException($errorMessage);
             }
         }
@@ -78,9 +78,7 @@ class PhpMailerService implements InterfaceMailService
             $mail->Body    = $bodyHTML;
 
             return $mail->send();
-
         } catch (PHPMailerException $e) {
-
             $this->logger->error("Error al enviar email a {$toEmail}: " . $e->getMessage(), [
                 'recipient' => $toEmail,
                 'subject'   => $subject,

@@ -8,7 +8,6 @@ use PDO;
 
 class PdoUserCrudRepository implements UserCrudRepositoryInterface
 {
-    
     private PDO $pdo;
 
     public function __construct(PDO $pdo)
@@ -75,7 +74,7 @@ class PdoUserCrudRepository implements UserCrudRepositoryInterface
         $sql = "DELETE FROM users WHERE id = :id";
 
         $stmt = $this->pdo->prepare($sql);
-        
+
         return $stmt->execute(['id' => $id]);
     }
 }

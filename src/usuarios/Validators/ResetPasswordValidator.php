@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Validators;
 
 use App\Usuarios\Validators\RegexPatterns;
@@ -10,7 +11,7 @@ class ResetPasswordValidator extends BaseValidator
      */
     protected function rules(): array
     {
-        
+
 
         return [
             'token'            => ['required'],

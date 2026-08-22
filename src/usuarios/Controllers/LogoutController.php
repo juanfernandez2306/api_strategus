@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -8,7 +9,6 @@ use App\Usuarios\Repository\UsuarioRepository;
 class LogoutController
 {
     private UsuarioRepository $repository;
-
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -18,8 +18,7 @@ class LogoutController
     {
         // 1. Obtener la cabecera 'Authorization' enviada por el cliente/Postman
         $authHeader = $request->getHeaderLine('Authorization');
-        
-        // 2. Validar que la cabecera exista y tenga el formato correcto "Bearer <token>"
+// 2. Validar que la cabecera exista y tenga el formato correcto "Bearer <token>"
         if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
             return $this->jsonResponse($response, [
                 'success' => false,
@@ -29,14 +28,10 @@ class LogoutController
 
         // 3. Extraer el token en texto plano (el string largo que devolvió el login)
         $plainTextToken = $matches[1];
-
-        // 4. Calcular el hash SHA-256 para poder buscarlo en la Base de Datos
+// 4. Calcular el hash SHA-256 para poder buscarlo en la Base de Datos
         $hashedToken = hash('sha256', $plainTextToken);
-
-        
         $this->repository->deleteToken($hashedToken);
-
-        // 6. Responder con éxito
+// 6. Responder con éxito
         return $this->jsonResponse($response, [
             'success' => true,
             'message' => 'Sesión cerrada correctamente (Token revocado).'

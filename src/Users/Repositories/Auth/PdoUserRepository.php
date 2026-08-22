@@ -21,7 +21,7 @@ class PdoUserRepository implements InterfaceUserRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['email' => $email]);
 
-        
+
         return (bool) $stmt->fetchColumn();
     }
 }

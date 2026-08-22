@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Repository;
 
 use PDO;
@@ -7,13 +8,10 @@ use Exception;
 class UsuarioRepository
 {
     private PDO $db;
-
     private array $queries;
-
     public function __construct(PDO $db)
     {
         $this->db = $db;
-
         $this->queries = require __DIR__ . '/../Queries/sentencesUsuarios.php';
     }
 
@@ -21,9 +19,7 @@ class UsuarioRepository
     public function getAll(): array
     {
         $sql = $this->queries['getAll'];
-        
         $stmt = $this->db->query($sql);
-
         return $stmt->fetchAll();
     }
 
@@ -40,80 +36,67 @@ class UsuarioRepository
     public function create(array $data): bool
     {
         $sql = $this->queries['create'];
-        
         $stmt = $this->db->prepare($sql);
-
         $response = $stmt->execute([
             ':nombre'   => $data['nombre'],
             ':apellido' => $data['apellido'],
             ':email'    => $data['email'],
             ':password' => password_hash($data['password'], PASSWORD_BCRYPT),
         ]);
-
         return (bool) $response;
-
     }
 
     // Eliminar un usuario por ID
     public function delete(int $id): array
     {
         $sql = $this->queries['delete'];
-
         try {
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':id' => $id]);
-        
-        
             if ($stmt->rowCount() > 0) {
                 return [
                     'status' => true,
                     'msg'    => 'Usuario eliminado físicamente del sistema con éxito.'
                 ];
             }
-        
+
             return [
                 'status' => false,
                 'msg'    => 'El usuario no pudo ser eliminado porque no existe en el sistema.'
             ];
-
         } catch (\PDOException $e) {
-            // Captura específica del error de clave foránea (Restricción por integridad)
+        // Captura específica del error de clave foránea (Restricción por integridad)
             if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1451) {
                 return [
                     'status' => false,
                     'msg'    => 'No se puede eliminar el usuario porque tiene historial de registros.'
                 ];
             }
-        
+
             // Si es cualquier otro error crítico de SQL, devolvemos un mensaje genérico por seguridad
             return [
                 'status' => false,
                 'msg'    => 'Error interno en la base de datos al intentar procesar la solicitud.'
             ];
         }
-    
     }
 
     public function updateStatus(int $id, int $status): bool
     {
         $sql = $this->queries['updateStatus'];
-        
         $stmt = $this->db->prepare($sql);
-        
         return $stmt->execute([
             ':id'     => $id,
             ':status' => $status
         ]);
     }
 
-    
+
     // Guardar un token de acceso ligero en personal_access_tokens
     public function storeToken(int $usuarioId, string $tokenName, string $tokenPlain): bool
     {
         $sql = $this->queries['storeToken'];
-        
         $stmt = $this->db->prepare($sql);
-        
         return $stmt->execute([
             ':usuario_id' => $usuarioId,
             ':nombre'     => $tokenName,
@@ -129,19 +112,16 @@ class UsuarioRepository
     public function update(int $id, array $data): array
     {
         $sql = $this->queries['update'];
-
         try {
             $stmt = $this->db->prepare($sql);
-            
             $stmt->execute([
                 ':id'        => $id,
                 ':nombre'    => $data['nombre'],
                 ':apellido'  => $data['apellido'],
-                ':role_id'   => !empty($data['role_id']) ? (int)$data['role_id'] : NULL,
+                ':role_id'   => !empty($data['role_id']) ? (int)$data['role_id'] : null,
                 ':status'   => !empty($data['status']) ? (int)$data['status'] : 0
             ]);
-
-            // Verificamos si realmente se modificó algo o si el ID existía
+        // Verificamos si realmente se modificó algo o si el ID existía
             if ($stmt->rowCount() > 0) {
                 return [
                     'status' => true,
@@ -149,14 +129,12 @@ class UsuarioRepository
                 ];
             }
 
-            return [
-                'status' => true, 
-                'msg'    => 'No se realizaron cambios en el usuario (los datos enviados eran idénticos).'
-            ];
-
+                    return [
+                        'status' => true,
+                        'msg'    => 'No se realizaron cambios en el usuario (los datos enviados eran idénticos).'
+                    ];
         } catch (\PDOException $e) {
-            
-            // Captura si el admin intenta asignar un role_id que NO existe en la tabla roles (Error 1452)
+        // Captura si el admin intenta asignar un role_id que NO existe en la tabla roles (Error 1452)
             if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1452) {
                 return [
                     'status' => false,
@@ -183,10 +161,7 @@ class UsuarioRepository
         $sql = $this->queries['getAuthData'];
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':email' => $email]);
-        
         $usuario = $stmt->fetch();
-        
-        
         return $usuario ?: null;
     }
 
@@ -197,7 +172,6 @@ class UsuarioRepository
     {
         $sql = $this->queries['deleteToken'];
         $stmt = $this->db->prepare($sql);
-        
         return $stmt->execute([
             ':token' => $hashedToken
         ]);
@@ -210,7 +184,6 @@ class UsuarioRepository
     {
         $sql = $this->queries['deleteAllTokens'];
         $stmt = $this->db->prepare($sql);
-        
         return $stmt->execute([
             ':usuario_id' => $usuarioId
         ]);
@@ -223,7 +196,6 @@ class UsuarioRepository
     {
         $sql = $this->queries['storeVerificationToken'];
         $stmt = $this->db->prepare($sql);
-        
         return $stmt->execute([
             ':email'      => $email,
             ':token'      => hash('sha256', $token),
@@ -239,7 +211,6 @@ class UsuarioRepository
         $sql = $this->queries['getVerificationToken'];
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':email' => $email]);
-        
         $result = $stmt->fetch();
         return $result ? $result : null;
     }
@@ -251,17 +222,15 @@ class UsuarioRepository
     {
         try {
             $this->db->beginTransaction();
-
-            // 1. Actualizar el usuario (Verificar email y activar estado)
-            $sqlUser = $this->queries['verifyEmail']; // UPDATE usuarios SET email_verified_at = CURRENT_TIMESTAMP, status = 1 WHERE email = :email
+// 1. Actualizar el usuario (Verificar email y activar estado)
+            $sqlUser = $this->queries['verifyEmail'];
+// UPDATE usuarios SET email_verified_at = CURRENT_TIMESTAMP, status = 1 WHERE email = :email
             $stmtUser = $this->db->prepare($sqlUser);
             $stmtUser->execute([':email' => $email]);
-
-            // 2. Limpiar el token usado de la tabla password_resets para que no se use dos veces
+// 2. Limpiar el token usado de la tabla password_resets para que no se use dos veces
             $sqlDelete = $this->queries['deleteVerificationToken'];
             $stmtDelete = $this->db->prepare($sqlDelete);
             $stmtDelete->execute([':email' => $email]);
-
             $this->db->commit();
             return true;
         } catch (\Exception $e) {
@@ -278,11 +247,9 @@ class UsuarioRepository
         // 1. Limpiamos cualquier token de recuperación viejo que tuviera este email
         $sqlDelete = $this->queries['deletePasswordReset'];
         $this->db->prepare($sqlDelete)->execute([':email' => $email]);
-
-        // 2. Insertamos el nuevo token con una expiración de 2 horas
+// 2. Insertamos el nuevo token con una expiración de 2 horas
         $sqlInsert = $this->queries['storePasswordReset'];
         $stmt = $this->db->prepare($sqlInsert);
-        
         return $stmt->execute([
             ':email'      => $email,
             ':token'      => hash('sha256', $token), // Almacenamos el hash por seguridad
@@ -298,7 +265,6 @@ class UsuarioRepository
         $sql = $this->queries['findByEmail'];
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':email' => $email]);
-        
         $result = $stmt->fetch();
         return $result ? $result : null;
     }
@@ -307,26 +273,22 @@ class UsuarioRepository
     {
         try {
             $this->db->beginTransaction();
-
-            // 1. Actualizar la contraseña
+// 1. Actualizar la contraseña
             $sqlUp = $this->queries['updatePassword'];
             $stmtUp = $this->db->prepare($sqlUp);
             $stmtUp->execute([':password' => $hashedPassword, ':email' => $email]);
-
-            // 2. 🔒 Ahora sí funciona findByEmail perfectamente
+// 2. 🔒 Ahora sí funciona findByEmail perfectamente
             $usuario = $this->findByEmail($email);
             if ($usuario) {
-                // Cierra todas las sesiones activas usando el ID encontrado
+            // Cierra todas las sesiones activas usando el ID encontrado
                 $this->deleteAllTokens((int)$usuario['id']);
             }
 
             // 3. Limpiar token de recuperación usado
             $sqlDel = $this->queries['deletePasswordReset'];
             $this->db->prepare($sqlDel)->execute([':email' => $email]);
-
             $this->db->commit();
             return true;
-
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -343,9 +305,7 @@ class UsuarioRepository
         $sql = $this->queries['getAccessToken'];
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':token' => $tokenHashed]);
-        
         $result = $stmt->fetch();
         return $result ? $result : null;
     }
-
 };

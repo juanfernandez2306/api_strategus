@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 // Importamos las interfaces estándar para manejar peticiones y respuestas HTTP (PSR-7)
@@ -9,8 +10,7 @@ use App\Usuarios\Repository\UsuarioRepository;
 class UpdateStatusController
 {
     private UsuarioRepository $repository;
-
-    // Inyectamos el repositorio que ya maneja la base de datos
+// Inyectamos el repositorio que ya maneja la base de datos
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -23,16 +23,17 @@ class UpdateStatusController
         // PASO 1: Capturar el ID de la URL y el nuevo estado del cuerpo
         // -------------------------------------------------------------
         // El ID viaja seguro en la URL: /usuarios/{id}/status
-        $id = (int) $args['id']; 
-
-        // Convertimos el estado recibido a un entero (0 o 1)
-        $nuevoEstado = (int) $args['status']; ;
+        $id = (int) $args['id'];
+// Convertimos el estado recibido a un entero (0 o 1)
+        $nuevoEstado = (int) $args['status'];
+        ;
 
         if (!in_array($nuevoEstado, [0, 1], true)) {
             return $this->jsonResponse($response, [
                 'success' => false,
                 'message' => 'El campo status es requerido y debe ser 0 (inactivo) o 1 (activo).'
-            ], 400); // 400 = Bad Request (Petición incorrecta)
+            ], 400);
+// 400 = Bad Request (Petición incorrecta)
         }
 
         // -------------------------------------------------------------
@@ -40,12 +41,12 @@ class UpdateStatusController
         // -------------------------------------------------------------
         // Ejecutamos el método de tu repositorio que hace el UPDATE
         $success = $this->repository->updateStatus($id, $nuevoEstado);
-
         if (!$success) {
             return $this->jsonResponse($response, [
                 'success' => false,
                 'message' => 'No se pudo actualizar el estado del usuario en la base de datos.'
-            ], 500); // 500 = Internal Server Error
+            ], 500);
+        // 500 = Internal Server Error
         }
 
         // -------------------------------------------------------------
@@ -56,7 +57,8 @@ class UpdateStatusController
             'success' => true,
             'message' => 'Estado del usuario actualizado correctamente.',
             'status'  => $nuevoEstado
-        ], 200); // 200 = OK
+        ], 200);
+// 200 = OK
     }
 
     /**

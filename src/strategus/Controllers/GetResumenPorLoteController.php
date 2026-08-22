@@ -31,7 +31,6 @@ class GetResumenPorLoteController
                 'message' => 'Resumen analítico por lotes generado con éxito.',
                 'data' => $resumen
             ], 200);
-
         } catch (Exception $e) {
             // Control de fallos del servidor o base de datos
             return $this->jsonResponse($response, [

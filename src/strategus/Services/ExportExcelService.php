@@ -44,11 +44,11 @@ class ExportExcelService
 
         // Encabezados
         $headers = ['Latitud', 'Longitud', 'Lote', 'Precisión','Galeria',  'Fecha Registro', 'Fecha Revisión'];
-        $sheet->fromArray($headers, NULL, 'A1');
+        $sheet->fromArray($headers, null, 'A1');
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
 
         // 3. Volcar datos obtenidos
-        $sheet->fromArray($data, NULL, 'A2');
+        $sheet->fromArray($data, null, 'A2');
 
         // Auto-ajustar el tamaño de las columnas automáticamente
         foreach (range('A', 'G') as $col) {

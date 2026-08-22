@@ -8,8 +8,6 @@ use PDO;
 
 class PdoTokenRepository implements InterfaceTokenRepository
 {
-    
-
     private PDO $pdo;
 
     public function __construct(PDO $pdo)
@@ -28,7 +26,7 @@ class PdoTokenRepository implements InterfaceTokenRepository
             )";
 
         $stmt = $this->pdo->prepare($sql);
-        
+
         return $stmt->execute([
             ':user_id' => $userId,
             ':name'     => $tokenName,
@@ -42,7 +40,7 @@ class PdoTokenRepository implements InterfaceTokenRepository
         $sql = "DELETE FROM personal_access_tokens WHERE token = :token";
 
         $stmt = $this->pdo->prepare($sql);
-        
+
         return $stmt->execute(['token' => $hashedToken]);
     }
 
@@ -52,9 +50,7 @@ class PdoTokenRepository implements InterfaceTokenRepository
                 WHERE user_id = :user_id";
 
         $stmt = $this->pdo->prepare($sql);
-        
+
         return $stmt->execute(['user_id' => $userId]);
     }
-
-    
 }

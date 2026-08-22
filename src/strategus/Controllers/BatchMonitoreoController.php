@@ -59,7 +59,7 @@ class BatchMonitoreoController
                     throw new Exception("Error de validación en el elemento con UUID [{$uuid}]: {$erroresValidacion}");
                 }
 
-                if (!$this->repository->esPuntoDentroDeLote($item)){
+                if (!$this->repository->esPuntoDentroDeLote($item)) {
                     // Si está fuera, lo ignoramos para MySQL, pero ordenamos al móvil borrarlo para limpiar datos corruptos
                     $completados[] = $uuid;
                     $fueraDeLote[] = $uuid;
@@ -71,7 +71,7 @@ class BatchMonitoreoController
                     // pero lo metemos en 'completados' para que el Frontend lo borre del teléfono.
                     $completados[] = $uuid;
                     $duplicados[] = $uuid;
-                    continue; 
+                    continue;
                 }
 
                 // 2. Ejecución del Upsert en la base de datos central
@@ -108,7 +108,6 @@ class BatchMonitoreoController
                     'guardados_sin_revision' => $guardadosSinRevision
                 ]
             ], 200);
-
         } catch (Exception $e) {
             // SI CUALQUIER COSA FALLA, REVERTIMOS ABSOLUTAMENTE TODOS LOS CAMBIOS DE ESTA LLAMADA
             if ($db->inTransaction()) {

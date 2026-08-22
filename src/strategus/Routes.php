@@ -11,7 +11,7 @@ use App\Strategus\Controllers\GetRegistroSemanalStrategusController;
 use App\Strategus\Controllers\GetExportRecordsController;
 
 return function (RouteCollectorProxy $group) {
-    
+
     $group->post('/sincronizar', BatchMonitoreoController::class)
         ->add(new RoleMiddleware([2, 3]))
         ->add(AuthMiddleware::class);

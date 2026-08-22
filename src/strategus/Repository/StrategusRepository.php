@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Strategus\Repository;
 
 use PDO;
@@ -11,13 +12,12 @@ class StrategusRepository
     private PDO $db;
     private array $queries;
     private DateTimeZone $timezone;
-
     public function __construct(PDO $db)
     {
         $this->db = $db;
         $this->queries = require __DIR__ . '/../Query/StrategusSentences.php';
-        // Ajustamos la hora local (Caracas / Bogotá / etc.)
-        $this->timezone = new DateTimeZone('America/Caracas'); 
+    // Ajustamos la hora local (Caracas / Bogotá / etc.)
+        $this->timezone = new DateTimeZone('America/Caracas');
     }
 
     public function getConnection(): PDO
@@ -34,8 +34,7 @@ class StrategusRepository
         $stringRegistro = $item['fecha_registro'] . ' ' . $item['hora_registro'];
         $dtRegistro = DateTime::createFromFormat('Y-m-d H:i:s', $stringRegistro, $this->timezone);
         $fechaRegistro = $dtRegistro->format('Y-m-d H:i:s');
-
-        // 2. Unir y formatear fecha_revision (Si el operador la trató, de lo contrario NULL)
+// 2. Unir y formatear fecha_revision (Si el operador la trató, de lo contrario NULL)
         $fechaRevision = null;
         if (!empty($item['fecha_revision'])) {
             $horaRev = $item['hora_revision'] ?? '00:00:00';
@@ -46,7 +45,6 @@ class StrategusRepository
 
         // 3. Formato espacial WKT POINT(longitud latitud)
         $wktPoint = "POINT(" . $item['longitud'] . " " . $item['latitud'] . ")";
-
         try {
             $stmt = $this->db->prepare($this->queries['insertBatch']);
             return $stmt->execute([
@@ -55,13 +53,11 @@ class StrategusRepository
                 ':posicion'       => $wktPoint,
                 ':fecha_registro' => $fechaRegistro,
                 ':galeria'        => (int) $item['galeria'],
-                ':precision_gps'  => (float) $item['precision'], 
+                ':precision_gps'  => (float) $item['precision'],
                 ':fecha_revision_insert' => $fechaRevision,
                 ':fecha_revision_update' => $fechaRevision
             ]);
-
             return $stmt->rowCount() > 0;
-            
         } catch (Exception $e) {
             throw new Exception("Error al procesar el monitoreo: " . $e->getMessage());
         }
@@ -87,7 +83,7 @@ class StrategusRepository
         }
     }
 
-    
+
     public function getResumenPorLote(): array
     {
         try {
@@ -104,9 +100,9 @@ class StrategusRepository
         try {
             $stmt = $this->db->prepare($this->queries['getMapMarkers']);
             $stmt->execute();
-            
-            // Forzamos el casteo de tipos para la compatibilidad exacta de TypeScript
-            return array_map(function($row) {
+// Forzamos el casteo de tipos para la compatibilidad exacta de TypeScript
+            return array_map(function ($row) {
+
                 return [
                     'uuid' => $row['uuid'],
                     'lat'  => (float) $row['latitud'],
@@ -114,7 +110,6 @@ class StrategusRepository
                     'revision_planta' => (bool) $row['revision_planta']
                 ];
             }, $stmt->fetchAll(PDO::FETCH_ASSOC));
-
         } catch (Exception $e) {
             throw new Exception("Error al obtener marcadores del mapa (Rango 30 días): " . $e->getMessage());
         }
@@ -127,9 +122,7 @@ class StrategusRepository
         $stringRegistro = $item['fecha_registro'] . ' ' . $item['hora_registro'];
         $dtRegistro = DateTime::createFromFormat('Y-m-d H:i:s', $stringRegistro, $this->timezone);
         $fechaRegistro = $dtRegistro->format('Y-m-d H:i:s');
-
         $stmt = $this->db->prepare($this->queries['buscarDuplicadoEnRadio']);
-        
         $stmt->execute([
             ':posicion_WKT'     => $posicionWKT,
             ':fecha_referencia' => $fechaRegistro, // Fecha central para evaluar el intervalo de 15 días
@@ -137,25 +130,21 @@ class StrategusRepository
             ':fecha_registro_2' => $fechaRegistro,
             ':uuid_actual'      => $item['uuid']
         ]);
-
-        // Si devuelve una fila, significa que ya existe un punto más viejo o idéntico a menos de 4 metros
+// Si devuelve una fila, significa que ya existe un punto más viejo o idéntico a menos de 4 metros
         return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
 
-    
+
     public function esPuntoDentroDeLote(array $item): bool
     {
         try {
             $posicionWKT = "POINT(" . $item['longitud'] . " " . $item['latitud'] . ")";
-            
             $stmt = $this->db->prepare($this->queries['validarPuntoEnLote']);
             $stmt->execute([
                 ':posicion_WKT' => $posicionWKT
             ]);
-            
-            // Retorna true si encontró coincidencia, o false si el punto está fuera de los polígonos
+// Retorna true si encontró coincidencia, o false si el punto está fuera de los polígonos
             return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
-            
         } catch (Exception $e) {
             throw new Exception("Error al validar si el punto se encuentra dentro de la capa de lotes: " . $e->getMessage());
         }
@@ -166,16 +155,15 @@ class StrategusRepository
         try {
             $stmt = $this->db->prepare($this->queries['getGraficoSemanal']);
             $stmt->execute();
-
-            // Mapeamos los resultados para asegurar tipos nativos correctos (int) en el JSON
+// Mapeamos los resultados para asegurar tipos nativos correctos (int) en el JSON
             return array_map(function ($row) {
+
                 return [
                     'fecha'            => $row['fecha'],
                     'palmas_marcadas'  => (int) $row['palmas_marcadas'],
                     'palmas_revisadas' => (int) $row['palmas_revisadas']
                 ];
             }, $stmt->fetchAll(PDO::FETCH_ASSOC));
-
         } catch (Exception $e) {
             throw new Exception("Error al obtener datos del gráfico semanal: " . $e->getMessage());
         }

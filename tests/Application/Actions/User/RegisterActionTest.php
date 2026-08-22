@@ -30,7 +30,7 @@ class RegisterActionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->pdoMock = $this->createMock(PDO::class);
         $this->validatorMock = $this->createMock(RegisterValidator::class);
         $this->userCrudRepoMock = $this->createMock(UserCrudRepositoryInterface::class);

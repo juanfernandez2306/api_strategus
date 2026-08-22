@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -11,30 +12,27 @@ class UpdateController
     private UsuarioRepository $repository;
     private UpdateValidator $validator;
 
-    
+
     public function __construct(
-        UsuarioRepository $repository, 
-        UpdateValidator $validator)
-    {
+        UsuarioRepository $repository,
+        UpdateValidator $validator
+    ) {
         $this->repository = $repository;
         $this->validator = $validator;
     }
 
     public function __invoke(Request $request, Response $response, array $args): Response
     {
-        $id = (int) $args['id']; 
+        $id = (int) $args['id'];
         $body = $request->getParsedBody() ?? [];
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 1: Normalización segura en minúsculas (UTF-8)
         // -------------------------------------------------------------
         $nombreRaw   = $body['nombre'] ?? '';
         $apellidoRaw = $body['apellido'] ?? '';
-
         $body['nombre']   = mb_strtolower(trim($nombreRaw), "UTF-8");
         $body['apellido'] = mb_strtolower(trim($apellidoRaw), "UTF-8");
-        
-        // Convertimos a tipos nativos para que Rakit valide correctamente tipos numéricos
+// Convertimos a tipos nativos para que Rakit valide correctamente tipos numéricos
         if (isset($body['role_id'])) {
             $body['role_id'] = (int) $body['role_id'];
         }
@@ -51,15 +49,15 @@ class UpdateController
             'role_id'  => 'Debe seleccionar un rol válido para el usuario.',
             'status'   => 'El estado del usuario no es válido.'
         ]);
-
-        // Si la validación falla, disparamos el código de error controlado
+// Si la validación falla, disparamos el código de error controlado
         if ($errores) {
             return $this->jsonResponse($response, [
                 'success' => false,
                 'errors'  => $errores
-            ], 420); // Código 420 adaptado a tus respuestas de validación
+            ], 420);
+// Código 420 adaptado a tus respuestas de validación
         }
-        
+
         // -------------------------------------------------------------
         // PASO 3: Ejecutar la actualización en el Repositorio
         // -------------------------------------------------------------
@@ -69,10 +67,8 @@ class UpdateController
             'role_id'  => $body['role_id'],
             'status'   => $body['status'],
         ];
-
         $result = $this->repository->update($id, $datosParaActualizar);
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 4: Responder al Frontend
         // -------------------------------------------------------------
         if (!$result['status']) {

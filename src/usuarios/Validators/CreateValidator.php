@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Validators;
 
 use App\Usuarios\Validators\RegexPatterns;
@@ -11,20 +12,19 @@ class CreateValidator extends BaseValidator
     protected function rules(): array
     {
         $regexSoloLetras = 'regex:/^[a-zA-ZÑñ]+$/';
-
         return [
             'nombre'           => [
-                                    'required', 
-                                    'max:50', 
+                                    'required',
+                                    'max:50',
                                     'regex:' . RegexPatterns::NOMBRE
                                 ],
             'apellido'         => [
                                     'required',
-                                    'max:50', 
+                                    'max:50',
                                     'regex:' . RegexPatterns::NOMBRE],
             'email'            => ['required', 'email'],
             'password'         => [
-                                    'required', 
+                                    'required',
                                     'regex:' . RegexPatterns::PASSWORD
                                 ],
             'password_confirm' => ['required', 'same:password']

@@ -29,7 +29,6 @@ class GetRegistroSemanalStrategusController
                 'message' => 'Métricas semanales de monitoreo generadas con éxito.',
                 'data' => $datosGrafico
             ], 200);
-
         } catch (Exception $e) {
             // Control de fallos del servidor o base de datos
             return $this->jsonResponse($response, [

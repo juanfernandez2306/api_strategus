@@ -15,7 +15,7 @@ abstract class AuthBaseValidator extends BaseValidator
     public function __construct()
     {
         parent::__construct();
-        
+
         $this->validator->setMessages([
             'regex' => 'El formato del campo :attribute no cumple con los requisitos esperados.'
         ]);

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Validators;
 
 use App\Usuarios\Validators\RegexPatterns;
@@ -12,13 +13,13 @@ class UpdateValidator extends BaseValidator
     {
         return [
             'nombre'   => [
-                            'required', 
-                            'max:50', 
+                            'required',
+                            'max:50',
                             'regex:' . RegexPatterns::NOMBRE
                         ],
             'apellido' => [
                             'required',
-                            'max:50', 
+                            'max:50',
                             'regex:' . RegexPatterns::NOMBRE
                         ],
             'role_id'  => ['required', 'numeric'],

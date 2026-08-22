@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 // Importamos las interfaces estándar para manejar peticiones y respuestas HTTP (PSR-7)
@@ -9,8 +10,7 @@ use App\Usuarios\Repository\UsuarioRepository;
 class DeleteController
 {
     private UsuarioRepository $repository;
-
-    // Inyectamos el repositorio
+// Inyectamos el repositorio
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -24,26 +24,25 @@ class DeleteController
         // -------------------------------------------------------------
         // El ID viaja en la URL (ej: /usuarios/5), Slim lo captura en el array $args
         $id = (int) $args['id'];
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 2: Solicitar el borrado al Repositorio
         // -------------------------------------------------------------
         // Ejecutamos el método delete() que devuelve un array con ['status', 'msg']
         $result = $this->repository->delete($id);
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 3: Procesar la respuesta y decidir el Código HTTP
         // -------------------------------------------------------------
-        
+
         // Si status es false, significa que el borrado falló
         if (!$result['status']) {
-            
-            // Evaluamos la causa del error analizando el mensaje devuelto por el repositorio
+// Evaluamos la causa del error analizando el mensaje devuelto por el repositorio
             // Si el mensaje menciona "historial", sabemos que es por la restricción de clave foránea (Error 1451)
             if (strpos($result['msg'], 'historial') !== false) {
-                $statusCode = 409; // 409 = Conflict (Conflicto de integridad en la base de datos)
+                $statusCode = 409;
+// 409 = Conflict (Conflicto de integridad en la base de datos)
             } else {
-                $statusCode = 404; // 404 = Not Found (El usuario no existía en el sistema)
+                $statusCode = 404;
+            // 404 = Not Found (El usuario no existía en el sistema)
             }
 
             return $this->jsonResponse($response, [
@@ -58,7 +57,8 @@ class DeleteController
         return $this->jsonResponse($response, [
             'success' => true,
             'message' => $result['msg'] // "Usuario eliminado físicamente..."
-        ], 200); // 200 = OK
+        ], 200);
+// 200 = OK
     }
 
     /**

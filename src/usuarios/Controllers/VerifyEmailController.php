@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -8,7 +9,6 @@ use App\Usuarios\Repository\UsuarioRepository;
 class VerifyEmailController
 {
     private UsuarioRepository $repository;
-
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -19,10 +19,8 @@ class VerifyEmailController
         $queryParams = $request->getQueryParams();
         $tokenParam = $queryParams['token'] ?? '';
         $emailParam = $queryParams['email'] ?? '';
-
-        // URL a la que redirigirás al usuario para que inicie sesión en tu frontend
-        $loginUrl = $_ENV['FRONTEND_URL']; 
-
+// URL a la que redirigirás al usuario para que inicie sesión en tu frontend
+        $loginUrl = $_ENV['FRONTEND_URL'];
         if (empty($tokenParam) || empty($emailParam)) {
             return $this->htmlResponse($response, [
                 'status_class' => 'error',
@@ -37,7 +35,6 @@ class VerifyEmailController
 
         // 1. Buscar si existe un token pendiente
         $dbToken = $this->repository->getVerificationToken($emailParam);
-
         if (!$dbToken) {
             return $this->htmlResponse($response, [
                 'status_class' => 'error',
@@ -78,7 +75,6 @@ class VerifyEmailController
 
         // 4. Proceder a verificar el usuario
         $success = $this->repository->verifyUserEmail($emailParam);
-
         if (!$success) {
             return $this->htmlResponse($response, [
                 'status_class' => 'error',
@@ -112,8 +108,7 @@ class VerifyEmailController
         // O dejarlo aquí en una variable heredoc para mantenerlo todo junto de momento:
         $templatePathHTML = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Views' . DIRECTORY_SEPARATOR . 'Emails' . DIRECTORY_SEPARATOR . 'response-email.html';
         $html = file_get_contents($templatePathHTML);
-
-        // Reemplazamos los placeholders por los valores reales
+// Reemplazamos los placeholders por los valores reales
         $html = str_replace('{{STATUS_CLASS}}', $data['status_class'], $html);
         $html = str_replace('{{ICON}}', $data['icon'], $html);
         $html = str_replace('{{TITLE}}', $data['title'], $html);
@@ -121,9 +116,7 @@ class VerifyEmailController
         $html = str_replace('{{BUTTON_LINK}}', $data['button_link'], $html);
         $html = str_replace('{{BUTTON_TEXT}}', $data['button_text'], $html);
         $html = str_replace('{{BTN_CLASS}}', $data['btn_class'], $html);
-
         $response->getBody()->write($html);
-        
         return $response
             ->withHeader('Content-Type', 'text/html; charset=utf-8')
             ->withStatus($statusCode);

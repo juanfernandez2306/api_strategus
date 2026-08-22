@@ -30,7 +30,6 @@ class GetMapMarkersController
             return $response
                 ->withHeader('Content-Type', 'application/json')
                 ->withStatus(200);
-
         } catch (Exception $e) {
             $payload = json_encode([
                 'statusCode' => 500,

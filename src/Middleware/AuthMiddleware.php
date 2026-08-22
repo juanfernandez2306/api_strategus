@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Middleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -11,7 +12,6 @@ use App\Usuarios\Repository\UsuarioRepository;
 class AuthMiddleware implements MiddlewareInterface
 {
     private UsuarioRepository $repository;
-
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -21,7 +21,6 @@ class AuthMiddleware implements MiddlewareInterface
     {
         // 1. Obtener la cabecera 'Authorization'
         $authHeader = $request->getHeaderLine('Authorization');
-
         if (empty($authHeader)) {
             return $this->unauthorizedResponse('Token de autenticación no proporcionado.');
         }
@@ -32,14 +31,11 @@ class AuthMiddleware implements MiddlewareInterface
         }
 
         $plainToken = $matches[1];
-
-        // 3. Buscar el token en la base de datos (aplicando hash sha256 si los guardas encriptados)
+// 3. Buscar el token en la base de datos (aplicando hash sha256 si los guardas encriptados)
         // Nota: Reutiliza o adapta el método con el que gestionas tus tokens cotidianos
         $tokenHashed = hash('sha256', $plainToken);
-        
-        // Asumiendo que tienes un método similar a 'validateAccessToken' en tu repositorio:
+// Asumiendo que tienes un método similar a 'validateAccessToken' en tu repositorio:
         $accessToken = $this->repository->getAccessToken($tokenHashed);
-
         if (!$accessToken) {
             return $this->unauthorizedResponse('Token inválido o sesión expirada.');
         }
@@ -61,8 +57,7 @@ class AuthMiddleware implements MiddlewareInterface
         // Esto permite que cualquier controlador posterior sepa QUIÉN está haciendo la petición
         $request = $request->withAttribute('usuario_id', $accessToken['usuario_id']);
         $request = $request->withAttribute('usuario_role', $accessToken['role_id'] ?? null);
-
-        // Todo está en orden, permitimos que la petición continúe hacia el controlador
+// Todo está en orden, permitimos que la petición continúe hacia el controlador
         return $handler->handle($request);
     }
 
@@ -77,7 +72,6 @@ class AuthMiddleware implements MiddlewareInterface
             'message' => 'Acceso denegado de forma segura por el Middleware.',
             'error'   => $message
         ], JSON_UNESCAPED_UNICODE));
-
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus(401);

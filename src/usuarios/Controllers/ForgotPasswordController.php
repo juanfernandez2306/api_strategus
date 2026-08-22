@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -10,7 +11,6 @@ class ForgotPasswordController
 {
     private UsuarioRepository $repository;
     private Mailer $mailer;
-
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -21,8 +21,7 @@ class ForgotPasswordController
     {
         $body = $request->getParsedBody() ?? [];
         $email = trim($body['email'] ?? '');
-
-        // 1. Validar que el campo email no venga vacío
+// 1. Validar que el campo email no venga vacío
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $this->jsonResponse($response, [
                 'success' => false,
@@ -30,7 +29,7 @@ class ForgotPasswordController
             ], 400);
         }
 
-        // 2. Si el correo NO existe en la base de datos, por seguridad no le decimos al atacante 
+        // 2. Si el correo NO existe en la base de datos, por seguridad no le decimos al atacante
         // "este correo no existe". Es mejor dar una respuesta genérica para evitar enumeración de usuarios.
         if (!$this->repository->existsEmail($email)) {
             return $this->jsonResponse($response, [
@@ -42,12 +41,10 @@ class ForgotPasswordController
         // 3. Generar token único de recuperación
         $resetToken = bin2hex(random_bytes(32));
         $this->repository->storePasswordResetToken($email, $resetToken);
-
-        // 4. Construir URL dinámica usando el .env
+// 4. Construir URL dinámica usando el .env
         $baseUrl = $_ENV['APP_URL'];
         $enlaceRecuperacion = $baseUrl . "/usuarios/reset-password?token=" . $resetToken . "&email=" . urlencode($email);
-
-        // 5. Cargar plantilla HTML externa
+// 5. Cargar plantilla HTML externa
         $templatePath = __DIR__ . '/../Views/Emails/forgot-password.html';
         if (file_exists($templatePath)) {
             $htmlBody = file_get_contents($templatePath);
@@ -57,13 +54,7 @@ class ForgotPasswordController
         }
 
         // 6. Enviar correo electrónico
-        $this->mailer->send(
-            $email,
-            "Usuario GESTION PALMA DIGITAL",
-            "Restablecer tu contraseña - SIGEPAD",
-            $htmlBody
-        );
-
+        $this->mailer->send($email, "Usuario GESTION PALMA DIGITAL", "Restablecer tu contraseña - SIGEPAD", $htmlBody);
         return $this->jsonResponse($response, [
             'success' => true,
             'message' => 'Si el correo electrónico coincide con una cuenta registrada, recibirá un enlace de recuperación en unos minutos.'

@@ -40,36 +40,33 @@ class RegisterAction
     {
         $data = (array) ($request->getParsedBody() ?? []);
 
-        
+
         $validatedData = $this->validator->validate($data);
 
-        
+
         $this->pdo->beginTransaction();
 
         try {
-            
             $userId = $this->userCrudRepo->create($validatedData);
 
             ($userId <= 0) && throw new RuntimeException("No se pudo obtener el ID del usuario recién creado.");
-            
+
             $tokenPlain = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-            
+
             $savedToken = $this->passwordResetRepo->save($userId, $tokenPlain, $expiresAt);
 
             (!$savedToken) && throw new RuntimeException("Error al registrar el token de verificación del usuario.");
 
-            
-            $this->pdo->commit();
 
+            $this->pdo->commit();
         } catch (Exception $e) {
-            
             $this->pdo->rollBack();
             throw $e;
         }
 
-        
+
         $fullName = ucfirst($validatedData['first_name']) . ' ' . ucfirst($validatedData['last_name']);
 
         $this->mailRegisterService->send(

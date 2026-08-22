@@ -27,7 +27,7 @@ class RegisterValidator extends AuthBaseValidator
         ];
     }
 
-    
+
     public function validate(array $data, array $customMessages = []): array
     {
         $messages = array_merge([

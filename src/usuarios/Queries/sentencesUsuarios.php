@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios;
 
 return [
@@ -105,7 +106,7 @@ return [
         WHERE email = :email 
         LIMIT 1
     ",
-    
+
     "deleteVerificationToken" => "
         DELETE FROM password_resets 
         WHERE email = :email
@@ -142,5 +143,5 @@ return [
         WHERE ut.token = :token 
         LIMIT 1
     ",
-    
+
 ];

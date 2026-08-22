@@ -17,7 +17,7 @@ class PdoPasswordResetRepository implements InterfacePasswordResetRepository
 
     public function save(int $userId, string $tokenPlain, string $expiresAt): bool
     {
-        
+
         $this->deleteByUserId($userId);
 
         $sql = "INSERT INTO 

@@ -30,12 +30,16 @@ class ExportExcelValidator
                 $params = $this->getParameters();
                 $minDateStr = $params[0] ?? null;
 
-                if (!$value || !$minDateStr) return true;
+                if (!$value || !$minDateStr) {
+                    return true;
+                }
 
                 $fechaActual = DateTime::createFromFormat('Y-m-d', $value);
                 $fechaMinima = DateTime::createFromFormat('Y-m-d', $minDateStr);
 
-                if (!$fechaActual || !$fechaMinima) return false;
+                if (!$fechaActual || !$fechaMinima) {
+                    return false;
+                }
 
                 return $fechaActual >= $fechaMinima;
             }
@@ -56,12 +60,16 @@ class ExportExcelValidator
                 $params = $this->getParameters();
                 $maxDateStr = $params[0] ?? null;
 
-                if (!$value || !$maxDateStr) return true;
+                if (!$value || !$maxDateStr) {
+                    return true;
+                }
 
                 $fechaActual = DateTime::createFromFormat('Y-m-d', $value);
                 $fechaMaxima = DateTime::createFromFormat('Y-m-d', $maxDateStr);
 
-                if (!$fechaActual || !$fechaMaxima) return false;
+                if (!$fechaActual || !$fechaMaxima) {
+                    return false;
+                }
 
                 return $fechaActual <= $fechaMaxima;
             }
@@ -81,26 +89,26 @@ class ExportExcelValidator
 
             public function check(mixed $value): bool
             {
-                $params = $this->getParameters(); 
+                $params = $this->getParameters();
                 $maxDays = (int) ($params[0] ?? 62);
-                
+
                 $fechaInicioParam = $this->validation->getValue('fecha_inicio');
 
                 if (!$fechaInicioParam || !$value) {
-                    return true; 
+                    return true;
                 }
 
                 $inicio = DateTime::createFromFormat('Y-m-d', $fechaInicioParam);
                 $fin = DateTime::createFromFormat('Y-m-d', $value);
 
                 if (!$inicio || !$fin) {
-                    return false; 
+                    return false;
                 }
 
                 $diferencia = $inicio->diff($fin);
-                
+
                 if ($diferencia->invert === 1) {
-                    return false; 
+                    return false;
                 }
 
                 return $diferencia->days <= $maxDays;
@@ -138,7 +146,7 @@ class ExportExcelValidator
         // Validación extra de coherencia cronológica por seguridad
         $inicio = DateTime::createFromFormat('Y-m-d', $data['fecha_inicio'] ?? '');
         $fin = DateTime::createFromFormat('Y-m-d', $data['fecha_fin'] ?? '');
-        
+
         if ($inicio && $fin && $fin < $inicio) {
             return ['fecha_fin' => 'La fecha hasta no puede ser menor o anterior a la fecha desde.'];
         }

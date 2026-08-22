@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Strategus\Validators;
 
 use Rakit\Validation\Validator;
@@ -7,7 +8,6 @@ use Rakit\Validation\Validation;
 class StrategusValidator
 {
     private Validator $validator;
-
     public function __construct()
     {
         $this->validator = new Validator();
@@ -20,10 +20,9 @@ class StrategusValidator
      */
     public function validate(array $data): Validation
     {
-        $regexHora = 'regex:/^\d{2}:\d{2}:\d{2}$/'; // HH:mm:ss
+        $regexHora = 'regex:/^\d{2}:\d{2}:\d{2}$/';
+// HH:mm:ss
         $regexUuid = 'regex:/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
-
-
         return $this->validator->validate($data, [
             'uuid'           => ['required', $regexUuid],
             'latitud'        => ['required', 'numeric'],

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Usuarios\Controllers;
 
 // Importamos las interfaces estándar para manejar peticiones y respuestas HTTP (PSR-7)
@@ -9,8 +10,7 @@ use App\Usuarios\Repository\UsuarioRepository;
 class GetAllController
 {
     private UsuarioRepository $repository;
-
-    // Inyectamos el repositorio que ya sabe cómo hacer la consulta con el LEFT JOIN
+// Inyectamos el repositorio que ya sabe cómo hacer la consulta con el LEFT JOIN
     public function __construct(UsuarioRepository $repository)
     {
         $this->repository = $repository;
@@ -24,9 +24,9 @@ class GetAllController
         // -------------------------------------------------------------
         // Ejecuta el método getAll() que corregimos (el que trae id, nombre, email y el nombre del rol)
         $usuarios = $this->repository->getAll();
-
         $usuariosFormateados = array_map(function ($user) {
-            
+
+
             // Verificamos que existan las llaves para evitar un "Undefined array key"
             if (isset($user['nombre'])) {
                 $user['nombre'] = mb_convert_case($user['nombre'], MB_CASE_TITLE, "UTF-8");
@@ -34,11 +34,10 @@ class GetAllController
             if (isset($user['apellido'])) {
                 $user['apellido'] = mb_convert_case($user['apellido'], MB_CASE_TITLE, "UTF-8");
             }
-            
+
             return $user;
         }, $usuarios);
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 2: Estructurar la respuesta para el Frontend
         // -------------------------------------------------------------
         // Armamos un array con una estructura clara: un indicador de éxito y la lista de datos
@@ -46,14 +45,12 @@ class GetAllController
             'success' => true,
             'data'    => $usuariosFormateados
         ];
-
-        // -------------------------------------------------------------
+// -------------------------------------------------------------
         // PASO 3: Enviar la respuesta en formato JSON
         // -------------------------------------------------------------
         // Convertimos el array a texto JSON (asegurando que los acentos se lean bien con JSON_UNESCAPED_UNICODE)
         $response->getBody()->write(json_encode($responseData, JSON_UNESCAPED_UNICODE));
-
-        // Devolvemos la respuesta especificando que es un JSON y con un código 200 (Éxito)
+// Devolvemos la respuesta especificando que es un JSON y con un código 200 (Éxito)
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus(200);

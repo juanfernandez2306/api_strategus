@@ -15,7 +15,7 @@ return [
         ON DUPLICATE KEY UPDATE 
             fecha_revision = :fecha_revision_update
     ",
-    
+
     "getExportData" => "
         SELECT 
             ST_Y(m.posicion) AS latitud,
