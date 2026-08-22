@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         # Se actualizaron las versiones de PHP (PHP 7.4 está descontinuado)
-        php: ['8.1', '8.2', '8.3']
+        php: '8.3'
         experimental: [false]
         include:
           - php: '8.2'
