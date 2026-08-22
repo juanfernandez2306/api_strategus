@@ -4,27 +4,17 @@ on: [push, pull_request]
 
 jobs:
   tests:
-    name: Tests PHP ${{ matrix.php }}
+    name: Tests PHP 8.3
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # Se actualizaron las versiones de PHP (PHP 7.4 está descontinuado)
-        php: '8.3'
-        experimental: [false]
-        include:
-          - php: '8.2'
-            analysis: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up PHP ${{ matrix.php }}
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.3'
           coverage: xdebug
           tools: composer:v2
 
@@ -34,18 +24,15 @@ jobs:
           composer-options: "--prefer-dist --no-progress"
 
       - name: Coding standards
-        if: matrix.analysis
         run: vendor/bin/phpcs
 
       - name: Static analysis
-        if: matrix.analysis
         run: vendor/bin/phpstan
 
       - name: Tests
         run: vendor/bin/phpunit --coverage-clover clover.xml
 
       - name: Upload coverage results to Coveralls
-        if: matrix.analysis
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
