@@ -308,4 +308,4 @@ class UsuarioRepository
         $result = $stmt->fetch();
         return $result ? $result : null;
     }
-};
+}

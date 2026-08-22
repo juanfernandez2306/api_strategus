@@ -15,11 +15,6 @@ use App\Usuarios\Controllers\ResetPasswordController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 
-/**
- * Definición de rutas para el módulo de Usuarios
- * * Este archivo se importa en tu index.php principal de la siguiente manera:
- * $app->group('/usuarios', require __DIR__ . '/src/Usuarios/Routes.php');
- */
 
 return function (RouteCollectorProxy $group) {
 
