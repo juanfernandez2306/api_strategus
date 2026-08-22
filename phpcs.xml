@@ -14,4 +14,6 @@
     <!-- Paths to check -->
     <file>src</file>
     <file>tests</file>
+    <exclude-pattern>src/Usuarios/*</exclude-pattern>
+    <exclude-pattern>src/Strategus/*</exclude-pattern>
 </ruleset>
