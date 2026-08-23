@@ -9,7 +9,7 @@ use App\Users\Validators\BaseValidator;
 abstract class AuthBaseValidator extends BaseValidator
 {
     public const PASSWORD_REGEX = '/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/';
-    public const PERSON_NAME_REGEX = '/^[A-Za-z]{3,}$/';
+    public const PERSON_NAME_REGEX = '/^[A-Za-zÑñ]{3,}$/';
 
 
     public function __construct()
