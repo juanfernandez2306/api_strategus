@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Validators;
 
+use App\Shared\Exceptions\ValidationException;
 use Rakit\Validation\Validator;
 
 abstract class BaseValidator
@@ -41,7 +42,8 @@ abstract class BaseValidator
 
         if ($validation->fails()) {
             $errors = $validation->errors()->firstOfAll();
-            throw new \InvalidArgumentException(json_encode($errors));
+            
+            throw new ValidationException($errors);
         }
 
         return $validation->getValidData();

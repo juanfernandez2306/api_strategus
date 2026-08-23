@@ -16,6 +16,7 @@ use Slim\Exception\HttpNotImplementedException;
 use Slim\Exception\HttpUnauthorizedException;
 use Slim\Handlers\ErrorHandler as SlimErrorHandler;
 use Throwable;
+use App\Shared\Exceptions\ValidationException;
 
 class HttpErrorHandler extends SlimErrorHandler
 {
@@ -30,6 +31,26 @@ class HttpErrorHandler extends SlimErrorHandler
             ActionError::SERVER_ERROR,
             'An internal error has occurred while processing your request.'
         );
+
+        if ($exception instanceof ValidationException) {
+            $statusCode = 422;
+            
+            $payload = [
+                'statusCode' => $statusCode,
+                'error' => [
+                    'type'        => 'VALIDATION_ERROR',
+                    'description' => $exception->getMessage(),
+                    'fields'      => $exception->getErrors()
+                ]
+            ];
+
+            $encodedPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+            $response = $this->responseFactory->createResponse($statusCode);
+            $response->getBody()->write($encodedPayload);
+
+            return $response->withHeader('Content-Type', 'application/json');
+        }
 
         if ($exception instanceof HttpException) {
             $statusCode = $exception->getCode();

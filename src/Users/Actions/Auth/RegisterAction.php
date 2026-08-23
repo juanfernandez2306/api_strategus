@@ -6,8 +6,8 @@ namespace App\Users\Actions\Auth;
 
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
-use App\Users\Repositories\Auth\InterfacePasswordResetRepository;
-use App\Users\Services\Mail\InterfaceMailRegister;
+use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
+use App\Users\Services\Mail\MailRegisterInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
@@ -19,15 +19,15 @@ class RegisterAction
     private PDO $pdo;
     private RegisterValidator $validator;
     private UserCrudRepositoryInterface $userCrudRepo;
-    private InterfacePasswordResetRepository $passwordResetRepo;
-    private InterfaceMailRegister $mailRegisterService;
+    private PasswordResetRepositoryInterface $passwordResetRepo;
+    private MailRegisterInterface $mailRegisterService;
 
     public function __construct(
         PDO $pdo,
         RegisterValidator $validator,
         UserCrudRepositoryInterface $userCrudRepo,
-        InterfacePasswordResetRepository $passwordResetRepo,
-        InterfaceMailRegister $mailRegisterService
+        PasswordResetRepositoryInterface $passwordResetRepo,
+        MailRegisterInterface $mailRegisterService
     ) {
         $this->pdo = $pdo;
         $this->validator = $validator;
