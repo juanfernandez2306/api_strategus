@@ -66,6 +66,7 @@ return function (ContainerBuilder $containerBuilder) {
         RateLimitMiddleware::class => function (ContainerInterface $c) {
             return new RateLimitMiddleware(
                 $c->get(RateLimitCacheRepository::class),
+                40,
                 60
             );
         },
