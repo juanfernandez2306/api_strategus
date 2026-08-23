@@ -3,5 +3,6 @@ parameters:
   paths:
     - src
   excludePaths:
-    - src/Usuarios/*
-    - src/Strategus/*
+    - analyse:
+        - src/Usuarios/*
+        - src/Strategus/*
