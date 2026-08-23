@@ -45,7 +45,6 @@ class AuthMiddleware implements MiddlewareInterface
         }
 
         if (empty($accessToken['email_verified_at'])) {
-
             return $this->unauthorizedResponse(
                 'Acceso denegado: Su dirección de correo electrónico no ha sido verificada.'
             );

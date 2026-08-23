@@ -33,9 +33,10 @@ class IndexController
     private function jsonResponse(Response $response, array $data, int $statusCode = 200): Response
     {
         $response->getBody()->write(json_encode(
-            $data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+            $data,
+            JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
         ));
-        
+
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($statusCode);
