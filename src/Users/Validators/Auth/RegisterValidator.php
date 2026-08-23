@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
-use App\Users\Repositories\Auth\InterfaceUserRepository;
+use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\Rules\UniqueEmailRule;
 
 class RegisterValidator extends AuthBaseValidator
 {
-    public function __construct(InterfaceUserRepository $userRepository)
+    public function __construct(UserRepositoryInterface $userRepository)
     {
         parent::__construct();
 

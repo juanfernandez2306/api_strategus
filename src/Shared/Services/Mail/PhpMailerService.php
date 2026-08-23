@@ -9,7 +9,7 @@ use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
-class PhpMailerService implements InterfaceMailService
+class PhpMailerService implements MailServiceInterface
 {
     private array $config;
     private LoggerInterface $logger;

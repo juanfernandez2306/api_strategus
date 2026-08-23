@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
-interface InterfacePasswordResetRepository
+interface PasswordResetRepositoryInterface
 {
     public function save(int $userId, string $tokenPlain, string $expiresAt): bool;
 

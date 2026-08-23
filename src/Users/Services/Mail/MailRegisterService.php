@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Users\Services\Mail;
 
-use App\Shared\Services\Mail\InterfaceMailService;
+use App\Shared\Services\Mail\MailServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
-class MailRegisterService implements InterfaceMailRegister
+class MailRegisterService implements MailRegisterInterface
 {
-    private InterfaceMailService $mailService;
+    private MailServiceInterface $mailService;
     private LoggerInterface $logger;
     private string $templatePath;
     private string $frontendUrl;
 
     public function __construct(
-        InterfaceMailService $mailService,
+        MailServiceInterface $mailService,
         LoggerInterface $logger,
         ?string $frontendUrl = null
     ) {

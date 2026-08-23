@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use App\Application\Settings\SettingsInterface;
 use App\Middleware\RateLimitMiddleware;
-use App\Shared\Services\Mail\InterfaceMailService;
+use App\Shared\Services\Mail\MailServiceInterface;
 use App\Shared\Services\Mail\PhpMailerService;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
-use App\Users\Services\Mail\InterfaceMailRegister;
+use App\Users\Services\Mail\MailRegisterInterface;
 use App\Users\Services\Mail\MailRegisterService;
 use DI\ContainerBuilder;
 use Monolog\Handler\StreamHandler;
@@ -24,8 +24,8 @@ use function DI\autowire;
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
 
-        InterfaceMailService::class  => autowire(PhpMailerService::class),
-        InterfaceMailRegister::class => autowire(MailRegisterService::class),
+        MailServiceInterface::class  => autowire(PhpMailerService::class),
+        MailRegisterInterface::class => autowire(MailRegisterService::class),
 
         PDO::class => function (ContainerInterface $c) {
             $settingsInstance = $c->get(SettingsInterface::class);

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Domain\User\UserRepository;
 use App\Infrastructure\Persistence\User\InMemoryUserRepository;
-use App\Users\Repositories\Auth\InterfacePasswordResetRepository;
-use App\Users\Repositories\Auth\InterfaceUserRepository;
+use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
+use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Repositories\Auth\PdoPasswordResetRepository;
 use App\Users\Repositories\Auth\PdoUserRepository;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
@@ -20,9 +20,9 @@ use function DI\autowire;
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
         UserRepository::class                    => autowire(InMemoryUserRepository::class),
-        InterfaceUserRepository::class           => autowire(PdoUserRepository::class),
+        UserRepositoryInterface::class           => autowire(PdoUserRepository::class),
         UserCrudRepositoryInterface::class       => autowire(PdoUserCrudRepository::class),
-        InterfacePasswordResetRepository::class => autowire(PdoPasswordResetRepository::class),
+        PasswordResetRepositoryInterface::class => autowire(PdoPasswordResetRepository::class),
 
         RateLimitCacheRepository::class => function (ContainerInterface $c) {
             return new RateLimitCacheRepository($c->get(CacheInterface::class));
