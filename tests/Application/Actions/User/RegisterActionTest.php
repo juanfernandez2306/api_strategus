@@ -7,8 +7,8 @@ namespace Tests\Application\Actions\User;
 use App\Users\Actions\Auth\RegisterAction;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
-use App\Users\Repositories\Auth\InterfacePasswordResetRepository;
-use App\Users\Services\Mail\InterfaceMailRegister;
+use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
+use App\Users\Services\Mail\MailRegisterInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ServerRequestInterface;
@@ -21,8 +21,8 @@ class RegisterActionTest extends TestCase
     private PDO&MockObject $pdoMock;
     private RegisterValidator&MockObject $validatorMock;
     private UserCrudRepositoryInterface&MockObject $userCrudRepoMock;
-    private InterfacePasswordResetRepository&MockObject $passwordResetRepoMock;
-    private InterfaceMailRegister&MockObject $mailRegisterServiceMock;
+    private PasswordResetRepositoryInterface&MockObject $passwordResetRepoMock;
+    private MailRegisterInterface&MockObject $mailRegisterServiceMock;
     private ServerRequestInterface&MockObject $requestMock;
     private ResponseInterface&MockObject $responseMock;
     private StreamInterface&MockObject $streamMock;
@@ -34,8 +34,8 @@ class RegisterActionTest extends TestCase
         $this->pdoMock = $this->createMock(PDO::class);
         $this->validatorMock = $this->createMock(RegisterValidator::class);
         $this->userCrudRepoMock = $this->createMock(UserCrudRepositoryInterface::class);
-        $this->passwordResetRepoMock = $this->createMock(InterfacePasswordResetRepository::class);
-        $this->mailRegisterServiceMock = $this->createMock(InterfaceMailRegister::class);
+        $this->passwordResetRepoMock = $this->createMock(PasswordResetRepositoryInterface::class);
+        $this->mailRegisterServiceMock = $this->createMock(MailRegisterInterface::class);
 
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
         $this->responseMock = $this->createMock(ResponseInterface::class);
