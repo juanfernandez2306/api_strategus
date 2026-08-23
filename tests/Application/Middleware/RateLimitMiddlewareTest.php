@@ -18,42 +18,40 @@ class RateLimitMiddlewareTest extends TestCase
         $app = $this->getAppInstance();
         $container = $app->getContainer();
 
-        
+
         $cache = $container->get(CacheInterface::class);
         $cache->clear();
 
-        
+
         $testLimit = 5;
         $totalRequests = 8;
 
         $repository = new RateLimitCacheRepository($cache);
         $middleware = new RateLimitMiddleware(
-            $repository, 
-            limit: $testLimit, 
+            $repository,
+            limit: $testLimit,
             windowSeconds: 60
         );
 
-        
+
         $handler = $this->createMock(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn(new Response(200));
 
-        
+
         for ($i = 0; $i < $totalRequests; $i++) {
             $request = $this->createRequest('GET', '/test-route');
             $response = $middleware->process($request, $handler);
 
             if ($i < $testLimit) {
-                
                 $this->assertEquals(
-                    200, 
-                    $response->getStatusCode(), 
+                    200,
+                    $response->getStatusCode(),
                     "Falló permitiendo en la iteración $i"
                 );
             } else {
-                
                 $this->assertEquals(
-                    429, 
-                    $response->getStatusCode(), 
+                    429,
+                    $response->getStatusCode(),
                     "Falló bloqueando en la iteración $i"
                 );
                 $this->assertTrue($response->hasHeader('Retry-After'));
