@@ -19,13 +19,13 @@ class AuthMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandler $handler): Response
     {
-        
+
         $authHeader = $request->getHeaderLine('Authorization');
         if (empty($authHeader)) {
             return $this->unauthorizedResponse('Token de autenticación no proporcionado.');
         }
 
-        
+
         if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
             return $this->unauthorizedResponse(
                 'Formato de autenticación inválido. Debe ser Bearer <token>.'
@@ -37,7 +37,7 @@ class AuthMiddleware implements MiddlewareInterface
         $tokenHashed = hash('sha256', $plainToken);
 
         $accessToken = $this->repository->getAccessToken($tokenHashed);
-        
+
         if (empty($accessToken)) {
             return $this->unauthorizedResponse(
                 'Token inválido o sesión expirada.'
@@ -56,14 +56,14 @@ class AuthMiddleware implements MiddlewareInterface
             );
         }
 
-        
+
         if (strtotime($accessToken['expires_at']) < time()) {
             return $this->unauthorizedResponse(
                 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'
             );
         }
 
-        
+
         $request = $request->withAttribute('user_id', $accessToken['user_id']);
         $request = $request->withAttribute('role_id', $accessToken['role_id'] ?? null);
 

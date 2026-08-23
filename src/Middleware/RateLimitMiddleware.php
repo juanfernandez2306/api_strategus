@@ -46,7 +46,7 @@ class RateLimitMiddleware implements MiddlewareInterface
 
         if ($currentHits > $this->limit) {
             $response = new SlimResponse(429);
-            
+
             // Cast explícito a string y bandera JSON_UNESCAPED_UNICODE
             $response->getBody()->write((string) json_encode([
                 'status'  => 429,

@@ -19,10 +19,10 @@ class RoleMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandler $handler): Response
     {
-        
+
         $userRole = $request->getAttribute('role_id');
 
-        if ($userRole === null || !in_array((int) $userRole, $this->allowedRoles, true)){
+        if ($userRole === null || !in_array((int) $userRole, $this->allowedRoles, true)) {
             return $this->forbiddenResponse(
                 'No tienes los privilegios necesarios para realizar esta acción.'
             );
@@ -31,7 +31,7 @@ class RoleMiddleware implements MiddlewareInterface
         return $handler->handle($request);
     }
 
-    
+
     private function forbiddenResponse(string $message): Response
     {
         $response = new SlimResponse();

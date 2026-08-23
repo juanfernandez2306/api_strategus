@@ -29,7 +29,7 @@ class AccessTokenUserRepository
         $stmt->execute([':token' => $tokenHashed]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         return $result ?: [];
     }
 }
