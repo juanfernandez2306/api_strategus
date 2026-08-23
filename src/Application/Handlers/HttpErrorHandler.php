@@ -20,20 +20,20 @@ use App\Shared\Exceptions\ValidationException;
 
 class HttpErrorHandler extends SlimErrorHandler
 {
-    /**
-     * @inheritdoc
-     */
+    private const HTTP_UNPROCESSABLE_ENTITY = 422;
+    private const HTTP_INTERNAL_SERVER_ERROR = 500;
+
     protected function respond(): Response
     {
         $exception = $this->exception;
-        $statusCode = 500;
+        $statusCode = self::HTTP_INTERNAL_SERVER_ERROR;
         $error = new ActionError(
             ActionError::SERVER_ERROR,
-            'An internal error has occurred while processing your request.'
+            'Ha ocurrido un error interno al procesar su solicitud.'
         );
 
         if ($exception instanceof ValidationException) {
-            $statusCode = 422;
+            $statusCode = self::HTTP_UNPROCESSABLE_ENTITY;
             
             $payload = [
                 'statusCode' => $statusCode,
