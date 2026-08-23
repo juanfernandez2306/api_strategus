@@ -58,11 +58,15 @@ class MailRegisterService implements InterfaceMailRegister
             $htmlBody = str_replace(
                 ['{{nombre}}', '{{enlace}}'],
                 [htmlspecialchars(
-                    $toName, ENT_QUOTES, 'UTF-8'), 
-                    htmlspecialchars($verificationUrl, 
-                    ENT_QUOTES, 
+                    $toName,
+                    ENT_QUOTES,
                     'UTF-8'
-                )],
+                ),
+                    htmlspecialchars(
+                        $verificationUrl,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    )],
                 $htmlBody
             );
 
@@ -73,7 +77,6 @@ class MailRegisterService implements InterfaceMailRegister
                 $htmlBody
             );
         } catch (RuntimeException $e) {
-
             $errorMessage = sprintf(
                 "No se encontró la plantilla de correo de verificación para %s: %s",
                 $toEmail,
