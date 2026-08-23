@@ -31,7 +31,9 @@ class MailRegisterService implements InterfaceMailRegister
         try {
             $url = $frontendUrl ?? ($_ENV['FRONTEND_URL'] ?? '');
 
-            empty($url) && throw new RuntimeException("La variable de entorno 'FRONTEND_URL' no está definida o está vacía.");
+            $errorMessage = "La variable de entorno 'FRONTEND_URL' no está definida o está vacía.";
+
+            empty($url) && throw new RuntimeException($errorMessage);
 
             return rtrim($url, '/');
         } catch (RuntimeException $e) {
@@ -43,14 +45,24 @@ class MailRegisterService implements InterfaceMailRegister
     public function send(string $toEmail, string $toName, string $tokenPlain): bool
     {
         try {
-            (!file_exists($this->templatePath)) && throw new RuntimeException("No se encontró el archivo de la plantilla HTML en la ruta: {$this->templatePath}");
+            if (!file_exists($this->templatePath)) {
+                throw new RuntimeException(sprintf(
+                    "No se encontró el archivo de la plantilla HTML en la ruta: %s",
+                    $this->templatePath
+                ));
+            }
 
             $htmlBody = file_get_contents($this->templatePath);
             $verificationUrl = "{$this->frontendUrl}/verify/email?token={$tokenPlain}";
 
             $htmlBody = str_replace(
                 ['{{nombre}}', '{{enlace}}'],
-                [htmlspecialchars($toName, ENT_QUOTES, 'UTF-8'), htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8')],
+                [htmlspecialchars(
+                    $toName, ENT_QUOTES, 'UTF-8'), 
+                    htmlspecialchars($verificationUrl, 
+                    ENT_QUOTES, 
+                    'UTF-8'
+                )],
                 $htmlBody
             );
 
@@ -61,7 +73,15 @@ class MailRegisterService implements InterfaceMailRegister
                 $htmlBody
             );
         } catch (RuntimeException $e) {
-            $this->logger->error("No se encontró la plantilla de correo de verificación para {$toEmail}: " . $e->getMessage());
+
+            $errorMessage = sprintf(
+                "No se encontró la plantilla de correo de verificación para %s: %s",
+                $toEmail,
+                $e->getMessage()
+            );
+
+            $this->logger->error($errorMessage);
+
             throw $e;
         }
     }

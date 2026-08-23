@@ -30,9 +30,12 @@ class RegisterValidator extends AuthBaseValidator
 
     public function validate(array $data, array $customMessages = []): array
     {
+        $passwordRegexMessage = 'La contraseña debe tener al menos 6 caracteres, ' .
+                                'incluir letras, números y al menos un carácter especial.';
+
         $messages = array_merge([
             'email.required'  => 'El campo correo electrónico es obligatorio.',
-            'password.regex' => 'La contraseña debe tener al menos 6 caracteres, incluir letras, números y al menos un carácter especial.',
+            'password.regex' => $passwordRegexMessage,
             'first_name.regex' => 'El nombre solo debe contener letras.',
             'last_name.regex'  => 'El apellido solo debe contener letras.'
         ], $customMessages);

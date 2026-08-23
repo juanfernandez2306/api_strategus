@@ -45,12 +45,17 @@ class AuthMiddleware implements MiddlewareInterface
         }
 
         if (empty($accessToken['email_verified_at'])) {
-            return $this->unauthorizedResponse('Acceso denegado: Su dirección de correo electrónico no ha sido verificada.');
+
+            return $this->unauthorizedResponse(
+                'Acceso denegado: Su dirección de correo electrónico no ha sido verificada.'
+            );
         }
 
         // 4. Validar si el token ya expiró en tiempo
         if (strtotime($accessToken['expires_at']) < time()) {
-            return $this->unauthorizedResponse('La sesión ha expirado. Por favor, inicie sesión nuevamente.');
+            return $this->unauthorizedResponse(
+                'La sesión ha expirado. Por favor, inicie sesión nuevamente.'
+            );
         }
 
         // 5. Inyectar los datos del usuario autenticado en los atributos de la petición

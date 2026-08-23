@@ -33,8 +33,12 @@ class PhpMailerService implements InterfaceMailService
         ];
 
         foreach ($requiredKeys as $key) {
-            if (empty($_ENV[$key])) {
-                $errorMessage = "Error de configuración: La variable de entorno '{$key}' no está definida o está vacía.";
+            if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
+
+                $errorMessage = sprintf(
+                    "Error de configuración: La variable de entorno '%s' no está definida o está vacía.",
+                    $key
+                );
 
                 $this->logger->critical($errorMessage);
 
