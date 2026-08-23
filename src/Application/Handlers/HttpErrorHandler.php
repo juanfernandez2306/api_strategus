@@ -34,7 +34,7 @@ class HttpErrorHandler extends SlimErrorHandler
 
         if ($exception instanceof ValidationException) {
             $statusCode = self::HTTP_UNPROCESSABLE_ENTITY;
-            
+
             $payload = [
                 'statusCode' => $statusCode,
                 'error' => [

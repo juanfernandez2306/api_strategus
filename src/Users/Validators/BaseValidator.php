@@ -42,7 +42,7 @@ abstract class BaseValidator
 
         if ($validation->fails()) {
             $errors = $validation->errors()->firstOfAll();
-            
+
             throw new ValidationException($errors);
         }
 
