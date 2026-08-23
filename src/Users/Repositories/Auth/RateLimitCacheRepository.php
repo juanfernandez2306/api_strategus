@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Middleware\Repositories;
+namespace App\Users\Repositories\Auth;
 
 use Psr\SimpleCache\CacheInterface;
 

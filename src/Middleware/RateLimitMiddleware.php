@@ -2,7 +2,7 @@
 
 namespace App\Middleware;
 
-use App\Middleware\Repositories\RateLimitCacheRepository;
+use App\Users\Repositories\Auth\RateLimitCacheRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
@@ -25,14 +25,14 @@ class RateLimitMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandler $handler): Response
     {
-        // Identificar al cliente (Token Authorization o IP)
+        
         $clientIdentifier = $request->getHeaderLine('Authorization')
             ? md5($request->getHeaderLine('Authorization'))
             : ($request->getServerParams()['REMOTE_ADDR'] ?? '127.0.0.1');
 
         $endpoint = $request->getUri()->getPath();
 
-        // Calcular ventana temporal fija
+        
         $currentTime = time();
         $windowBlock = (int) floor($currentTime / $this->windowSeconds);
         $rateKey = 'ratelimit_' . md5($clientIdentifier . ':' . $endpoint . ':' . $windowBlock);
@@ -40,11 +40,11 @@ class RateLimitMiddleware implements MiddlewareInterface
         $resetTime = ($windowBlock + 1) * $this->windowSeconds;
         $ttlSeconds = max(1, $resetTime - $currentTime);
 
-        // Incrementar contador en Symfony Cache
+        
         $currentHits = $this->repository->incrementHit($rateKey, $ttlSeconds);
         $remaining = max(0, $this->limit - $currentHits);
 
-        // Si se sobrepasa el límite
+        
         if ($currentHits > $this->limit) {
             $response = new SlimResponse(429);
             $response->getBody()->write(json_encode([
@@ -61,7 +61,7 @@ class RateLimitMiddleware implements MiddlewareInterface
                 ->withHeader('Retry-After', (string) $ttlSeconds);
         }
 
-        // Si la petición es válida, continuar con la ejecución
+        
         $response = $handler->handle($request);
 
         return $response
