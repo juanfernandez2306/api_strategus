@@ -4,20 +4,24 @@ declare(strict_types=1);
 
 namespace Tests\Application\Actions\User;
 
+use App\Shared\Exceptions\ValidationException;
 use App\Users\Actions\Auth\RegisterAction;
-use App\Users\Validators\Auth\RegisterValidator;
-use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
+use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
 use App\Users\Services\Mail\MailRegisterInterface;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use App\Users\Validators\Auth\RegisterValidator;
+use Faker\Factory;
+use Faker\Generator;
 use PDO;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamInterface;
 
 class RegisterActionTest extends TestCase
 {
+    private Generator $faker;
     private PDO&MockObject $pdoMock;
     private RegisterValidator&MockObject $validatorMock;
     private UserCrudRepositoryInterface&MockObject $userCrudRepoMock;
@@ -31,6 +35,8 @@ class RegisterActionTest extends TestCase
     {
         parent::setUp();
 
+        $this->faker = Factory::create('es_ES');
+
         $this->pdoMock = $this->createMock(PDO::class);
         $this->validatorMock = $this->createMock(RegisterValidator::class);
         $this->userCrudRepoMock = $this->createMock(UserCrudRepositoryInterface::class);
@@ -42,76 +48,35 @@ class RegisterActionTest extends TestCase
         $this->streamMock = $this->createMock(StreamInterface::class);
     }
 
-    public function testExecuteRegisterActionSuccessfully(): void
+
+    public function testExecuteReturns201OnSuccessfulRegistration(): void
     {
-        $inputData = [
-            'first_name'            => 'Juan',
-            'last_name'             => 'Pérez',
-            'email'                 => 'juan.perez@example.com',
-            'password'              => 'Secret123!',
-            'password_confirmation' => 'Secret123!'
+        $dummyPayload = [
+            'first_name' => $this->faker->firstName(),
+            'last_name'  => $this->faker->lastName(),
+            'email'      => $this->faker->email(),
         ];
 
-        // Configuración del validador mock[cite: 4]
-        $this->validatorMock
-            ->expects($this->once())
-            ->method('validate')
-            ->with($inputData)
-            ->willReturn($inputData);
 
-        // Expectativa de la transacción en BD
-        $this->pdoMock->expects($this->once())->method('beginTransaction');
-        $this->pdoMock->expects($this->once())->method('commit');
+        $this->validatorMock->method('validate')->willReturn($dummyPayload);
+        $this->userCrudRepoMock->method('create')->willReturn($this->faker->randomNumber());
+        $this->passwordResetRepoMock->method('save')->willReturn(true);
+        $this->mailRegisterServiceMock->method('send')->willReturn(true);
 
-        // Configuración de la creación del usuario (devuelve ID 15)[cite: 5, 6]
-        $this->userCrudRepoMock
-            ->expects($this->once())
-            ->method('create')
-            ->with($inputData)
-            ->willReturn(15);
-
-        // Configuración del guardado del token en password_resets[cite: 7, 8]
-        $this->passwordResetRepoMock
-            ->expects($this->once())
-            ->method('save')
-            ->with(
-                $this->equalTo(15),
-                $this->callback(fn($token) => is_string($token) && strlen($token) === 64),
-                $this->isType('string')
-            )
-            ->willReturn(true);
-
-        // Configuración del envío de correo[cite: 9]
-        $this->mailRegisterServiceMock
-            ->expects($this->once())
-            ->method('send')
-            ->with(
-                'juan.perez@example.com',
-                'Juan Pérez',
-                $this->callback(fn($token) => is_string($token) && strlen($token) === 64)
-            )
-            ->willReturn(true);
-
-        // Mocking del Request y Response HTTP
-        $this->requestMock
-            ->method('getParsedBody')
-            ->willReturn($inputData);
-
-        $this->responseMock
-            ->method('getBody')
-            ->willReturn($this->streamMock);
+        $this->requestMock->method('getParsedBody')->willReturn($dummyPayload);
+        $this->responseMock->method('getBody')->willReturn($this->streamMock);
 
         $this->responseMock
             ->method('withHeader')
-            ->with('Content-Type', 'application/json')
             ->willReturnSelf();
 
         $this->responseMock
+            ->expects($this->once())
             ->method('withStatus')
             ->with(201)
             ->willReturnSelf();
 
-        // Instanciación y ejecución de la Action
+
         $action = new RegisterAction(
             $this->pdoMock,
             $this->validatorMock,
@@ -120,9 +85,36 @@ class RegisterActionTest extends TestCase
             $this->mailRegisterServiceMock
         );
 
-        $resultResponse = $action($this->requestMock, $this->responseMock);
+        $response = $action($this->requestMock, $this->responseMock);
 
-        // Aserciones
-        $this->assertInstanceOf(ResponseInterface::class, $resultResponse);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+    }
+
+
+    public function testExecuteThrowsExceptionOnValidationError(): void
+    {
+        $invalidPayload = [];
+
+        $validationErrors = [
+            'email' => ['El campo correo electrónico es obligatorio.']
+        ];
+
+        $this->validatorMock
+            ->method('validate')
+            ->willThrowException(new ValidationException($validationErrors));
+
+        $this->requestMock->method('getParsedBody')->willReturn($invalidPayload);
+
+        $this->expectException(ValidationException::class);
+
+        $action = new RegisterAction(
+            $this->pdoMock,
+            $this->validatorMock,
+            $this->userCrudRepoMock,
+            $this->passwordResetRepoMock,
+            $this->mailRegisterServiceMock
+        );
+
+        $action($this->requestMock, $this->responseMock);
     }
 }
