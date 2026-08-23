@@ -37,7 +37,8 @@ class AuthMiddleware implements MiddlewareInterface
         $tokenHashed = hash('sha256', $plainToken);
 
         $accessToken = $this->repository->getAccessToken($tokenHashed);
-        if (count($accessToken) > 0) {
+        
+        if (empty($accessToken)) {
             return $this->unauthorizedResponse(
                 'Token inválido o sesión expirada.'
             );

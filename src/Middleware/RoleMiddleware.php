@@ -22,7 +22,7 @@ class RoleMiddleware implements MiddlewareInterface
         
         $userRole = $request->getAttribute('role_id');
 
-        if ($userRole === null || !in_array((int)$userRole, $this->allowedRoles, true)){
+        if ($userRole === null || !in_array((int) $userRole, $this->allowedRoles, true)){
             return $this->forbiddenResponse(
                 'No tienes los privilegios necesarios para realizar esta acción.'
             );
