@@ -19,7 +19,8 @@ abstract class BaseValidator
             'required' => 'El campo :attribute es obligatorio.',
             'min'      => 'El campo :attribute debe tener al menos :min caracteres.',
             'max'      => 'El campo :attribute no debe superar los :max caracteres.',
-            'same'     => 'Los campos :attribute y :to deben coincidir.'
+            'same'     => 'Los campos :attribute y :field deben coincidir.',
+            'regex'    => 'El campo :attribute no cumple con el formato requerido.'
         ]);
     }
 
