@@ -29,7 +29,7 @@ class RegisterActionIntegrationTest extends TestCase
 
         $projectRoot = dirname(__DIR__, 5);
         $basePath = $projectRoot . '/app';
-        
+
         if (file_exists($projectRoot . '/.env')) {
             $dotenv = Dotenv::createImmutable($projectRoot);
             $dotenv->safeLoad();
