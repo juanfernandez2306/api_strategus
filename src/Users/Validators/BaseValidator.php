@@ -39,6 +39,10 @@ abstract class BaseValidator
             $validation->setAliases($this->customAttributes());
         }
 
+        if (!empty($customMessages)) {
+            $validation->setMessages($customMessages);
+        }
+
         $validation->validate();
 
         if ($validation->fails()) {

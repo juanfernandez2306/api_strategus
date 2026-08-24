@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
-class LoginValidator extends AuthBaseValidator
+use App\Users\Validators\BaseValidator;
+
+class LoginValidator extends BaseValidator
 {
     protected function rules(): array
     {

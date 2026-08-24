@@ -19,6 +19,16 @@ class RegisterValidator extends BaseValidator
         parent::__construct();
 
         $this->validator->addValidator('unique_email', new UniqueEmailRule($userRepository));
+
+        $msgRegexPassword = "La contraseña debe tener al menos 6 caracteres,"
+                            . " incluir letras, números y al menos un carácter especial.";
+
+        $this->validator->setMessages([
+            'first_name:regex'           => 'El nombre solo debe contener letras, sin tíldes ni espacios.',
+            'last_name:regex'            => 'El apellido solo debe contener letras, sin tíldes ni espacios.',
+            'password:regex'             => $msgRegexPassword,
+            'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.'
+        ]);
     }
 
     protected function customAttributes(): array
@@ -41,17 +51,5 @@ class RegisterValidator extends BaseValidator
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password'
         ];
-    }
-
-    public function validate(array $data, array $customMessages = []): array
-    {
-        $messages = array_merge([
-            'password.regex'   => 'La contraseña debe tener al menos 6 caracteres, incluir letras, números y al menos un carácter especial.',
-            'first_name.regex' => 'El nombre solo debe contener letras.',
-            'last_name.regex'  => 'El apellido solo debe contener letras.',
-            'password_confirmation.same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.'
-        ], $customMessages);
-
-        return parent::validate($data, $messages);
     }
 }
