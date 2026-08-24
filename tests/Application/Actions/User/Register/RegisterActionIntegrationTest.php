@@ -27,9 +27,9 @@ class RegisterActionIntegrationTest extends TestCase
 
         $this->faker = Factory::create('es_ES');
 
-        $projectRoot = 'C:/xampp/htdocs/api-gepad';
-
-        // 1. Cargar variables del entorno .env
+        $projectRoot = dirname(__DIR__, 5);
+        $basePath = $projectRoot . '/app';
+        
         if (file_exists($projectRoot . '/.env')) {
             $dotenv = Dotenv::createImmutable($projectRoot);
             $dotenv->safeLoad();
