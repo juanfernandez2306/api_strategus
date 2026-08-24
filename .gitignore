@@ -67,3 +67,4 @@ tmp/
 var/
 /var/cache/*
 !/var/cache/.gitignore
+tests/integration_ignored/
