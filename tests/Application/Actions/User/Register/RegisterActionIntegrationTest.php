@@ -35,6 +35,12 @@ class RegisterActionIntegrationTest extends TestCase
             $dotenv->safeLoad();
         }
 
+        $_ENV['DB_HOST']    = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: '127.0.0.1';
+        $_ENV['DB_NAME']    = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'test_db';
+        $_ENV['DB_USER']    = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'root';
+        $_ENV['DB_PASS']    = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
+        $_ENV['DB_CHARSET'] = $_ENV['DB_CHARSET'] ?? getenv('DB_CHARSET') ?: 'utf8mb4';
+
         $basePath = $projectRoot . '/app';
 
         $containerBuilder = new ContainerBuilder();
