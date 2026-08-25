@@ -16,4 +16,5 @@ class HttpStatus
     public const CONFLICT = 409;
     public const UNPROCESSABLE_ENTITY = 422;
     public const INTERNAL_SERVER_ERROR = 500;
+    public const NOT_IMPLEMENTED = 501;
 }

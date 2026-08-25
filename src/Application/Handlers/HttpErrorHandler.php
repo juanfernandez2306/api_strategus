@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Handlers;
 
-use App\Application\Actions\ActionError;
-use App\Application\Actions\ActionPayload;
+use App\Shared\Http\ApiResponse;
+use App\Shared\Http\HttpStatus;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpException;
@@ -20,71 +20,62 @@ use App\Shared\Exceptions\ValidationException;
 
 class HttpErrorHandler extends SlimErrorHandler
 {
-    private const HTTP_UNPROCESSABLE_ENTITY = 422;
-    private const HTTP_INTERNAL_SERVER_ERROR = 500;
-
     protected function respond(): Response
     {
         $exception = $this->exception;
-        $statusCode = self::HTTP_INTERNAL_SERVER_ERROR;
-        $error = new ActionError(
-            ActionError::SERVER_ERROR,
-            'Ha ocurrido un error interno al procesar su solicitud.'
-        );
+        $statusCode = HttpStatus::INTERNAL_SERVER_ERROR;
+        $message = 'Ha ocurrido un error interno al procesar su solicitud.';
+        $errors = null;
 
         if ($exception instanceof ValidationException) {
-            $statusCode = self::HTTP_UNPROCESSABLE_ENTITY;
-
-            $payload = [
-                'statusCode' => $statusCode,
-                'error' => [
-                    'type'        => 'VALIDATION_ERROR',
-                    'description' => $exception->getMessage(),
-                    'fields'      => $exception->getErrors()
-                ]
-            ];
-
-            $encodedPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
-            $response = $this->responseFactory->createResponse($statusCode);
-            $response->getBody()->write($encodedPayload);
-
-            return $response->withHeader('Content-Type', 'application/json');
-        }
-
-        if ($exception instanceof HttpException) {
+            $statusCode = HttpStatus::UNPROCESSABLE_ENTITY;
+            $message = $exception->getMessage();
+            $errors = $exception->getErrors();
+        } elseif ($exception instanceof HttpException) {
             $statusCode = $exception->getCode();
-            $error->setDescription($exception->getMessage());
+            $message = $exception->getMessage();
 
             if ($exception instanceof HttpNotFoundException) {
-                $error->setType(ActionError::RESOURCE_NOT_FOUND);
+                $statusCode = HttpStatus::NOT_FOUND;
             } elseif ($exception instanceof HttpMethodNotAllowedException) {
-                $error->setType(ActionError::NOT_ALLOWED);
+                $statusCode = HttpStatus::METHOD_NOT_ALLOWED;
             } elseif ($exception instanceof HttpUnauthorizedException) {
-                $error->setType(ActionError::UNAUTHENTICATED);
+                $statusCode = HttpStatus::UNAUTHORIZED;
             } elseif ($exception instanceof HttpForbiddenException) {
-                $error->setType(ActionError::INSUFFICIENT_PRIVILEGES);
+                $statusCode = HttpStatus::FORBIDDEN;
             } elseif ($exception instanceof HttpBadRequestException) {
-                $error->setType(ActionError::BAD_REQUEST);
+                $statusCode = HttpStatus::BAD_REQUEST;
             } elseif ($exception instanceof HttpNotImplementedException) {
-                $error->setType(ActionError::NOT_IMPLEMENTED);
+                $statusCode = HttpStatus::NOT_IMPLEMENTED;
             }
+        } elseif ($exception instanceof Throwable && $this->displayErrorDetails) {
+            $message = $exception->getMessage();
         }
 
-        if (
-            !($exception instanceof HttpException)
-            && $exception instanceof Throwable
-            && $this->displayErrorDetails
-        ) {
-            $error->setDescription($exception->getMessage());
+        $response = $this->responseFactory->createResponse();
+
+        try {
+            return ApiResponse::json(
+                $response,
+                $statusCode,
+                $message,
+                null,
+                $errors
+            );
+        } catch (Throwable $e) {
+            $fallbackPayload = json_encode([
+                'status'     => 'error',
+                'statusCode' => HttpStatus::INTERNAL_SERVER_ERROR,
+                'message'    => 'Error crítico e imprevisto en el servidor.',
+                'data'       => null,
+                'errors'     => null
+            ]);
+
+            $response->getBody()->write($fallbackPayload);
+
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(HttpStatus::INTERNAL_SERVER_ERROR);
         }
-
-        $payload = new ActionPayload($statusCode, null, $error);
-        $encodedPayload = json_encode($payload, JSON_PRETTY_PRINT);
-
-        $response = $this->responseFactory->createResponse($statusCode);
-        $response->getBody()->write($encodedPayload);
-
-        return $response->withHeader('Content-Type', 'application/json');
     }
 }

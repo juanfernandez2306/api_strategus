@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Http;
 
 use Psr\Http\Message\ResponseInterface as Response;
+use Throwable;
 
 class ApiResponse
 {
@@ -25,7 +26,21 @@ class ApiResponse
             'errors'     => $errors
         ];
 
-        $encodedPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        try {
+            $encodedPayload = json_encode(
+                $payload,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+            );
+        } catch (Throwable $e) {
+            $statusCode = HttpStatus::INTERNAL_SERVER_ERROR;
+            $encodedPayload = json_encode([
+                'status'     => 'error',
+                'statusCode' => $statusCode,
+                'message'    => 'Error crítico al serializar la respuesta JSON.',
+                'data'       => null,
+                'errors'     => null
+            ]);
+        }
 
         $response->getBody()->write($encodedPayload);
 
