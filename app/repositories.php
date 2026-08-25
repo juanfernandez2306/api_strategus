@@ -9,8 +9,6 @@ use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Repositories\Auth\PdoPasswordResetRepository;
 use App\Users\Repositories\Auth\PdoUserRepository;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
-use App\Users\Repositories\Crud\PdoUserCrudRepository;
-use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -21,7 +19,6 @@ return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
         UserRepository::class                    => autowire(InMemoryUserRepository::class),
         UserRepositoryInterface::class           => autowire(PdoUserRepository::class),
-        UserCrudRepositoryInterface::class       => autowire(PdoUserCrudRepository::class),
         PasswordResetRepositoryInterface::class => autowire(PdoPasswordResetRepository::class),
 
         RateLimitCacheRepository::class => function (ContainerInterface $c) {

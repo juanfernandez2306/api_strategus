@@ -7,8 +7,8 @@ namespace App\Users\Actions\Auth;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Users\Validators\Auth\RegisterValidator;
-use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
+use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Services\Mail\MailRegisterInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -20,20 +20,20 @@ class RegisterAction
 {
     private PDO $pdo;
     private RegisterValidator $validator;
-    private UserCrudRepositoryInterface $userCrudRepo;
+    private UserRepositoryInterface $userRepo;
     private PasswordResetRepositoryInterface $passwordResetRepo;
     private MailRegisterInterface $mailRegisterService;
 
     public function __construct(
         PDO $pdo,
         RegisterValidator $validator,
-        UserCrudRepositoryInterface $userCrudRepo,
+        UserRepositoryInterface $userRepo,
         PasswordResetRepositoryInterface $passwordResetRepo,
         MailRegisterInterface $mailRegisterService
     ) {
         $this->pdo = $pdo;
         $this->validator = $validator;
-        $this->userCrudRepo = $userCrudRepo;
+        $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
         $this->mailRegisterService = $mailRegisterService;
     }
@@ -49,7 +49,7 @@ class RegisterAction
         $this->pdo->beginTransaction();
 
         try {
-            $userId = $this->userCrudRepo->create($validatedData);
+            $userId = $this->userRepo->create($validatedData);
 
             ($userId <= 0) && throw new RuntimeException("No se pudo obtener el ID del usuario recién creado.");
 

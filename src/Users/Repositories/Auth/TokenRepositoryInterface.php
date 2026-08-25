@@ -11,4 +11,6 @@ interface TokenRepositoryInterface
     public function delete(string $hashedToken): bool;
 
     public function deleteAllByUserId(int $userId): bool;
+
+    public function getAccessToken(string $tokenHashed): array;
 }
