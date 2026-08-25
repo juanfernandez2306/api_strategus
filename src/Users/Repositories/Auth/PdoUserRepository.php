@@ -24,4 +24,14 @@ class PdoUserRepository implements UserRepositoryInterface
 
         return (bool) $stmt->fetchColumn();
     }
+
+    public function countActiveUsers(): int
+    {
+        $sql = "SELECT COUNT(*) FROM users WHERE is_active = 1";
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute();
+
+        return (int) $statement->fetchColumn();
+    }
 }

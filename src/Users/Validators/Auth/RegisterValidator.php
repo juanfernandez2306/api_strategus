@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
-use App\Shared\Exceptions\ValidationException;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\BaseValidator;
 use App\Users\Validators\Rules\UniqueEmailRule;
+use App\Users\Validators\Rules\MaxActiveUsersRule;
 
 class RegisterValidator extends BaseValidator
 {
@@ -19,6 +19,8 @@ class RegisterValidator extends BaseValidator
         parent::__construct();
 
         $this->validator->addValidator('unique_email', new UniqueEmailRule($userRepository));
+
+        $this->validator->addValidator('max_active_users', new MaxActiveUsersRule($userRepository));
 
         $msgRegexPassword = "La contraseña debe tener al menos 6 caracteres,"
                             . " incluir letras, números y al menos un carácter especial.";
@@ -47,7 +49,7 @@ class RegisterValidator extends BaseValidator
         return [
             'first_name'            => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
             'last_name'             => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
-            'email'                 => 'required|email|max:150|unique_email',
+            'email'                 => 'required|email|max:150|unique_email|max_active_users:30',
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password'
         ];
