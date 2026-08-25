@@ -68,6 +68,10 @@ class RegisterValidatorTest extends TestCase
             ->existsByEmail($payload['email'])
             ->willReturn(false);
 
+        $this->userRepositoryProphecy
+            ->countActiveUsers()
+            ->willReturn(0);
+
         // Usamos la instancia resuelta por el contenedor
         $result = $this->validator->validate($payload);
 
