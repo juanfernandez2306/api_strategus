@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Users\Actions\Auth;
 
+use App\Shared\Http\ApiResponse;
+use App\Shared\Http\HttpStatus;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
@@ -75,18 +77,13 @@ class RegisterAction
             $tokenPlain
         );
 
-        $payload = json_encode([
-            'status'  => 'success',
-            'message' => 'Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.',
-            'data'    => [
+        return ApiResponse::json(
+            $response,
+            HttpStatus::CREATED,
+            'Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.',
+            [
                 'user_id' => $userId
             ]
-        ], JSON_UNESCAPED_UNICODE);
-
-        $response->getBody()->write($payload);
-
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(201);
+        );
     }
 }
