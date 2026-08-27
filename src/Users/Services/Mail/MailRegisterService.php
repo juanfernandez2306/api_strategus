@@ -53,20 +53,20 @@ class MailRegisterService implements MailRegisterInterface
             }
 
             $htmlBody = file_get_contents($this->templatePath);
-            $verificationUrl = "{$this->frontendUrl}/verify/email?token={$tokenPlain}";
+
+            $verificationUrl = sprintf(
+                '%s/verify/email?email=%s&token=%s',
+                $this->frontendUrl,
+                urlencode($toEmail),
+                urlencode($tokenPlain)
+            );
 
             $htmlBody = str_replace(
                 ['{{nombre}}', '{{enlace}}'],
-                [htmlspecialchars(
-                    $toName,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ),
-                    htmlspecialchars(
-                        $verificationUrl,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    )],
+                [
+                    htmlspecialchars($toName, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8')
+                ],
                 $htmlBody
             );
 
@@ -78,7 +78,7 @@ class MailRegisterService implements MailRegisterInterface
             );
         } catch (RuntimeException $e) {
             $errorMessage = sprintf(
-                "No se encontró la plantilla de correo de verificación para %s: %s",
+                "Error al enviar el correo de verificación para %s: %s",
                 $toEmail,
                 $e->getMessage()
             );

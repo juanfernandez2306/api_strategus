@@ -8,7 +8,7 @@ interface PasswordResetRepositoryInterface
 {
     public function save(int $userId, string $tokenPlain, string $expiresAt): bool;
 
-    public function findValidToken(string $hashedToken): ?array;
+    public function findByEmailAndToken(string $email, string $tokenPlain): array;
 
     public function deleteByUserId(int $userId): bool;
 

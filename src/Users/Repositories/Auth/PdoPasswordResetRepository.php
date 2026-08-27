@@ -33,19 +33,27 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
         ]);
     }
 
-    public function findValidToken(string $hashedToken): ?array
+    public function findByEmailAndToken(string $email, string $tokenPlain): array
     {
-        $sql = "SELECT user_id, token, expires_at 
-                FROM password_resets WHERE token = :token 
-                AND expires_at > NOW() LIMIT 1";
+        $sql = "SELECT 
+                    pr.id, 
+                    pr.user_id, 
+                    pr.expires_at, 
+                    u.email_verified_at 
+                FROM password_resets pr
+                INNER JOIN users u ON u.id = pr.user_id
+                WHERE u.email = :email AND pr.token = :token
+                LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'email' => mb_strtolower($email),
+            'token' => hash('sha256', $tokenPlain)
+        ]);
 
-        $stmt->execute([':token' => $hashedToken]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $record = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $record ?: null;
+        return $result ?: [];
     }
 
     public function deleteByUserId(int $userId): bool

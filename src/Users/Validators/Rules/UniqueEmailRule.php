@@ -17,7 +17,7 @@ class UniqueEmailRule extends Rule
     {
         $this->userRepository = $userRepository;
     }
-    
+
     public function check(mixed $value): bool
     {
         if (!is_string($value) || empty($value)) {

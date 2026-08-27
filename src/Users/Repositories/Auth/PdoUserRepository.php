@@ -97,4 +97,14 @@ class PdoUserRepository implements UserRepositoryInterface
 
         return $stmt->execute(['id' => $id]);
     }
+
+    public function markEmailAsVerified(int $userId): bool
+    {
+        $sql = "UPDATE users 
+                SET email_verified_at = NOW(), updated_at = NOW() 
+                WHERE id = :user_id";
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['user_id' => $userId]);
+    }
 }

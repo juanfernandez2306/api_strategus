@@ -69,7 +69,8 @@ class RegisterAction
         }
 
 
-        $fullName = ucfirst($validatedData['first_name']) . ' ' . ucfirst($validatedData['last_name']);
+        $fullName = ucfirst($validatedData['first_name'])
+                    . ' ' . ucfirst($validatedData['last_name']);
 
         $this->mailRegisterService->send(
             $validatedData['email'],
