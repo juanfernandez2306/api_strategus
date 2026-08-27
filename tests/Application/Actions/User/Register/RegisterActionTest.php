@@ -7,7 +7,7 @@ namespace Tests\Application\Actions\User\Register;
 use App\Shared\Exceptions\ValidationException;
 use App\Users\Actions\Auth\RegisterAction;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
-use App\Users\Repositories\Crud\UserCrudRepositoryInterface;
+use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Services\Mail\MailRegisterInterface;
 use App\Users\Validators\Auth\RegisterValidator;
 use Faker\Factory;
@@ -18,18 +18,20 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Log\LoggerInterface;
 
 class RegisterActionTest extends TestCase
 {
     private Generator $faker;
     private PDO&MockObject $pdoMock;
     private RegisterValidator&MockObject $validatorMock;
-    private UserCrudRepositoryInterface&MockObject $userCrudRepoMock;
+    private UserRepositoryInterface&MockObject $userCrudRepoMock;
     private PasswordResetRepositoryInterface&MockObject $passwordResetRepoMock;
     private MailRegisterInterface&MockObject $mailRegisterServiceMock;
     private ServerRequestInterface&MockObject $requestMock;
     private ResponseInterface&MockObject $responseMock;
     private StreamInterface&MockObject $streamMock;
+    private LoggerInterface&MockObject $loggerMock;
 
     protected function setUp(): void
     {
@@ -39,9 +41,10 @@ class RegisterActionTest extends TestCase
 
         $this->pdoMock = $this->createMock(PDO::class);
         $this->validatorMock = $this->createMock(RegisterValidator::class);
-        $this->userCrudRepoMock = $this->createMock(UserCrudRepositoryInterface::class);
+        $this->userCrudRepoMock = $this->createMock(UserRepositoryInterface::class);
         $this->passwordResetRepoMock = $this->createMock(PasswordResetRepositoryInterface::class);
         $this->mailRegisterServiceMock = $this->createMock(MailRegisterInterface::class);
+        $this->loggerMock = $this->createMock(LoggerInterface::class);
 
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
         $this->responseMock = $this->createMock(ResponseInterface::class);
@@ -82,7 +85,8 @@ class RegisterActionTest extends TestCase
             $this->validatorMock,
             $this->userCrudRepoMock,
             $this->passwordResetRepoMock,
-            $this->mailRegisterServiceMock
+            $this->mailRegisterServiceMock,
+            $this->loggerMock
         );
 
         $response = $action($this->requestMock, $this->responseMock);
@@ -112,7 +116,8 @@ class RegisterActionTest extends TestCase
             $this->validatorMock,
             $this->userCrudRepoMock,
             $this->passwordResetRepoMock,
-            $this->mailRegisterServiceMock
+            $this->mailRegisterServiceMock,
+            $this->loggerMock
         );
 
         $action($this->requestMock, $this->responseMock);

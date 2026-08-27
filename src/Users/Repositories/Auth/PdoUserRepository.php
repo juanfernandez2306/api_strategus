@@ -107,4 +107,28 @@ class PdoUserRepository implements UserRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute(['user_id' => $userId]);
     }
+
+    public function findByEmail(string $email): array
+    {
+        $sql = "SELECT 
+                    id, 
+                    role_id, 
+                    first_name, 
+                    last_name, 
+                    email,
+                    is_active, 
+                    email_verified_at
+                FROM users 
+                WHERE email = :email 
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'email' => mb_strtolower(trim($email))
+        ]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: [];
+    }
 }

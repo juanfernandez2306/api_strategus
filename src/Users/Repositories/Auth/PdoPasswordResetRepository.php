@@ -29,7 +29,7 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
         return $stmt->execute([
             ':user_id'    => $userId,
             ':token'      => hash('sha256', $tokenPlain),
-            ':expires_at' => date('Y-m-d H:i:s', strtotime('+24 hours'))
+            ':expires_at' => $expiresAt
         ]);
     }
 

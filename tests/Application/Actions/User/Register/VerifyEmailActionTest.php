@@ -16,6 +16,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Slim\Psr7\Response;
 
 class VerifyEmailActionTest extends TestCase
@@ -25,6 +27,7 @@ class VerifyEmailActionTest extends TestCase
     private MockObject&PasswordResetRepositoryInterface $passwordResetRepoMock;
     private MockObject&UserRepositoryInterface $userRepoMock;
     private MockObject&VerifyEmailValidator $validatorMock;
+    private MockObject&LoggerInterface $loggerMock;
     private VerifyEmailAction $action;
 
     protected function setUp(): void
@@ -36,12 +39,14 @@ class VerifyEmailActionTest extends TestCase
         $this->passwordResetRepoMock = $this->createMock(PasswordResetRepositoryInterface::class);
         $this->userRepoMock = $this->createMock(UserRepositoryInterface::class);
         $this->validatorMock = $this->createMock(VerifyEmailValidator::class);
+        $this->loggerMock = $this->createMock(LoggerInterface::class);
 
         $this->action = new VerifyEmailAction(
             $this->pdoMock,
             $this->passwordResetRepoMock,
             $this->userRepoMock,
-            $this->validatorMock
+            $this->validatorMock,
+            $this->loggerMock
         );
     }
 
@@ -82,10 +87,15 @@ class VerifyEmailActionTest extends TestCase
             ->with($email, $tokenPlain)
             ->willReturn($resetRecord);
 
-
         $this->pdoMock->expects($this->once())->method('beginTransaction');
-        $this->userRepoMock->expects($this->once())->method('markEmailAsVerified')->with($userId)->willReturn(true);
-        $this->passwordResetRepoMock->expects($this->once())->method('deleteByUserId')->with($userId)->willReturn(true);
+        $this->userRepoMock->expects($this->once())
+            ->method('markEmailAsVerified')
+            ->with($userId)
+            ->willReturn(true);
+        $this->passwordResetRepoMock->expects($this->once())
+            ->method('deleteByUserId')
+            ->with($userId)
+            ->willReturn(true);
         $this->pdoMock->expects($this->once())->method('commit');
 
         $resultResponse = ($this->action)($request, $response);
@@ -117,7 +127,10 @@ class VerifyEmailActionTest extends TestCase
         $resultResponse = ($this->action)($request, $response);
 
         $this->assertEquals(HttpStatus::NOT_FOUND, $resultResponse->getStatusCode());
-        $this->assertStringContainsString('El enlace de verificación es inválido o no existe.', (string) $resultResponse->getBody());
+        $this->assertStringContainsString(
+            'El enlace de verificación es inválido o no existe.',
+            (string) $resultResponse->getBody()
+        );
     }
 
     public function testRetornaOkSiElCorreoYaHabiaSidoVerificado(): void
@@ -143,7 +156,10 @@ class VerifyEmailActionTest extends TestCase
         $resultResponse = ($this->action)($request, $response);
 
         $this->assertEquals(HttpStatus::OK, $resultResponse->getStatusCode());
-        $this->assertStringContainsString('El correo electrónico ya ha sido verificado anteriormente.', (string) $resultResponse->getBody());
+        $this->assertStringContainsString(
+            'El correo electrónico ya ha sido verificado anteriormente.',
+            (string) $resultResponse->getBody()
+        );
     }
 
     public function testRetornaBadRequestSiElTokenHaExpirado(): void
@@ -169,10 +185,13 @@ class VerifyEmailActionTest extends TestCase
         $resultResponse = ($this->action)($request, $response);
 
         $this->assertEquals(HttpStatus::BAD_REQUEST, $resultResponse->getStatusCode());
-        $this->assertStringContainsString('El enlace de verificación ha expirado.', (string) $resultResponse->getBody());
+        $this->assertStringContainsString(
+            'El enlace de verificación ha expirado.',
+            (string) $resultResponse->getBody()
+        );
     }
 
-    public function testHaceRollbackSiFallaLaEliminacionDeTokens(): void
+    public function testHaceRollbackYEscribeLogSiFallaProcesamiento(): void
     {
         $email = $this->faker->safeEmail();
         $tokenPlain = $this->faker->regexify('[a-f0-9]{64}');
@@ -195,10 +214,20 @@ class VerifyEmailActionTest extends TestCase
 
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->userRepoMock->method('markEmailAsVerified')->with($userId)->willReturn(true);
-        $this->passwordResetRepoMock->method('deleteByUserId')->with($userId)->willReturn(false); // Falla borrado
+        $this->passwordResetRepoMock->method('deleteByUserId')->with($userId)->willReturn(false);
         $this->pdoMock->expects($this->once())->method('rollBack');
 
-        $this->expectException(\RuntimeException::class);
+        $assertContext = fn(array $context): bool =>
+            $context['user_id'] === $userId && $context['email'] === $email;
+
+        $this->loggerMock->expects($this->once())
+            ->method('error')
+            ->with(
+                $this->stringContains('Error al procesar la verificación'),
+                $this->callback($assertContext)
+            );
+
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Error al procesar la verificación.');
 
         ($this->action)($request, $response);

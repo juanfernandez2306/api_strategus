@@ -19,4 +19,6 @@ interface UserRepositoryInterface
     public function delete(int $id): bool;
 
     public function markEmailAsVerified(int $userId): bool;
+
+    public function findByEmail(string $email): array;
 }
