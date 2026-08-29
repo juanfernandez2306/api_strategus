@@ -59,8 +59,8 @@ class UserMailService implements UserMailServiceInterface
         } catch (RuntimeException $e) {
             $this->logger->error(sprintf(
                 "Error al enviar correo '%s' para %s: %s",
-                $emailContext['subject'] ?? 'Sin Asunto',
-                $emailContext['toEmail'] ?? 'Sin Email',
+                $emailContext['subject'],
+                $emailContext['toEmail'],
                 $e->getMessage()
             ));
 

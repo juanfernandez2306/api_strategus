@@ -7,12 +7,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response as SlimResponse;
-use App\Users\Repositories\Auth\AccessTokenUserRepository;
+use App\Users\Repositories\Auth\PdoTokenRepository;
 
 class AuthMiddleware implements MiddlewareInterface
 {
-    private AccessTokenUserRepository $repository;
-    public function __construct(AccessTokenUserRepository $repository)
+    private PdoTokenRepository $repository;
+    public function __construct(PdoTokenRepository $repository)
     {
         $this->repository = $repository;
     }

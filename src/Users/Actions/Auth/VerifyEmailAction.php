@@ -40,7 +40,7 @@ class VerifyEmailAction
 
     public function __invoke(Request $request, Response $response): Response
     {
-        $data = (array) ($request->getQueryParams() ?? []);
+        $data = (array) ($request->getQueryParams());
         $validatedData = $this->validator->validate($data);
 
         $email = $validatedData['email'];
