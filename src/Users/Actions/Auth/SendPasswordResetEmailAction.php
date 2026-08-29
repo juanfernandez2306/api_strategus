@@ -17,10 +17,10 @@ use PDO;
 use Exception;
 use RuntimeException;
 
-class ResendVerificationEmailAction
+class SendPasswordResetEmailAction
 {
-    private const GENERIC_SUCCESS_MESSAGE = 'Si el correo electrónico está registrado'
-            . ' y pendiente de activación, recibirá un nuevo enlace de verificación.';
+    private const GENERIC_SUCCESS_MESSAGE = 'Si la dirección de correo ingresada coincide con una cuenta registrada, '
+                                            . 'recibirás un enlace para restablecer tu contraseña.';
 
     private PDO $pdo;
     private UserRepositoryInterface $userRepo;
@@ -54,7 +54,7 @@ class ResendVerificationEmailAction
 
         $user = $this->userRepo->findByEmail($email);
 
-        if (empty($user) || $user['email_verified_at'] !== null) {
+        if (empty($user)) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -74,14 +74,14 @@ class ResendVerificationEmailAction
             );
 
             if (!$saved) {
-                throw new RuntimeException('Error al registrar el nuevo token de verificación.');
+                throw new RuntimeException('Error al guardar el token de restablecimiento de contraseña.');
             }
 
             $this->pdo->commit();
         } catch (Exception $e) {
             $this->pdo->rollBack();
 
-            $this->logger->error('Error al registrar el token de verificación de correo', [
+            $this->logger->error('Error al solicitar restablecimiento de contraseña', [
                 'user_id' => $user['id'],
                 'email'   => $email,
                 'error'   => $e->getMessage(),
@@ -97,8 +97,8 @@ class ResendVerificationEmailAction
             "La variable de entorno 'FRONTEND_URL' no está definida o está vacía."
         );
 
-        $verificationUrl = sprintf(
-            '%s/verify/email?email=%s&token=%s',
+        $resetUrl = sprintf(
+            '%s/reset/password?email=%s&token=%s',
             rtrim($frontendUrl, '/'),
             urlencode($email),
             urlencode($tokenPlain)
@@ -109,9 +109,9 @@ class ResendVerificationEmailAction
         $this->userMailService->send([
             'toEmail'      => $email,
             'userFullName' => $fullName,
-            'subject'      => 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
-            'viewTemplate' => 'Emails.VerifyEmail',
-            'actionUrl'    => $verificationUrl,
+            'subject'      => 'Restablecer contraseña - GESTIÓN PALMA DIGITAL',
+            'viewTemplate' => 'Emails.ResetPassword',
+            'actionUrl'    => $resetUrl,
         ]);
 
         return ApiResponse::json(

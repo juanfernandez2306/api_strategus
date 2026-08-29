@@ -8,7 +8,7 @@ use App\Shared\Http\HttpStatus;
 use App\Users\Actions\Auth\ResendVerificationEmailAction;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\MailRegisterInterface;
+use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\EmailRequestValidator;
 use Faker\Factory as Faker;
 use Faker\Generator;
@@ -27,7 +27,7 @@ class ResendVerificationEmailActionTest extends TestCase
     private MockObject&PDO $pdoMock;
     private MockObject&UserRepositoryInterface $userRepoMock;
     private MockObject&PasswordResetRepositoryInterface $passwordResetRepoMock;
-    private MockObject&MailRegisterInterface $mailRegisterMock;
+    private MockObject&UserMailServiceInterface $userMailServiceMock;
     private MockObject&EmailRequestValidator $validatorMock;
     private MockObject&LoggerInterface $loggerMock;
     private ResendVerificationEmailAction $action;
@@ -36,11 +36,14 @@ class ResendVerificationEmailActionTest extends TestCase
     {
         parent::setUp();
 
+        // 1. Inyección de entorno para evitar RuntimeException en la Action
+        $_ENV['FRONTEND_URL'] = 'https://ejemplo.com';
+
         $this->faker = Faker::create();
         $this->pdoMock = $this->createMock(PDO::class);
         $this->userRepoMock = $this->createMock(UserRepositoryInterface::class);
         $this->passwordResetRepoMock = $this->createMock(PasswordResetRepositoryInterface::class);
-        $this->mailRegisterMock = $this->createMock(MailRegisterInterface::class);
+        $this->userMailServiceMock = $this->createMock(UserMailServiceInterface::class);
         $this->validatorMock = $this->createMock(EmailRequestValidator::class);
         $this->loggerMock = $this->createMock(LoggerInterface::class);
 
@@ -48,7 +51,7 @@ class ResendVerificationEmailActionTest extends TestCase
             $this->pdoMock,
             $this->userRepoMock,
             $this->passwordResetRepoMock,
-            $this->mailRegisterMock,
+            $this->userMailServiceMock,
             $this->validatorMock,
             $this->loggerMock
         );
@@ -103,15 +106,17 @@ class ResendVerificationEmailActionTest extends TestCase
             ->willReturn(true);
         $this->pdoMock->expects($this->once())->method('commit');
 
-        // Verificación del envío de correo
-        $expectedFullName = trim("{$firstName} {$lastName}");
-        $this->mailRegisterMock->expects($this->once())
+        // 2. Verificación del envío de correo usando la estructura del nuevo contexto
+        $expectedFullName = trim(ucfirst($firstName) . ' ' . ucfirst($lastName));
+        $this->userMailServiceMock->expects($this->once())
             ->method('send')
-            ->with(
-                $this->equalTo(mb_strtolower($email)),
-                $this->equalTo($expectedFullName),
-                $this->callback(fn($token) => is_string($token) && strlen($token) === 64)
-            );
+            ->with($this->callback(function (array $context) use ($email, $expectedFullName) {
+                return $context['toEmail'] === mb_strtolower($email)
+                    && $context['userFullName'] === $expectedFullName
+                    && $context['viewTemplate'] === 'Emails.VerifyEmail'
+                    && isset($context['actionUrl']);
+            }))
+            ->willReturn(true);
 
         $resultResponse = ($this->action)($request, $response);
 
@@ -134,9 +139,8 @@ class ResendVerificationEmailActionTest extends TestCase
         $this->validatorMock->method('validate')->willReturn($data);
         $this->userRepoMock->method('findByEmail')->willReturn([]);
 
-        // Se asegura de que no ejecute base de datos ni envío de correos
         $this->pdoMock->expects($this->never())->method('beginTransaction');
-        $this->mailRegisterMock->expects($this->never())->method('send');
+        $this->userMailServiceMock->expects($this->never())->method('send');
 
         $resultResponse = ($this->action)($request, $response);
 
@@ -168,7 +172,7 @@ class ResendVerificationEmailActionTest extends TestCase
         $this->userRepoMock->method('findByEmail')->willReturn($userRecord);
 
         $this->pdoMock->expects($this->never())->method('beginTransaction');
-        $this->mailRegisterMock->expects($this->never())->method('send');
+        $this->userMailServiceMock->expects($this->never())->method('send');
 
         $resultResponse = ($this->action)($request, $response);
 
@@ -200,12 +204,10 @@ class ResendVerificationEmailActionTest extends TestCase
 
         $this->userRepoMock->method('findByEmail')->willReturn($userRecord);
 
-        // Simulamos un fallo de persistencia
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->passwordResetRepoMock->method('save')->willReturn(false);
         $this->pdoMock->expects($this->once())->method('rollBack');
 
-        // Se verifica que registre el log de error
         $this->loggerMock->expects($this->once())
             ->method('error')
             ->with(

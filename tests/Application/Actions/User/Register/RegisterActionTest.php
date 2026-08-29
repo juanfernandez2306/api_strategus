@@ -8,7 +8,7 @@ use App\Shared\Exceptions\ValidationException;
 use App\Users\Actions\Auth\RegisterAction;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\MailRegisterInterface;
+use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\RegisterValidator;
 use Faker\Factory;
 use Faker\Generator;
@@ -27,7 +27,7 @@ class RegisterActionTest extends TestCase
     private RegisterValidator&MockObject $validatorMock;
     private UserRepositoryInterface&MockObject $userCrudRepoMock;
     private PasswordResetRepositoryInterface&MockObject $passwordResetRepoMock;
-    private MailRegisterInterface&MockObject $mailRegisterServiceMock;
+    private UserMailServiceInterface&MockObject $userMailServiceMock;
     private ServerRequestInterface&MockObject $requestMock;
     private ResponseInterface&MockObject $responseMock;
     private StreamInterface&MockObject $streamMock;
@@ -37,20 +37,21 @@ class RegisterActionTest extends TestCase
     {
         parent::setUp();
 
+        $_ENV['FRONTEND_URL'] = 'https://ejemplo.com';
+
         $this->faker = Factory::create('es_ES');
 
         $this->pdoMock = $this->createMock(PDO::class);
         $this->validatorMock = $this->createMock(RegisterValidator::class);
         $this->userCrudRepoMock = $this->createMock(UserRepositoryInterface::class);
         $this->passwordResetRepoMock = $this->createMock(PasswordResetRepositoryInterface::class);
-        $this->mailRegisterServiceMock = $this->createMock(MailRegisterInterface::class);
+        $this->userMailServiceMock = $this->createMock(UserMailServiceInterface::class);
         $this->loggerMock = $this->createMock(LoggerInterface::class);
 
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
         $this->responseMock = $this->createMock(ResponseInterface::class);
         $this->streamMock = $this->createMock(StreamInterface::class);
     }
-
 
     public function testExecuteReturns201OnSuccessfulRegistration(): void
     {
@@ -60,11 +61,20 @@ class RegisterActionTest extends TestCase
             'email'      => $this->faker->email(),
         ];
 
-
         $this->validatorMock->method('validate')->willReturn($dummyPayload);
-        $this->userCrudRepoMock->method('create')->willReturn($this->faker->randomNumber());
+        $this->userCrudRepoMock->method('create')->willReturn(1);
         $this->passwordResetRepoMock->method('save')->willReturn(true);
-        $this->mailRegisterServiceMock->method('send')->willReturn(true);
+
+        // 2. Verificar que el método send reciba el contexto adecuado
+        $this->userMailServiceMock
+            ->expects($this->once())
+            ->method('send')
+            ->with($this->callback(function (array $context) use ($dummyPayload) {
+                return $context['toEmail'] === $dummyPayload['email']
+                    && $context['viewTemplate'] === 'Emails.VerifyEmail'
+                    && isset($context['actionUrl']);
+            }))
+            ->willReturn(true);
 
         $this->requestMock->method('getParsedBody')->willReturn($dummyPayload);
         $this->responseMock->method('getBody')->willReturn($this->streamMock);
@@ -79,13 +89,12 @@ class RegisterActionTest extends TestCase
             ->with(201)
             ->willReturnSelf();
 
-
         $action = new RegisterAction(
             $this->pdoMock,
             $this->validatorMock,
             $this->userCrudRepoMock,
             $this->passwordResetRepoMock,
-            $this->mailRegisterServiceMock,
+            $this->userMailServiceMock,
             $this->loggerMock
         );
 
@@ -93,7 +102,6 @@ class RegisterActionTest extends TestCase
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
     }
-
 
     public function testExecuteThrowsExceptionOnValidationError(): void
     {
@@ -116,7 +124,7 @@ class RegisterActionTest extends TestCase
             $this->validatorMock,
             $this->userCrudRepoMock,
             $this->passwordResetRepoMock,
-            $this->mailRegisterServiceMock,
+            $this->userMailServiceMock,
             $this->loggerMock
         );
 

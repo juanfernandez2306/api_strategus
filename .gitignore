@@ -69,3 +69,4 @@ var/
 !/var/cache/.gitignore
 tests/integration_ignored/
 src/Usuarios/
+public/assets/img/

@@ -20,7 +20,6 @@ class PhpMailerService implements MailServiceInterface
         $this->config = $config ?? $this->loadEnvironmentConfig();
     }
 
-
     private function loadEnvironmentConfig(): array
     {
         $requiredKeys = [
@@ -56,8 +55,12 @@ class PhpMailerService implements MailServiceInterface
         ];
     }
 
-    public function send(string $toEmail, string $toName, string $subject, string $bodyHTML): bool
-    {
+    public function send(
+        string|array $toEmail,
+        string|array $toName,
+        string $subject,
+        string $bodyHTML
+    ): bool {
         $mail = new PHPMailer(true);
 
         try {
@@ -74,7 +77,15 @@ class PhpMailerService implements MailServiceInterface
             }
 
             $mail->setFrom($this->config['from'], $this->config['from_name']);
-            $mail->addAddress($toEmail, $toName);
+
+            // Cast a array para uniformar el tratamiento de recipient(s)
+            $emails = (array) $toEmail;
+            $names  = (array) $toName;
+
+            foreach ($emails as $index => $email) {
+                $name = $names[$index] ?? '';
+                $mail->addAddress($email, $name);
+            }
 
             $mail->isHTML(true);
             $mail->Subject = $subject;
@@ -82,10 +93,12 @@ class PhpMailerService implements MailServiceInterface
 
             return $mail->send();
         } catch (PHPMailerException $e) {
-            $this->logger->error("Error al enviar email a {$toEmail}: " . $e->getMessage(), [
-                'recipient' => $toEmail,
-                'subject'   => $subject,
-                'exception' => $e
+            $recipientsLog = is_array($toEmail) ? implode(', ', $toEmail) : $toEmail;
+
+            $this->logger->error("Error al enviar email a {$recipientsLog}: " . $e->getMessage(), [
+                'recipients' => $toEmail,
+                'subject'    => $subject,
+                'exception'  => $e
             ]);
 
             return false;
