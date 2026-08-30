@@ -116,6 +116,7 @@ class PdoUserRepository implements UserRepositoryInterface
                     first_name, 
                     last_name, 
                     email,
+                    password,
                     is_active, 
                     email_verified_at
                 FROM users 
@@ -140,6 +141,7 @@ class PdoUserRepository implements UserRepositoryInterface
                     first_name, 
                     last_name, 
                     email,
+                    password,
                     is_active, 
                     email_verified_at
                 FROM users 
