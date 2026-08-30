@@ -131,4 +131,41 @@ class PdoUserRepository implements UserRepositoryInterface
 
         return $user ?: [];
     }
+
+    public function findById(int $id): array
+    {
+        $sql = "SELECT 
+                    id, 
+                    role_id, 
+                    first_name, 
+                    last_name, 
+                    email,
+                    is_active, 
+                    email_verified_at
+                FROM users 
+                WHERE id = :id 
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: [];
+    }
+
+    public function findAdminEmails(): array
+    {
+        $sql = "SELECT u.email 
+                FROM users u 
+                INNER JOIN roles r ON u.role_id = r.id 
+                WHERE r.name = :role_name AND u.is_active = 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['role_name' => 'administrador']);
+
+        return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    }
 }

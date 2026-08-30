@@ -1,0 +1,20 @@
+{% extends "Layouts/BaseEmail.html.twig" %}
+
+{% block title %}Nuevo Usuario Verificado{% endblock %}
+
+{% block greeting %}¡Atención Administrador!{% endblock %}
+
+{% block content %}
+    <p style="font-size: 16px; line-height: 1.5; color: #222222;">
+        Un nuevo usuario ha verificado exitosamente su cuenta de correo en <strong>GESTIÓN PALMA DIGITAL</strong>.
+    </p>
+    
+    <div style="background-color: #f8f9fa; border-left: 4px solid #386641; padding: 15px; margin: 20px 0;">
+        <p style="margin: 5px 0; font-size: 14px;"><strong>Nombre:</strong> {{ registeredUserName }}</p>
+        <p style="margin: 5px 0; font-size: 14px;"><strong>Correo:</strong> {{ registeredUserEmail }}</p>
+    </div>
+
+    <p style="font-size: 14px; line-height: 1.5; color: #555555;">
+        Por favor, ingresa al panel de administración si requiere asignación de roles o permisos adicionales.
+    </p>
+{% endblock %}

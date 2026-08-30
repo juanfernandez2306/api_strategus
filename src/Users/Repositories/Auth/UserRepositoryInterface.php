@@ -21,4 +21,8 @@ interface UserRepositoryInterface
     public function markEmailAsVerified(int $userId): bool;
 
     public function findByEmail(string $email): array;
+
+    public function findById(int $id): array;
+
+    public function findAdminEmails(): array;
 }

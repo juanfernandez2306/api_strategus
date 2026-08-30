@@ -8,6 +8,7 @@ use App\Shared\Http\HttpStatus;
 use App\Users\Actions\Auth\VerifyEmailAction;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
+use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\VerifyEmailValidator;
 use Faker\Factory as Faker;
 use Faker\Generator;
@@ -28,6 +29,7 @@ class VerifyEmailActionTest extends TestCase
     private MockObject&UserRepositoryInterface $userRepoMock;
     private MockObject&VerifyEmailValidator $validatorMock;
     private MockObject&LoggerInterface $loggerMock;
+    private MockObject&UserMailServiceInterface $userMailServiceMock;
     private VerifyEmailAction $action;
 
     protected function setUp(): void
@@ -40,13 +42,15 @@ class VerifyEmailActionTest extends TestCase
         $this->userRepoMock = $this->createMock(UserRepositoryInterface::class);
         $this->validatorMock = $this->createMock(VerifyEmailValidator::class);
         $this->loggerMock = $this->createMock(LoggerInterface::class);
+        $this->userMailServiceMock = $this->createMock(UserMailServiceInterface::class);
 
         $this->action = new VerifyEmailAction(
             $this->pdoMock,
             $this->passwordResetRepoMock,
             $this->userRepoMock,
             $this->validatorMock,
-            $this->loggerMock
+            $this->loggerMock,
+            $this->userMailServiceMock
         );
     }
 
@@ -97,6 +101,31 @@ class VerifyEmailActionTest extends TestCase
             ->with($userId)
             ->willReturn(true);
         $this->pdoMock->expects($this->once())->method('commit');
+
+        // Mocks para la obtención de usuario y notificación a admins
+        $this->userRepoMock->expects($this->once())
+            ->method('findById')
+            ->with($userId)
+            ->willReturn([
+                'id'         => $userId,
+                'first_name' => 'juan',
+                'last_name'  => 'perez',
+            ]);
+
+        $adminEmails = ['admin1@empresa.com', 'admin2@empresa.com'];
+        $this->userRepoMock->expects($this->once())
+            ->method('findAdminEmails')
+            ->willReturn($adminEmails);
+
+        $this->userMailServiceMock->expects($this->once())
+            ->method('send')
+            ->with($this->callback(function (array $mailData) use ($adminEmails, $email) {
+                return $mailData['toEmail'] === $adminEmails
+                    && $mailData['subject'] === 'Nuevo Usuario Registrado y Verificado'
+                    && $mailData['viewTemplate'] === 'Emails.NewUserAdminNotification'
+                    && $mailData['registeredUserName'] === 'Juan Perez'
+                    && $mailData['registeredUserEmail'] === $email;
+            }));
 
         $resultResponse = ($this->action)($request, $response);
 
