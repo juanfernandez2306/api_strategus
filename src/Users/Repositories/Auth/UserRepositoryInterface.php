@@ -25,4 +25,6 @@ interface UserRepositoryInterface
     public function findById(int $id): array;
 
     public function findAdminEmails(): array;
+
+    public function updatePassword(int $userId, string $newPassword): bool;
 }

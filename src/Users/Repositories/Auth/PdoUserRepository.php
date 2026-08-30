@@ -168,4 +168,17 @@ class PdoUserRepository implements UserRepositoryInterface
 
         return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
     }
+
+    public function updatePassword(int $userId, string $newPassword): bool
+    {
+        $sql = "UPDATE users 
+                SET password = :password, updated_at = NOW() 
+                WHERE id = :user_id";
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            'user_id'  => $userId,
+            'password' => password_hash($newPassword, PASSWORD_BCRYPT)
+        ]);
+    }
 }
