@@ -110,8 +110,9 @@ class LoginAction
             statusCode: HttpStatus::OK,
             message: 'Inicio de sesión exitoso.',
             data: [
-                'token'         => $tokenPlain,
-                'user_full_name' => $userFullName
+                'token'          => $tokenPlain,
+                'user_full_name' => $userFullName,
+                'role_id'        => (int) $user['role_id']
             ]
         );
     }

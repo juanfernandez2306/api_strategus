@@ -80,6 +80,7 @@ class LoginActionTest extends TestCase
 
         $user = [
             'id'                => $userId,
+            'role_id'           => 1,
             'first_name'        => 'juan',
             'last_name'         => 'perez',
             'email'             => mb_strtolower($email),
