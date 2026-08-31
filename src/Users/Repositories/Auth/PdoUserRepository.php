@@ -71,7 +71,7 @@ class PdoUserRepository implements UserRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function update(int $id, array $data): bool
+    public function update(array $data): bool
     {
         $sql = "UPDATE users SET 
                 first_name = :first_name, 
@@ -82,7 +82,7 @@ class PdoUserRepository implements UserRepositoryInterface
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute([
-            'id'         => $id,
+            'id'         => (int) $data['id'],
             'first_name' => mb_strtolower($data['first_name']),
             'last_name'  => mb_strtolower($data['last_name']),
             'is_active'  => (int) $data['is_active']

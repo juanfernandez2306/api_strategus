@@ -14,7 +14,7 @@ interface UserRepositoryInterface
 
     public function getAll(int $limit = 10, int $offset = 0): array;
 
-    public function update(int $id, array $data): bool;
+    public function update(array $data): bool;
 
     public function delete(int $id): bool;
 
