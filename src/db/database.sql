@@ -65,6 +65,7 @@ CREATE TABLE password_resets (
 
 CREATE TABLE oil_palm_growing_areas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid BINARY(16) NOT NULL UNIQUE,
     growing_area_code INT UNSIGNED NOT NULL UNIQUE,
     palm_count INT UNSIGNED NOT NULL,
     boundary POLYGON NOT NULL,
@@ -107,8 +108,7 @@ CREATE TABLE growing_area_interventions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE strategus_monitorings (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    uuid CHAR(36) NOT NULL UNIQUE,
+    uuid BINARY(16) NOT NULL PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
     growing_area_code INT UNSIGNED DEFAULT NULL,
     location POINT NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE strategus_monitorings (
 
 
 CREATE TABLE gps_tracks (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid BINARY(16) NOT NULL PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
     
     work_date DATE NOT NULL,
