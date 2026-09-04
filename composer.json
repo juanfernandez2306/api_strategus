@@ -24,6 +24,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
+        "brick/geo": "^0.13.1",
         "monolog/monolog": "^3.10",
         "php-di/php-di": "^6.4",
         "phpmailer/phpmailer": "^7.1",
