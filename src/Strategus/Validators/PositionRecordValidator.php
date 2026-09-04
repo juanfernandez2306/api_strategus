@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Strategus\Validators;
 
 use App\Users\Validators\BaseValidator;
-use App\Shared\Exceptions\ValidationException;
 
 class PositionRecordValidator extends BaseValidator
 {
@@ -30,8 +29,8 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => 'identificador único (UUID v7)',
-            'userId'          => 'identicador del usuario',
-            'growingAreaCode' => 'codigo del lote',
+            'userId'          => 'identificador del usuario',
+            'growingAreaCode' => 'código del lote',
             'latitude'        => 'latitud',
             'longitude'       => 'longitud',
             'recordedDate'    => 'fecha de registro',
@@ -48,19 +47,19 @@ class PositionRecordValidator extends BaseValidator
     protected function rules(): array
     {
         return [
-            'uuid'            => 'required|regex:' . self::UUID_V7_REGEX,
-            'userId'          => 'required|integer',
-            'growingAreaCode' => 'required|integer',
-            'latitude'        => 'required|numeric|min:-90|max:90',
-            'longitude'       => 'required|numeric|min:-180|max:180',
-            'recordedDate'    => 'required|regex:' . self::DATE_REGEX,
-            'recordedTime'    => 'required|regex:' . self::TIME_REGEX,
+            'uuid'            => ['required', 'regex:' . self::UUID_V7_REGEX],
+            'userId'          => 'required|integer|min:1',
+            'growingAreaCode' => 'required|integer|between:1,9',
+            'latitude'        => 'required|numeric|between:9.0,10.5',
+            'longitude'       => 'required|numeric|between:-73.5,-72.0',
+            'recordedDate'    => ['required', 'regex:' . self::DATE_REGEX],
+            'recordedTime'    => ['required', 'regex:' . self::TIME_REGEX],
             'galleryCount'    => 'required|integer|min:0',
-            'gpsAccuracy'     => 'required|numeric|min:0|max:999.99',
+            'gpsAccuracy'     => 'required|numeric|min:0|max:20',
             'isPlantReviewed' => 'required|boolean',
             'isSynced'        => 'required|boolean',
-            'reviewedDate'    => 'nullable|regex:' . self::DATE_REGEX,
-            'reviewedTime'    => 'nullable|regex:' . self::TIME_REGEX,
+            'reviewedDate'    => ['nullable', 'regex:' . self::DATE_REGEX],
+            'reviewedTime'    => ['nullable', 'regex:' . self::TIME_REGEX]
         ];
     }
 }
