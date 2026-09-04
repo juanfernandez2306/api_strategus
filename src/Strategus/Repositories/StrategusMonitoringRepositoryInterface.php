@@ -6,9 +6,7 @@ namespace App\Strategus\Repositories;
 
 interface StrategusMonitoringRepositoryInterface
 {
-    public function create(array $data, int $userId, ?int $growingAreaCode): bool;
-
-    public function createBulk(array $records, int $userId, array $areaCodesMap): bool;
+    public function create(array $input): bool;
 
     public function findByUuid(string $uuid): array;
 

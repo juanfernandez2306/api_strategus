@@ -30,6 +30,8 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => 'identificador único (UUID v7)',
+            'userId'          => 'identicador del usuario',
+            'growingAreaCode' => 'codigo del lote',
             'latitude'        => 'latitud',
             'longitude'       => 'longitud',
             'recordedDate'    => 'fecha de registro',
@@ -47,6 +49,8 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => 'required|regex:' . self::UUID_V7_REGEX,
+            'userId'          => 'required|integer',
+            'growingAreaCode' => 'required|integer',
             'latitude'        => 'required|numeric|min:-90|max:90',
             'longitude'       => 'required|numeric|min:-180|max:180',
             'recordedDate'    => 'required|regex:' . self::DATE_REGEX,
@@ -58,23 +62,5 @@ class PositionRecordValidator extends BaseValidator
             'reviewedDate'    => 'nullable|regex:' . self::DATE_REGEX,
             'reviewedTime'    => 'nullable|regex:' . self::TIME_REGEX,
         ];
-    }
-
-    public function validateBulk(array $records): array
-    {
-        $validatedRecords = [];
-
-        foreach ($records as $index => $record) {
-            try {
-                $validatedRecords[] = $this->validate($record);
-            } catch (ValidationException $e) {
-                throw new ValidationException([
-                    'index'  => $index,
-                    'errors' => $e->getErrors()
-                ]);
-            }
-        }
-
-        return $validatedRecords;
     }
 }

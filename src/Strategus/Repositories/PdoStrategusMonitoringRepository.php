@@ -4,34 +4,38 @@ declare(strict_types=1);
 
 namespace App\Strategus\Repositories;
 
+use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
 use PDO;
+use PDOException;
 
 class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryInterface
 {
-    public function __construct(private PDO $pdo)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
     {
+        $this->pdo = $pdo;
     }
 
-    public function create(array $data, int $userId, ?int $growingAreaCode): bool
+    public function create(array $input): bool
     {
         $recordedAt = sprintf(
             '%s %s',
-            $data['recordedDate'],
-            $data['recordedTime']
+            $input['recordedDate'],
+            $input['recordedTime']
         );
 
-        $reviewedAt = (!empty($data['reviewedDate']) && !empty($data['reviewedTime']))
+        $reviewedAt = (!empty($input['reviewedDate']) && !empty($input['reviewedTime']))
             ? sprintf(
                 '%s %s',
-                $data['reviewedDate'],
-                $data['reviewedTime']
-            )
-            : null;
+                $input['reviewedDate'],
+                $input['reviewedTime']
+            ) : null;
 
         $pointWkt = sprintf(
             'POINT(%f %f)',
-            (float) $data['longitude'],
-            (float) $data['latitude']
+            (float) $input['longitude'],
+            (float) $input['latitude']
         );
 
         $sql = "INSERT INTO strategus_monitorings (
@@ -52,95 +56,28 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                     :gallery_count,
                     :gps_accuracy,
                     :reviewed_at
-                )
-                AS new_data
-                ON DUPLICATE KEY UPDATE
-                reviewed_at = new_data.reviewed_at";
+                )";
 
-        $stmt = $this->pdo->prepare($sql);
+        try {
+            $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
-            'uuid'              => $data['uuid'],
-            'user_id'           => $userId,
-            'growing_area_code' => $growingAreaCode,
-            'location'          => $pointWkt,
-            'recorded_at'       => $recordedAt,
-            'gallery_count'     => (int) $data['galleryCount'],
-            'gps_accuracy'      => (float) $data['gpsAccuracy'],
-            'reviewed_at'       => $reviewedAt,
-        ]);
-    }
+            return $stmt->execute([
+                'uuid'              => $input['uuid'],
+                'user_id'           => (int) $input['userId'],
+                'growing_area_code' => $input['growingAreaCode'] ?? null,
+                'location'          => $pointWkt,
+                'recorded_at'       => $recordedAt,
+                'gallery_count'     => (int) $input['galleryCount'],
+                'gps_accuracy'      => (float) $input['gpsAccuracy'],
+                'reviewed_at'       => $reviewedAt,
+            ]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                throw new MonitoringUuidAlreadyExistsException($input['uuid']);
+            }
 
-    public function createBulk(array $records, int $userId, array $areaCodesMap): bool
-    {
-        if (empty($records)) {
-            return false;
+            throw $e;
         }
-
-        $placeholders = [];
-        $params = [];
-
-        foreach ($records as $index => $record) {
-            $uuid = $record['uuid'];
-            $growingAreaCode = $areaCodesMap[$uuid] ?? null;
-
-            $recordedAt = sprintf(
-                '%s %s',
-                $record['recordedDate'],
-                $record['recordedTime']
-            );
-
-            $reviewedAt = (!empty($record['reviewedDate']) && !empty($record['reviewedTime']))
-                ? sprintf(
-                    '%s %s',
-                    $record['reviewedDate'],
-                    $record['reviewedTime']
-                )
-                : null;
-
-            $pointWkt = sprintf(
-                'POINT(%f %f)',
-                (float) $record['longitude'],
-                (float) $record['latitude']
-            );
-
-            $placeholders[] = "(
-                UUID_TO_BIN(:uuid_{$index}),
-                :user_id_{$index},
-                :growing_area_code_{$index},
-                ST_PointFromText(:location_{$index}, 4326),
-                :recorded_at_{$index},
-                :gallery_count_{$index},
-                :gps_accuracy_{$index},
-                :reviewed_at_{$index}
-            )";
-
-            $params["uuid_{$index}"]              = $uuid;
-            $params["user_id_{$index}"]           = $userId;
-            $params["growing_area_code_{$index}"] = $growingAreaCode;
-            $params["location_{$index}"]          = $pointWkt;
-            $params["recorded_at_{$index}"]       = $recordedAt;
-            $params["gallery_count_{$index}"]     = (int) $record['galleryCount'];
-            $params["gps_accuracy_{$index}"]      = (float) $record['gpsAccuracy'];
-            $params["reviewed_at_{$index}"]       = $reviewedAt;
-        }
-
-        $sql = "INSERT INTO strategus_monitorings (
-                    uuid,
-                    user_id,
-                    growing_area_code,
-                    location,
-                    recorded_at,
-                    gallery_count,
-                    gps_accuracy,
-                    reviewed_at
-                ) VALUES " . implode(', ', $placeholders) . "
-                AS new_data ON DUPLICATE KEY UPDATE
-                    reviewed_at = new_data.reviewed_at";
-
-        $stmt = $this->pdo->prepare($sql);
-
-        return $stmt->execute($params);
     }
 
     public function findByUuid(string $uuid): array
