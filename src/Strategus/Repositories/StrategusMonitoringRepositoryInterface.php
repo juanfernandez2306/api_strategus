@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Strategus\Repositories;
 
+use App\Strategus\DTOs\PositionRecordInputData;
+
 interface StrategusMonitoringRepositoryInterface
 {
-    public function create(array $input): bool;
+    public function create(PositionRecordInputData $record): bool;
 
     public function findByUuid(string $uuid): array;
 

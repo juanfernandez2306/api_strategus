@@ -7,6 +7,7 @@ namespace App\Strategus\Repositories;
 use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
 use PDO;
 use PDOException;
+use App\Strategus\DTOs\PositionRecordInputData;
 
 class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryInterface
 {
@@ -17,27 +18,8 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $this->pdo = $pdo;
     }
 
-    public function create(array $input): bool
+    public function create(PositionRecordInputData $record): bool
     {
-        $recordedAt = sprintf(
-            '%s %s',
-            $input['recordedDate'],
-            $input['recordedTime']
-        );
-
-        $reviewedAt = (!empty($input['reviewedDate']) && !empty($input['reviewedTime']))
-            ? sprintf(
-                '%s %s',
-                $input['reviewedDate'],
-                $input['reviewedTime']
-            ) : null;
-
-        $pointWkt = sprintf(
-            'POINT(%f %f)',
-            (float) $input['longitude'],
-            (float) $input['latitude']
-        );
-
         $sql = "INSERT INTO strategus_monitorings (
                     uuid,
                     user_id,
@@ -62,18 +44,18 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
             $stmt = $this->pdo->prepare($sql);
 
             return $stmt->execute([
-                'uuid'              => $input['uuid'],
-                'user_id'           => (int) $input['userId'],
-                'growing_area_code' => $input['growingAreaCode'] ?? null,
-                'location'          => $pointWkt,
-                'recorded_at'       => $recordedAt,
-                'gallery_count'     => (int) $input['galleryCount'],
-                'gps_accuracy'      => (float) $input['gpsAccuracy'],
-                'reviewed_at'       => $reviewedAt,
+                'uuid'              => $record->uuid,
+                'user_id'           => $record->userId,
+                'growing_area_code' => $record->growingAreaCode,
+                'location'          => $record->getWktPoint(),
+                'recorded_at'       => $record->getRecordedAtFormatted(),
+                'gallery_count'     => $record->galleryCount,
+                'gps_accuracy'      => $record->gpsAccuracy,
+                'reviewed_at'       => $record->getReviewedAtFormatted(),
             ]);
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
-                throw new MonitoringUuidAlreadyExistsException($input['uuid']);
+                throw new MonitoringUuidAlreadyExistsException($record->uuid);
             }
 
             throw $e;
