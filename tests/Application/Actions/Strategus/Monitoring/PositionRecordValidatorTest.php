@@ -31,8 +31,6 @@ final class PositionRecordValidatorTest extends TestCase
                 $this->faker->numberBetween(32768, 49151),
                 $this->faker->numberBetween(0, 281474976710655)
             ),
-            'userId'          => (string) $this->faker->numberBetween(1, 100),
-            'growingAreaCode' => (string) $this->faker->numberBetween(1, 9),
             'latitude'        => (string) $this->faker->randomFloat(6, 9.0, 10.5),
             'longitude'       => (string) $this->faker->randomFloat(6, -73.5, -72.0),
             'recordedDate'    => $this->faker->date('Y-m-d'),
@@ -55,36 +53,90 @@ final class PositionRecordValidatorTest extends TestCase
         $this->assertEquals($input['uuid'], $validated['uuid']);
     }
 
-    public function testFailsWhenRandomLatitudeIsOutOfRange(): void
+    public function testValidateBulkSuccessfullyWithMultipleRandomRecords(): void
+    {
+        $batch = [
+            $this->getValidRandomData(),
+            $this->getValidRandomData(),
+            $this->getValidRandomData(),
+        ];
+
+        $validatedBatch = $this->validator->validateBulk($batch);
+
+        $this->assertIsArray($validatedBatch);
+        $this->assertCount(3, $validatedBatch);
+    }
+
+    public function testValidateBulkFailsWithIndexedErrorMessage(): void
+    {
+        $batch = [
+            $this->getValidRandomData(),
+            $this->getValidRandomData(),
+        ];
+
+        // Corrompemos el GPS en el índice 1
+        $batch[1]['gpsAccuracy'] = 'PRECISION_NO_VALIDA';
+
+        try {
+            $this->validator->validateBulk($batch);
+            $this->fail('Se esperaba ValidationException pero no fue lanzada.');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('registro indexado en [1]', $e->getMessage());
+        }
+    }
+
+    /**
+     * Prueba exhaustiva de datos corruptos mediante Data Provider.
+     *
+     * @dataProvider corruptedDataProvider
+     */
+    public function testFailsWithCorruptedData(string $field, mixed $corruptedValue): void
     {
         $this->expectException(ValidationException::class);
 
         $input = $this->getValidRandomData();
 
-        $input['latitude'] = (string) $this->faker->randomFloat(6, 11.0, 15.0);
+        if ($corruptedValue === '__REMOVE_KEY__') {
+            unset($input[$field]);
+        } else {
+            $input[$field] = $corruptedValue;
+        }
 
         $this->validator->validate($input);
     }
 
-    public function testFailsWhenRandomLongitudeIsOutOfRange(): void
+    public static function corruptedDataProvider(): array
     {
-        $this->expectException(ValidationException::class);
+        return [
+            // Precisión GPS corrupta
+            'gpsAccuracy_text'           => ['gpsAccuracy', 'alta_precision'],
+            'gpsAccuracy_exceeds_max'    => ['gpsAccuracy', '25.5'],
+            'gpsAccuracy_negative'       => ['gpsAccuracy', '-1.5'],
 
-        $input = $this->getValidRandomData();
+            // Coordenadas corruptas
+            'latitude_text'              => ['latitude', 'latitud_norte'],
+            'latitude_out_of_bounds'     => ['latitude', '12.8500'],
+            'longitude_text'             => ['longitude', 'longitud_oeste'],
+            'longitude_out_of_bounds'    => ['longitude', '-75.0000'],
 
-        $input['longitude'] = (string) $this->faker->randomFloat(6, -71.9, -65.0);
+            // UUID v7 corrupto o v4
+            'uuid_invalid_string'        => ['uuid', 'not-a-valid-uuid'],
+            'uuid_v4_instead_of_v7'      => ['uuid', '123e4567-e89b-12d3-a456-426614174000'],
 
-        $this->validator->validate($input);
-    }
+            // Fechas y Horas corruptas
+            'recordedDate_bad_format'    => ['recordedDate', '15/08/2026'],
+            'recordedTime_bad_format'    => ['recordedTime', '25:61:99'],
+            'reviewedDate_invalid_text'  => ['reviewedDate', 'ayer'],
 
-    public function testFailsWhenRandomGrowingAreaCodeIsOutOfRange(): void
-    {
-        $this->expectException(ValidationException::class);
+            // Conteos y Banderas corruptos
+            'galleryCount_negative'      => ['galleryCount', '-5'],
+            'galleryCount_float'         => ['galleryCount', '3.14'],
+            'isPlantReviewed_not_bool'   => ['isPlantReviewed', 'quizas'],
 
-        $input = $this->getValidRandomData();
-
-        $input['growingAreaCode'] = (string) $this->faker->numberBetween(10, 50);
-
-        $this->validator->validate($input);
+            // Campos obligatorios faltantes
+            'missing_uuid'               => ['uuid', '__REMOVE_KEY__'],
+            'missing_latitude'           => ['latitude', '__REMOVE_KEY__'],
+            'missing_recordedDate'       => ['recordedDate', '__REMOVE_KEY__'],
+        ];
     }
 }

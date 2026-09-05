@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Strategus\Validators;
 
+use App\Shared\Exceptions\ValidationException;
+use App\Shared\Http\HttpStatus;
 use App\Users\Validators\BaseValidator;
 
 class PositionRecordValidator extends BaseValidator
@@ -29,8 +31,6 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => 'identificador único (UUID v7)',
-            'userId'          => 'identificador del usuario',
-            'growingAreaCode' => 'código del lote',
             'latitude'        => 'latitud',
             'longitude'       => 'longitud',
             'recordedDate'    => 'fecha de registro',
@@ -48,8 +48,6 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => ['required', 'regex:' . self::UUID_V7_REGEX],
-            'userId'          => 'required|integer|min:1',
-            'growingAreaCode' => 'required|integer|between:1,9',
             'latitude'        => 'required|numeric|between:9.0,10.5',
             'longitude'       => 'required|numeric|between:-73.5,-72.0',
             'recordedDate'    => ['required', 'regex:' . self::DATE_REGEX],
@@ -61,5 +59,28 @@ class PositionRecordValidator extends BaseValidator
             'reviewedDate'    => ['nullable', 'regex:' . self::DATE_REGEX],
             'reviewedTime'    => ['nullable', 'regex:' . self::TIME_REGEX]
         ];
+    }
+
+    public function validateBulk(array $records): array
+    {
+        $validatedRecords = [];
+
+        foreach ($records as $index => $record) {
+            try {
+                $validatedRecords[$index] = $this->validate($record);
+            } catch (ValidationException $e) {
+                throw new ValidationException(
+                    errors: $e->getErrors(),
+                    message: sprintf(
+                        'Error de validación en el registro indexado en [%d]: %s',
+                        $index,
+                        $e->getMessage()
+                    ),
+                    code: HttpStatus::UNPROCESSABLE_ENTITY
+                );
+            }
+        }
+
+        return $validatedRecords;
     }
 }
