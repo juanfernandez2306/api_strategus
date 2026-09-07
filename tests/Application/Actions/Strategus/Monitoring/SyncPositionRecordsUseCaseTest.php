@@ -226,7 +226,7 @@ final class SyncPositionRecordsUseCaseTest extends TestCase
 
         $this->pdoMock->expects($this->once())->method('inTransaction')->willReturn(true);
         $this->pdoMock->expects($this->once())->method('rollBack');
-        
+
         $this->loggerMock->expects($this->once())
             ->method('error')
             ->with(

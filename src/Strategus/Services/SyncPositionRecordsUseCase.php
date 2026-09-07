@@ -24,7 +24,8 @@ final readonly class SyncPositionRecordsUseCase
         private StrategusMonitoringRepositoryInterface $monitoringRepository,
         private PDO $pdo,
         private LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
     public function execute(array $rawRecords, int $userId): BulkSyncOutputDTO
     {
@@ -101,9 +102,8 @@ final readonly class SyncPositionRecordsUseCase
                         }
                     }
                 }
-                
-                $this->pdo->commit();
 
+                $this->pdo->commit();
             } catch (Throwable $e) {
                 if ($this->pdo->inTransaction()) {
                     $this->pdo->rollBack();

@@ -14,7 +14,8 @@ final readonly class SyncPositionRecordsAction
 {
     public function __construct(
         private SyncPositionRecordsUseCase $syncUseCase
-    ) {}
+    ) {
+    }
 
     public function __invoke(Request $request, Response $response): Response
     {
@@ -26,7 +27,7 @@ final readonly class SyncPositionRecordsAction
             rawRecords: $rawRecords,
             userId: $userId
         );
-        
+
         return ApiResponse::json(
             response: $response,
             statusCode: HttpStatus::OK,
