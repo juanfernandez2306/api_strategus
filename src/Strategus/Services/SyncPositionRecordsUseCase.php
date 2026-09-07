@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace App\Strategus\Services;
 
-use App\Strategus\Repositories\OilPalmGrowingAreaRepositoryInterface;
-use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
 use App\Strategus\DTOs\Monitoring\BulkSyncOutputDTO;
 use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
+use App\Strategus\Repositories\OilPalmGrowingAreaRepositoryInterface;
 use App\Strategus\Repositories\StrategusMonitoringRepositoryInterface;
 use App\Strategus\Validators\PositionRecordValidator;
+use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
 use PDO;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 final readonly class SyncPositionRecordsUseCase
 {
+    private const CHUNK_SIZE = 200;
+
     public function __construct(
         private PositionRecordValidator $validator,
         private OilPalmGrowingAreaRepositoryInterface $growingAreaRepository,
         private StrategusMonitoringRepositoryInterface $monitoringRepository,
         private PDO $pdo,
         private LoggerInterface $logger
-    ) {
-    }
+    ) {}
 
     public function execute(array $rawRecords, int $userId): BulkSyncOutputDTO
     {
@@ -33,89 +34,90 @@ final readonly class SyncPositionRecordsUseCase
         $syncedIncompleteUuids = [];
         $insertedCount = 0;
 
-        $this->pdo->beginTransaction();
+        $chunks = array_chunk($validatedRecords, self::CHUNK_SIZE);
 
-        try {
-            foreach ($validatedRecords as $rawItem) {
-                $latitude = (float) $rawItem['latitude'];
-                $longitude = (float) $rawItem['longitude'];
-                $uuid = (string) $rawItem['uuid'];
+        foreach ($chunks as $chunkIndex => $chunk) {
+            $this->pdo->beginTransaction();
 
-                $growingAreaCode = $this->growingAreaRepository->findCodeByLocation(
-                    latitude: $latitude,
-                    longitude: $longitude
-                );
+            try {
+                foreach ($chunk as $rawItem) {
+                    $latitude = (float) $rawItem['latitude'];
+                    $longitude = (float) $rawItem['longitude'];
+                    $uuid = (string) $rawItem['uuid'];
 
-                if ($growingAreaCode === null) {
-                    $deletedUuids[] = $uuid;
-                    continue;
-                }
+                    $growingAreaCode = $this->growingAreaRepository->findCodeByLocation(
+                        latitude: $latitude,
+                        longitude: $longitude
+                    );
 
-                $incomingRecord = PositionRecordItemInputDTO::fromArray(
-                    userId: $userId,
-                    growingAreaCode: $growingAreaCode,
-                    rawAttributesValidated: $rawItem
-                );
-
-                $spatialDuplicateMatch = $this->monitoringRepository->findDuplicateInRadius($incomingRecord);
-
-                if ($spatialDuplicateMatch->found) {
-                    if (!$spatialDuplicateMatch->isReviewed && $incomingRecord->isReviewedDateComplete()) {
-                        $this->monitoringRepository->delete($spatialDuplicateMatch->uuid);
-
-                        if ($this->tryInsertRecord($incomingRecord)) {
-                            $insertedCount++;
-                            $this->categorizeUuidByCompleteness(
-                                record: $incomingRecord,
-                                deletedUuids: $deletedUuids,
-                                syncedIncompleteUuids: $syncedIncompleteUuids
-                            );
-                        }
-                    } else {
-                        $deletedUuids[] = $incomingRecord->uuid;
+                    if ($growingAreaCode === null) {
+                        $deletedUuids[] = $uuid;
+                        continue;
                     }
 
-                    continue;
-                }
-
-                try {
-                    $this->monitoringRepository->create($incomingRecord);
-                    $insertedCount++;
-                    $this->categorizeUuidByCompleteness(
-                        record: $incomingRecord,
-                        deletedUuids: $deletedUuids,
-                        syncedIncompleteUuids: $syncedIncompleteUuids
+                    $incomingRecord = PositionRecordItemInputDTO::fromArray(
+                        userId: $userId,
+                        growingAreaCode: $growingAreaCode,
+                        rawAttributesValidated: $rawItem
                     );
-                } catch (MonitoringUuidAlreadyExistsException $e) {
-                    $existingDbRecord = $this->monitoringRepository->findByUuid($incomingRecord->uuid);
 
-                    if (!empty($existingDbRecord)) {
-                        $isDbReviewed = !empty($existingDbRecord['reviewed_at']);
+                    $spatialDuplicateMatch = $this->monitoringRepository->findDuplicateInRadius($incomingRecord);
 
-                        if (!$isDbReviewed && $incomingRecord->isReviewedDateComplete()) {
-                            $this->monitoringRepository->updateReviewedAt($incomingRecord);
+                    if ($spatialDuplicateMatch->found) {
+                        if (!$spatialDuplicateMatch->isReviewed && $incomingRecord->isReviewedDateComplete()) {
+                            $this->monitoringRepository->delete($spatialDuplicateMatch->uuid);
+
+                            if ($this->tryInsertRecord($incomingRecord)) {
+                                $insertedCount++;
+                                $this->categorizeUuidByCompleteness(
+                                    record: $incomingRecord,
+                                    deletedUuids: $deletedUuids,
+                                    syncedIncompleteUuids: $syncedIncompleteUuids
+                                );
+                            }
+                        } else {
                             $deletedUuids[] = $incomingRecord->uuid;
                         }
+
+                        continue;
+                    }
+
+                    try {
+                        $this->monitoringRepository->create($incomingRecord);
+                        $insertedCount++;
+                        $this->categorizeUuidByCompleteness(
+                            record: $incomingRecord,
+                            deletedUuids: $deletedUuids,
+                            syncedIncompleteUuids: $syncedIncompleteUuids
+                        );
+                    } catch (MonitoringUuidAlreadyExistsException $e) {
+                        $existingDbRecord = $this->monitoringRepository->findByUuid($incomingRecord->uuid);
+
+                        if (!empty($existingDbRecord) && empty($existingDbRecord['reviewed_at'])) {
+                            if ($incomingRecord->isReviewedDateComplete()) {
+                                $this->monitoringRepository->updateReviewedAt($incomingRecord);
+                                $deletedUuids[] = $incomingRecord->uuid;
+                            }
+                        }
                     }
                 }
+                
+                $this->pdo->commit();
+
+            } catch (Throwable $e) {
+                if ($this->pdo->inTransaction()) {
+                    $this->pdo->rollBack();
+                }
+
+                $this->logger->error('Error durante la sincronización por fragmentos', [
+                    'user_id'     => $userId,
+                    'chunk_index' => $chunkIndex,
+                    'chunk_size'  => count($chunk),
+                    'error'       => $e->getMessage(),
+                ]);
+
+                throw $e;
             }
-
-            $this->pdo->commit();
-        } catch (Throwable $e) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-
-            $this->logger->error('Error durante la sincronización masiva de posiciones', [
-                'user_id'     => $userId,
-                'total_batch' => count($rawRecords),
-                'error'       => $e->getMessage(),
-                'file'        => $e->getFile(),
-                'line'        => $e->getLine(),
-                'trace'       => $e->getTraceAsString(),
-            ]);
-
-            throw $e;
         }
 
         return new BulkSyncOutputDTO(

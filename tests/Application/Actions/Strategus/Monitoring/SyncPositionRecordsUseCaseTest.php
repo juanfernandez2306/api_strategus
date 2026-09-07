@@ -226,14 +226,15 @@ final class SyncPositionRecordsUseCaseTest extends TestCase
 
         $this->pdoMock->expects($this->once())->method('inTransaction')->willReturn(true);
         $this->pdoMock->expects($this->once())->method('rollBack');
-
+        
         $this->loggerMock->expects($this->once())
             ->method('error')
             ->with(
-                'Error durante la sincronización masiva de posiciones',
-                $this->callback(function (array $context) use ($userId, $rawRecords) {
+                'Error durante la sincronización por fragmentos',
+                $this->callback(function (array $context) use ($userId) {
                     return $context['user_id'] === $userId
-                        && $context['total_batch'] === count($rawRecords)
+                        && $context['chunk_index'] === 0
+                        && $context['chunk_size'] === 1
                         && $context['error'] === 'Fatal Database Connection Loss';
                 })
             );
