@@ -6,6 +6,7 @@ namespace App\Strategus\Actions;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Shared\Services\Normalizers\CompressedPayloadTransformer;
 use App\Strategus\Services\SyncPositionRecordsUseCase;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -21,7 +22,9 @@ final readonly class SyncPositionRecordsAction
     {
         $userId = (int) $request->getAttribute('user_id');
 
-        $rawRecords = (array) ($request->getParsedBody() ?? []);
+        $rawBody = (array) ($request->getParsedBody() ?? []);
+
+        $rawRecords = CompressedPayloadTransformer::unpack($rawBody);
 
         $outputDTO = $this->syncUseCase->execute(
             rawRecords: $rawRecords,
