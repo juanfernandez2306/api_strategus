@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Strategus\Repositories;
 
 use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
+use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
+use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
 use PDO;
 use PDOException;
-use App\Strategus\DTOs\PositionRecordInputData;
 
 class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryInterface
 {
@@ -18,7 +19,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $this->pdo = $pdo;
     }
 
-    public function create(PositionRecordInputData $record): bool
+    public function create(PositionRecordItemInputDTO $record): bool
     {
         $sql = "INSERT INTO strategus_monitorings (
                     uuid,
@@ -60,6 +61,20 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
             throw $e;
         }
+    }
+
+    public function updateReviewedAt(PositionRecordItemInputDTO $record): bool
+    {
+        $sql = "UPDATE strategus_monitorings 
+                SET reviewed_at = :reviewed_at 
+                WHERE uuid = UUID_TO_BIN(:uuid)";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute([
+            'reviewed_at' => $record->getReviewedAtFormatted(),
+            'uuid'        => $record->uuid,
+        ]);
     }
 
     public function findByUuid(string $uuid): array
@@ -298,30 +313,28 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }, $results);
     }
 
-    public function hasDuplicateInRadius(array $data): bool
-    {
-        $pointWkt = sprintf(
-            'POINT(%f %f)',
-            (float) $data['longitude'],
-            (float) $data['latitude']
-        );
-
-        $sql = "SELECT EXISTS(
-                    SELECT 1 
-                    FROM strategus_monitorings 
-                    WHERE ST_Distance_Sphere(location, ST_PointFromText(:point, 4326)) <= 2
-                    AND ABS(DATEDIFF(recorded_at, :recorded_at)) <= 15
-                    AND uuid <> UUID_TO_BIN(:uuid)
-                ) AS has_duplicate";
+    public function findDuplicateInRadius(
+        PositionRecordItemInputDTO $record
+    ): SpatialMatchOutputDTO {
+        $sql = "SELECT 
+                    BIN_TO_UUID(uuid) AS uuid,
+                    (reviewed_at IS NOT NULL) AS is_reviewed
+                FROM strategus_monitorings 
+                WHERE ST_Distance_Sphere(location, ST_PointFromText(:point, 4326)) <= 2
+                AND ABS(DATEDIFF(recorded_at, :recorded_at)) <= 15
+                AND uuid <> UUID_TO_BIN(:uuid)
+                LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'point'       => $pointWkt,
-            'recorded_at' => $data['recordedAt'],
-            'uuid'        => $data['uuid'],
+            'point'       => $record->getWktPoint(),
+            'recorded_at' => $record->getRecordedAtFormatted(),
+            'uuid'        => $record->uuid,
         ]);
 
-        return (bool) $stmt->fetchColumn();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return SpatialMatchOutputDTO::fromDatabaseRow($result ?: null);
     }
 
     public function getWeeklyChartData(): array

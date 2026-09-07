@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\GrowingAreas\Repositories;
+namespace App\Strategus\Repositories;
 
 interface OilPalmGrowingAreaRepositoryInterface
 {

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Strategus\Repositories;
 
-use App\Strategus\DTOs\PositionRecordInputData;
+use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
+use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
 
 interface StrategusMonitoringRepositoryInterface
 {
-    public function create(PositionRecordInputData $record): bool;
+    public function create(PositionRecordItemInputDTO $record): bool;
+
+    public function updateReviewedAt(PositionRecordItemInputDTO $record): bool;
 
     public function findByUuid(string $uuid): array;
 
@@ -30,7 +33,7 @@ interface StrategusMonitoringRepositoryInterface
 
     public function getRecentMapMarkers(int $days = 30): array;
 
-    public function hasDuplicateInRadius(array $data): bool;
+    public function findDuplicateInRadius(PositionRecordItemInputDTO $record): SpatialMatchOutputDTO;
 
     public function getWeeklyChartData(): array;
 }
