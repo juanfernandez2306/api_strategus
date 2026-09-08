@@ -29,7 +29,7 @@ class LoginValidator extends BaseValidator
     {
         return [
             'email'    => 'required|email|max:150',
-            'password' => 'required|string',
+            'password' => 'required',
         ];
     }
 }

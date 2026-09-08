@@ -6,7 +6,11 @@ use App\Application\Settings\SettingsInterface;
 use App\Middleware\RateLimitMiddleware;
 use App\Shared\Services\Mail\MailServiceInterface;
 use App\Shared\Services\Mail\PhpMailerService;
+use App\Users\Repositories\Auth\PdoTokenRepository;
+use App\Users\Repositories\Auth\PdoUserRepository;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
+use App\Users\Repositories\Auth\TokenRepositoryInterface;
+use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Services\Mail\UserMailService;
 use App\Users\Services\Mail\UserMailServiceInterface;
 use DI\ContainerBuilder;
@@ -70,6 +74,9 @@ return function (ContainerBuilder $containerBuilder) {
                 60
             );
         },
+
+        TokenRepositoryInterface::class => autowire(PdoTokenRepository::class),
+        UserRepositoryInterface::class  => autowire(PdoUserRepository::class),
 
     ]);
 };
