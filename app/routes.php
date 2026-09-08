@@ -16,4 +16,6 @@ return function (App $app) {
     $app->get('/', IndexController::class);
 
     $app->group('/users', require __DIR__ . '/../src/Users/Routes.php');
+
+    $app->group('/strategus', require __DIR__ . '/../src/Strategus/Routes.php');
 };
