@@ -48,8 +48,8 @@ class PositionRecordValidator extends BaseValidator
     {
         return [
             'uuid'            => ['required', 'regex:' . self::UUID_V7_REGEX],
-            'latitude'        => 'required|numeric|between:9.0,10.5',
-            'longitude'       => 'required|numeric|between:-73.5,-72.0',
+            'latitude'        => 'required|numeric',
+            'longitude'       => 'required|numeric',
             'recordedDate'    => ['required', 'regex:' . self::DATE_REGEX],
             'recordedTime'    => ['required', 'regex:' . self::TIME_REGEX],
             'galleryCount'    => 'required|integer|min:0',
@@ -66,13 +66,18 @@ class PositionRecordValidator extends BaseValidator
         $validatedRecords = [];
 
         foreach ($records as $index => $record) {
+            $uuid = is_array($record) && isset($record['uuid'])
+                ? (string) $record['uuid']
+                : 'S/I';
+
             try {
                 $validatedRecords[$index] = $this->validate($record);
             } catch (ValidationException $e) {
                 throw new ValidationException(
                     errors: $e->getErrors(),
                     message: sprintf(
-                        'Error de validación en el registro indexado en [%d]: %s',
+                        'Error de validación en el registro con UUID [%s] (índice %d): %s',
+                        $uuid,
                         $index,
                         $e->getMessage()
                     ),
