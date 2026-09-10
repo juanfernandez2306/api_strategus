@@ -19,6 +19,30 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $this->pdo = $pdo;
     }
 
+    /**
+     * Helper para convertir UUID canonical String (36 chars) a Binario (16 bytes).
+     */
+    private function uuidToBin(string $uuid): string
+    {
+        return hex2bin(str_replace('-', '', $uuid));
+    }
+
+    /**
+     * Helper para convertir Binario (16 bytes) a UUID canonical String (36 chars).
+     */
+    private function binToUuid(string $binaryUuid): string
+    {
+        $hex = bin2hex($binaryUuid);
+        return sprintf(
+            '%s-%s-%s-%s-%s',
+            substr($hex, 0, 8),
+            substr($hex, 8, 4),
+            substr($hex, 12, 4),
+            substr($hex, 16, 4),
+            substr($hex, 20, 12)
+        );
+    }
+
     public function create(PositionRecordItemInputDTO $record): bool
     {
         $sql = "INSERT INTO strategus_monitorings (
@@ -31,7 +55,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                     gps_accuracy,
                     reviewed_at
                 ) VALUES (
-                    UUID_TO_BIN(:uuid),
+                    :uuid,
                     :user_id,
                     :growing_area_code,
                     ST_PointFromText(:location, 4326),
@@ -45,7 +69,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
             $stmt = $this->pdo->prepare($sql);
 
             return $stmt->execute([
-                'uuid'              => $record->uuid,
+                'uuid'              => $this->uuidToBin($record->uuid),
                 'user_id'           => $record->userId,
                 'growing_area_code' => $record->growingAreaCode,
                 'location'          => $record->getWktPoint(),
@@ -67,20 +91,20 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
     {
         $sql = "UPDATE strategus_monitorings 
                 SET reviewed_at = :reviewed_at 
-                WHERE uuid = UUID_TO_BIN(:uuid)";
+                WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute([
             'reviewed_at' => $record->getReviewedAtFormatted(),
-            'uuid'        => $record->uuid,
+            'uuid'        => $this->uuidToBin($record->uuid),
         ]);
     }
 
     public function findByUuid(string $uuid): array
     {
         $sql = "SELECT 
-                    BIN_TO_UUID(uuid) AS uuid,
+                    uuid,
                     user_id,
                     growing_area_code,
                     ST_X(location) AS longitude,
@@ -91,21 +115,27 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                     reviewed_at,
                     synced_at
                 FROM strategus_monitorings 
-                WHERE uuid = UUID_TO_BIN(:uuid) 
+                WHERE uuid = :uuid 
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['uuid' => $uuid]);
+        $stmt->execute(['uuid' => $this->uuidToBin($uuid)]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $result ?: [];
+        if (!$result) {
+            return [];
+        }
+
+        $result['uuid'] = $this->binToUuid($result['uuid']);
+
+        return $result;
     }
 
     public function getByGrowingArea(int $growingAreaCode, int $limit = 50, int $offset = 0): array
     {
         $sql = "SELECT 
-                    BIN_TO_UUID(uuid) AS uuid,
+                    uuid,
                     user_id,
                     growing_area_code,
                     ST_X(location) AS longitude,
@@ -126,13 +156,18 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(function (array $row) {
+            $row['uuid'] = $this->binToUuid($row['uuid']);
+            return $row;
+        }, $rows);
     }
 
     public function getAll(int $limit = 50, int $offset = 0): array
     {
         $sql = "SELECT 
-                    BIN_TO_UUID(uuid) AS uuid,
+                    uuid,
                     user_id,
                     growing_area_code,
                     ST_X(location) AS longitude,
@@ -151,7 +186,12 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(function (array $row) {
+            $row['uuid'] = $this->binToUuid($row['uuid']);
+            return $row;
+        }, $rows);
     }
 
     public function update(string $uuid, array $data, ?int $growingAreaCode): bool
@@ -183,12 +223,12 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                     gallery_count     = :gallery_count,
                     gps_accuracy      = :gps_accuracy,
                     reviewed_at       = :reviewed_at
-                WHERE uuid = UUID_TO_BIN(:uuid)";
+                WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute([
-            'uuid'              => $uuid,
+            'uuid'              => $this->uuidToBin($uuid),
             'growing_area_code' => $growingAreaCode,
             'location'          => $pointWkt,
             'recorded_at'       => $recordedAt,
@@ -200,11 +240,11 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
     public function delete(string $uuid): bool
     {
-        $sql = "DELETE FROM strategus_monitorings WHERE uuid = UUID_TO_BIN(:uuid)";
+        $sql = "DELETE FROM strategus_monitorings WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute(['uuid' => $uuid]);
+        return $stmt->execute(['uuid' => $this->uuidToBin($uuid)]);
     }
 
     public function getExportableData(
@@ -289,7 +329,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
     public function getRecentMapMarkers(int $days = 30): array
     {
         $sql = "SELECT 
-                    BIN_TO_UUID(m.uuid) AS uuid,
+                    m.uuid,
                     ST_Y(m.location) AS latitude,
                     ST_X(m.location) AS longitude,
                     CASE WHEN m.reviewed_at IS NOT NULL THEN 1 ELSE 0 END AS isPlantReviewed
@@ -305,7 +345,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         return array_map(function (array $row) {
             return [
-                'uuid'            => (string) $row['uuid'],
+                'uuid'            => $this->binToUuid($row['uuid']),
                 'latitude'        => (float) $row['latitude'],
                 'longitude'       => (float) $row['longitude'],
                 'isPlantReviewed' => (bool) $row['isPlantReviewed'],
@@ -317,22 +357,26 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         PositionRecordItemInputDTO $record
     ): SpatialMatchOutputDTO {
         $sql = "SELECT 
-                    BIN_TO_UUID(uuid) AS uuid,
+                    uuid,
                     (reviewed_at IS NOT NULL) AS is_reviewed
                 FROM strategus_monitorings 
                 WHERE ST_Distance_Sphere(location, ST_PointFromText(:point, 4326)) <= 2
                 AND ABS(DATEDIFF(recorded_at, :recorded_at)) <= 15
-                AND uuid <> UUID_TO_BIN(:uuid)
+                AND uuid <> :uuid
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'point'       => $record->getWktPoint(),
             'recorded_at' => $record->getRecordedAtFormatted(),
-            'uuid'        => $record->uuid,
+            'uuid'        => $this->uuidToBin($record->uuid),
         ]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            $result['uuid'] = $this->binToUuid($result['uuid']);
+        }
 
         return SpatialMatchOutputDTO::fromDatabaseRow($result ?: null);
     }
@@ -376,7 +420,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
     public function getPendingPlants(int $days = 20): array
     {
         $sql = "SELECT 
-                    BIN_TO_UUID(uuid) AS uuid,
+                    uuid,
                     ST_Y(location) AS latitude,
                     ST_X(location) AS longitude,
                     DATE_FORMAT(recorded_at, '%Y-%m-%d') AS recordedDate,
@@ -400,7 +444,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         return array_map(function (array $row) {
             return [
-                'uuid'            => (string) $row['uuid'],
+                'uuid'            => $this->binToUuid($row['uuid']),
                 'latitude'        => (float) $row['latitude'],
                 'longitude'       => (float) $row['longitude'],
                 'recordedDate'    => (string) $row['recordedDate'],

@@ -2,6 +2,8 @@
 
 namespace App\Middleware;
 
+use App\Shared\Http\ApiResponse;
+use App\Shared\Http\HttpStatus;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
@@ -19,29 +21,16 @@ class RoleMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandler $handler): Response
     {
-
         $userRole = $request->getAttribute('role_id');
 
         if ($userRole === null || !in_array((int) $userRole, $this->allowedRoles, true)) {
-            return $this->forbiddenResponse(
-                'No tienes los privilegios necesarios para realizar esta acción.'
+            return ApiResponse::json(
+                response: new SlimResponse(),
+                statusCode: HttpStatus::FORBIDDEN,
+                message: 'No tienes los privilegios necesarios para realizar esta acción.'
             );
         }
 
         return $handler->handle($request);
-    }
-
-
-    private function forbiddenResponse(string $message): Response
-    {
-        $response = new SlimResponse();
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'message' => 'Acceso restringido.',
-            'error'   => $message
-        ], JSON_UNESCAPED_UNICODE));
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(403);
     }
 }

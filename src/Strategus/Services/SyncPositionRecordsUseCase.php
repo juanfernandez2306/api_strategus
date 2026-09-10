@@ -35,6 +35,14 @@ final readonly class SyncPositionRecordsUseCase
         $syncedIncompleteUuids = [];
         $insertedCount = 0;
 
+        $debugCounts = [
+            'total_received' => count($validatedRecords),
+            'discarded_no_growing_area' => 0,
+            'spatial_duplicate_ignored' => 0,
+            'uuid_already_exists_handled' => 0,
+            'successfully_inserted' => 0,
+        ];
+
         $chunks = array_chunk($validatedRecords, self::CHUNK_SIZE);
 
         foreach ($chunks as $chunkIndex => $chunk) {
@@ -51,7 +59,9 @@ final readonly class SyncPositionRecordsUseCase
                         longitude: $longitude
                     );
 
+                    
                     if ($growingAreaCode === null) {
+                        $debugCounts['discarded_no_growing_area']++;
                         $deletedUuids[] = $uuid;
                         continue;
                     }
@@ -64,12 +74,14 @@ final readonly class SyncPositionRecordsUseCase
 
                     $spatialDuplicateMatch = $this->monitoringRepository->findDuplicateInRadius($incomingRecord);
 
+                    
                     if ($spatialDuplicateMatch->found) {
                         if (!$spatialDuplicateMatch->isReviewed && $incomingRecord->isReviewedDateComplete()) {
                             $this->monitoringRepository->delete($spatialDuplicateMatch->uuid);
 
                             if ($this->tryInsertRecord($incomingRecord)) {
                                 $insertedCount++;
+                                $debugCounts['successfully_inserted']++;
                                 $this->categorizeUuidByCompleteness(
                                     record: $incomingRecord,
                                     deletedUuids: $deletedUuids,
@@ -77,6 +89,7 @@ final readonly class SyncPositionRecordsUseCase
                                 );
                             }
                         } else {
+                            $debugCounts['spatial_duplicate_ignored']++;
                             $deletedUuids[] = $incomingRecord->uuid;
                         }
 
@@ -86,12 +99,14 @@ final readonly class SyncPositionRecordsUseCase
                     try {
                         $this->monitoringRepository->create($incomingRecord);
                         $insertedCount++;
+                        $debugCounts['successfully_inserted']++;
                         $this->categorizeUuidByCompleteness(
                             record: $incomingRecord,
                             deletedUuids: $deletedUuids,
                             syncedIncompleteUuids: $syncedIncompleteUuids
                         );
                     } catch (MonitoringUuidAlreadyExistsException $e) {
+                        $debugCounts['uuid_already_exists_handled']++;
                         $existingDbRecord = $this->monitoringRepository->findByUuid($incomingRecord->uuid);
 
                         if (!empty($existingDbRecord) && empty($existingDbRecord['reviewed_at'])) {
@@ -119,6 +134,8 @@ final readonly class SyncPositionRecordsUseCase
                 throw $e;
             }
         }
+
+        $this->logger->info('Resumen del flujo de Sincronización', $debugCounts);
 
         return new BulkSyncOutputDTO(
             deletedUuids: $deletedUuids,

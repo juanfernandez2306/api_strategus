@@ -6,6 +6,10 @@ use App\Application\Settings\SettingsInterface;
 use App\Middleware\RateLimitMiddleware;
 use App\Shared\Services\Mail\MailServiceInterface;
 use App\Shared\Services\Mail\PhpMailerService;
+use App\Strategus\Repositories\OilPalmGrowingAreaRepositoryInterface;
+use App\Strategus\Repositories\PdoOilPalmGrowingAreaRepository;
+use App\Strategus\Repositories\PdoStrategusMonitoringRepository;
+use App\Strategus\Repositories\StrategusMonitoringRepositoryInterface;
 use App\Users\Repositories\Auth\PdoTokenRepository;
 use App\Users\Repositories\Auth\PdoUserRepository;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
@@ -77,6 +81,8 @@ return function (ContainerBuilder $containerBuilder) {
 
         TokenRepositoryInterface::class => autowire(PdoTokenRepository::class),
         UserRepositoryInterface::class  => autowire(PdoUserRepository::class),
+        OilPalmGrowingAreaRepositoryInterface::class => autowire(PdoOilPalmGrowingAreaRepository::class),
+        StrategusMonitoringRepositoryInterface::class => autowire(PdoStrategusMonitoringRepository::class),
 
     ]);
 };
