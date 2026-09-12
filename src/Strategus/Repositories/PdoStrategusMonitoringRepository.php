@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategus\Repositories;
 
 use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
+use App\Strategus\DTOs\Monitoring\ExistingRecordByUuidsOutputDTO;
 use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
 use PDO;
@@ -130,6 +131,40 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $result['uuid'] = $this->binToUuid($result['uuid']);
 
         return $result;
+    }
+    
+    public function findExistingByUuids(array $uuids): array
+    {
+        if (empty($uuids)) {
+            return [];
+        }
+
+        $binaryUuids = array_map(
+            fn(string $uuid) => $this->uuidToBin($uuid),
+            $uuids
+        );
+
+        $placeholders = implode(',', array_fill(0, count($binaryUuids), '?'));
+
+        $sql = "SELECT 
+                    uuid,
+                    (reviewed_at IS NOT NULL) AS is_reviewed
+                FROM strategus_monitorings 
+                WHERE uuid IN ({$placeholders})";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array_values($binaryUuids));
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formattedRows = array_map(function (array $row) {
+            return [
+                'uuid'       => $this->binToUuid($row['uuid']),
+                'isReviewed' => (bool) $row['is_reviewed'],
+            ];
+        }, $rows ?: []);
+
+        return ExistingRecordByUuidsOutputDTO::fromCollection($formattedRows);
     }
 
     public function getByGrowingArea(int $growingAreaCode, int $limit = 50, int $offset = 0): array

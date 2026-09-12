@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Strategus\Repositories;
 
+use App\Strategus\DTOs\Monitoring\ExistingRecordByUuidsOutputDTO;
 use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
 
@@ -15,6 +16,10 @@ interface StrategusMonitoringRepositoryInterface
 
     public function findByUuid(string $uuid): array;
 
+    /**
+     * @param string[] $uuids
+     * @return array<string, ExistingRecordByUuidsOutputDTO>
+     */
     public function findExistingByUuids(array $uuids);
 
     public function getByGrowingArea(int $growingAreaCode, int $limit = 50, int $offset = 0): array;

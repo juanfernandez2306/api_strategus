@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Strategus\Services;
 
 use App\Strategus\DTOs\Monitoring\BulkSyncOutputDTO;
+use App\Strategus\DTOs\Monitoring\ExistingRecordByUuidsOutputDTO;
 use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\Repositories\OilPalmGrowingAreaRepositoryInterface;
 use App\Strategus\Repositories\StrategusMonitoringRepositoryInterface;
@@ -47,13 +48,14 @@ final readonly class SyncPositionRecordsUseCase
                 /** @var PositionRecordItemInputDTO $record */
                 foreach ($chunk as $record) {
                     if (isset($existingDbRecords[$record->uuid])) {
-                        $existingRow = $existingDbRecords[$record->uuid];
+                        /** @var ExistingRecordByUuidsOutputDTO $existingDTO */
+                        $existingDTO = $existingDbRecords[$record->uuid];
 
-                        if (empty($existingRow['reviewed_at']) && $record->isReviewedDateComplete()) {
-                            $this->monitoringRepository->updateReviewedAt($record);
-                            $updatedCount++;
-                            $updatedUuids[] = $record->uuid;
-                        }
+                            if (!$existingDTO->isReviewed && $record->isReviewedDateComplete()) {
+                                $this->monitoringRepository->updateReviewedAt($record);
+                                $updatedCount++;
+                                $updatedUuids[] = $record->uuid;
+                            }
 
                         $deletedUuids[] = $record->uuid;
                         continue;
