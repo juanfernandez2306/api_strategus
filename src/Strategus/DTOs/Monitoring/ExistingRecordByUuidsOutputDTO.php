@@ -9,7 +9,8 @@ final readonly class ExistingRecordByUuidsOutputDTO
     public function __construct(
         public string $uuid,
         public bool $isReviewed
-    ) {}
+    ) {
+    }
 
     public static function fromDatabaseRow(array $row): self
     {
@@ -18,7 +19,7 @@ final readonly class ExistingRecordByUuidsOutputDTO
             isReviewed: (bool) $row['isReviewed']
         );
     }
-    
+
     public static function fromCollection(?array $rows): array
     {
         if (empty($rows)) {

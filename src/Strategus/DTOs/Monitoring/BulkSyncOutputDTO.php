@@ -15,7 +15,8 @@ final readonly class BulkSyncOutputDTO
         public int $spatialDuplicateCount = 0,
         public array $updatedUuids = [],
         public array $backendDeletedUuids = []
-    ) {}
+    ) {
+    }
 
     public function toArray(): array
     {

@@ -19,7 +19,8 @@ final readonly class SyncPositionRecordsUseCase
         private OilPalmGrowingAreaRepositoryInterface $growingAreaRepository,
         private StrategusMonitoringRepositoryInterface $monitoringRepository,
         private PDO $pdo
-    ) {}
+    ) {
+    }
 
     /**
      * @param PositionRecordItemInputDTO[] $dtoRecords
@@ -37,7 +38,6 @@ final readonly class SyncPositionRecordsUseCase
         $spatialDuplicateCount = 0;
 
         foreach (array_chunk($dtoRecords, self::CHUNK_SIZE) as $chunk) {
-            
             $chunkUuids = array_map(fn(PositionRecordItemInputDTO $r) => $r->uuid, $chunk);
             $existingDbRecords = $this->monitoringRepository->findExistingByUuids($chunkUuids);
 
@@ -46,7 +46,6 @@ final readonly class SyncPositionRecordsUseCase
             try {
                 /** @var PositionRecordItemInputDTO $record */
                 foreach ($chunk as $record) {
-
                     if (isset($existingDbRecords[$record->uuid])) {
                         $existingRow = $existingDbRecords[$record->uuid];
 
@@ -81,12 +80,12 @@ final readonly class SyncPositionRecordsUseCase
                         if (!$spatialMatch->isReviewed && $incomingRecord->isReviewedDateComplete()) {
                             $this->monitoringRepository->delete($spatialMatch->uuid);
                             $backendDeletedUuids[] = $spatialMatch->uuid;
-                            
+
                             $this->monitoringRepository->create($incomingRecord);
                             $insertedCount++;
                             $this->categorizeUuidByCompleteness(
-                                $incomingRecord, 
-                                $deletedUuids, 
+                                $incomingRecord,
+                                $deletedUuids,
                                 $syncedIncompleteUuids
                             );
                         } else {
@@ -99,8 +98,8 @@ final readonly class SyncPositionRecordsUseCase
                     $this->monitoringRepository->create($incomingRecord);
                     $insertedCount++;
                     $this->categorizeUuidByCompleteness(
-                        $incomingRecord, 
-                        $deletedUuids, 
+                        $incomingRecord,
+                        $deletedUuids,
                         $syncedIncompleteUuids
                     );
                 }

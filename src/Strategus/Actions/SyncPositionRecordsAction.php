@@ -18,7 +18,8 @@ final readonly class SyncPositionRecordsAction
     public function __construct(
         private PositionRecordValidator $validator,
         private SyncPositionRecordsUseCase $syncUseCase
-    ) {}
+    ) {
+    }
 
     public function __invoke(Request $request, Response $response): Response
     {

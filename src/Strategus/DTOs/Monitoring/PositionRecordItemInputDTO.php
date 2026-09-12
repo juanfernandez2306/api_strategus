@@ -20,7 +20,8 @@ final readonly class PositionRecordItemInputDTO
         public ?string $reviewedTime = null,
         public ?int $userId = null,
         public ?int $growingAreaCode = null
-    ) {}
+    ) {
+    }
 
     public static function fromArray(
         array $rawAttributesValidated
