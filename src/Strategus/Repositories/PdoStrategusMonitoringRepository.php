@@ -132,7 +132,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         return $result;
     }
-    
+
     public function findExistingByUuids(array $uuids): array
     {
         if (empty($uuids)) {

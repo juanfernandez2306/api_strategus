@@ -51,11 +51,11 @@ final readonly class SyncPositionRecordsUseCase
                         /** @var ExistingRecordByUuidsOutputDTO $existingDTO */
                         $existingDTO = $existingDbRecords[$record->uuid];
 
-                            if (!$existingDTO->isReviewed && $record->isReviewedDateComplete()) {
-                                $this->monitoringRepository->updateReviewedAt($record);
-                                $updatedCount++;
-                                $updatedUuids[] = $record->uuid;
-                            }
+                        if (!$existingDTO->isReviewed && $record->isReviewedDateComplete()) {
+                            $this->monitoringRepository->updateReviewedAt($record);
+                            $updatedCount++;
+                            $updatedUuids[] = $record->uuid;
+                        }
 
                         $deletedUuids[] = $record->uuid;
                         continue;
