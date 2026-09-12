@@ -8,8 +8,6 @@ final readonly class PositionRecordItemInputDTO
 {
     public function __construct(
         public string $uuid,
-        public int $userId,
-        public int $growingAreaCode,
         public float $latitude,
         public float $longitude,
         public string $recordedDate,
@@ -19,19 +17,16 @@ final readonly class PositionRecordItemInputDTO
         public bool $isPlantReviewed,
         public bool $isSynced,
         public ?string $reviewedDate = null,
-        public ?string $reviewedTime = null
-    ) {
-    }
+        public ?string $reviewedTime = null,
+        public ?int $userId = null,
+        public ?int $growingAreaCode = null
+    ) {}
 
     public static function fromArray(
-        int $userId,
-        int $growingAreaCode,
         array $rawAttributesValidated
     ): self {
         return new self(
             uuid: (string) $rawAttributesValidated['uuid'],
-            userId: $userId,
-            growingAreaCode: $growingAreaCode,
             latitude: (float) $rawAttributesValidated['latitude'],
             longitude: (float) $rawAttributesValidated['longitude'],
             recordedDate: (string) $rawAttributesValidated['recordedDate'],
@@ -46,6 +41,25 @@ final readonly class PositionRecordItemInputDTO
             reviewedTime: isset($rawAttributesValidated['reviewedTime'])
                         ? (string) $rawAttributesValidated['reviewedTime']
                         : null
+        );
+    }
+
+    public function withContext(int $userId, int $growingAreaCode): self
+    {
+        return new self(
+            uuid: $this->uuid,
+            latitude: $this->latitude,
+            longitude: $this->longitude,
+            recordedDate: $this->recordedDate,
+            recordedTime: $this->recordedTime,
+            galleryCount: $this->galleryCount,
+            gpsAccuracy: $this->gpsAccuracy,
+            isPlantReviewed: $this->isPlantReviewed,
+            isSynced: $this->isSynced,
+            reviewedDate: $this->reviewedDate,
+            reviewedTime: $this->reviewedTime,
+            userId: $userId,
+            growingAreaCode: $growingAreaCode,
         );
     }
 

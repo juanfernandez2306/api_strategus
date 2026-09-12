@@ -7,16 +7,18 @@ namespace App\Strategus\Actions;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Shared\Services\Normalizers\CompressedPayloadTransformer;
+use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\Services\SyncPositionRecordsUseCase;
+use App\Strategus\Validators\PositionRecordValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 final readonly class SyncPositionRecordsAction
 {
     public function __construct(
+        private PositionRecordValidator $validator,
         private SyncPositionRecordsUseCase $syncUseCase
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request, Response $response): Response
     {
@@ -24,10 +26,17 @@ final readonly class SyncPositionRecordsAction
 
         $rawBody = (array) ($request->getParsedBody() ?? []);
 
-        $rawRecords = CompressedPayloadTransformer::unpack($rawBody);
+        $unpackedRecords = CompressedPayloadTransformer::unpack($rawBody);
+
+        $validatedRecords = $this->validator->validateBulk($unpackedRecords);
+
+        $dtoRecords = array_map(
+            fn(array $item) => PositionRecordItemInputDTO::fromArray($item),
+            $validatedRecords
+        );
 
         $outputDTO = $this->syncUseCase->execute(
-            rawRecords: $rawRecords,
+            dtoRecords: $dtoRecords,
             userId: $userId
         );
 

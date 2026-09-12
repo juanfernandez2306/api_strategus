@@ -15,6 +15,8 @@ interface StrategusMonitoringRepositoryInterface
 
     public function findByUuid(string $uuid): array;
 
+    public function findExistingByUuids(array $uuids);
+
     public function getByGrowingArea(int $growingAreaCode, int $limit = 50, int $offset = 0): array;
 
     public function getAll(int $limit = 50, int $offset = 0): array;
