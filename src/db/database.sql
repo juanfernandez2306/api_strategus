@@ -65,7 +65,6 @@ CREATE TABLE password_resets (
 
 CREATE TABLE oil_palm_growing_areas (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    uuid BINARY(16) NOT NULL UNIQUE,
     growing_area_code INT UNSIGNED NOT NULL UNIQUE,
     palm_count INT UNSIGNED NOT NULL,
     boundary POLYGON NOT NULL,

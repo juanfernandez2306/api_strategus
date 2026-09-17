@@ -10,38 +10,26 @@ use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
 use PDO;
 use PDOException;
+use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 
 class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryInterface
 {
     private PDO $pdo;
+    private ?LoggerInterface $logger;
 
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $pdo, ?LoggerInterface $logger = null)
     {
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
-     * Helper para convertir UUID canonical String (36 chars) a Binario (16 bytes).
+     * Helper para garantizar la lectura de bytes desde un string o LOB Resource de PDO.
      */
-    private function uuidToBin(string $uuid): string
+    private function extractBytes(mixed $binaryData): string
     {
-        return hex2bin(str_replace('-', '', $uuid));
-    }
-
-    /**
-     * Helper para convertir Binario (16 bytes) a UUID canonical String (36 chars).
-     */
-    private function binToUuid(string $binaryUuid): string
-    {
-        $hex = bin2hex($binaryUuid);
-        return sprintf(
-            '%s-%s-%s-%s-%s',
-            substr($hex, 0, 8),
-            substr($hex, 8, 4),
-            substr($hex, 12, 4),
-            substr($hex, 16, 4),
-            substr($hex, 20, 12)
-        );
+        return is_resource($binaryData) ? stream_get_contents($binaryData) : (string) $binaryData;
     }
 
     public function create(PositionRecordItemInputDTO $record): bool
@@ -68,20 +56,25 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         try {
             $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':uuid', Uuid::fromString($record->uuid)->getBytes(), PDO::PARAM_LOB);
+            $stmt->bindValue(':user_id', $record->userId, PDO::PARAM_INT);
+            $stmt->bindValue(':growing_area_code', $record->growingAreaCode, PDO::PARAM_INT);
+            $stmt->bindValue(':location', $record->getWktPoint());
+            $stmt->bindValue(':recorded_at', $record->getRecordedAtFormatted());
+            $stmt->bindValue(':gallery_count', $record->galleryCount, PDO::PARAM_INT);
+            $stmt->bindValue(':gps_accuracy', $record->gpsAccuracy);
+            $stmt->bindValue(':reviewed_at', $record->getReviewedAtFormatted());
 
-            return $stmt->execute([
-                'uuid'              => $this->uuidToBin($record->uuid),
-                'user_id'           => $record->userId,
-                'growing_area_code' => $record->growingAreaCode,
-                'location'          => $record->getWktPoint(),
-                'recorded_at'       => $record->getRecordedAtFormatted(),
-                'gallery_count'     => $record->galleryCount,
-                'gps_accuracy'      => $record->gpsAccuracy,
-                'reviewed_at'       => $record->getReviewedAtFormatted(),
-            ]);
+            return $stmt->execute();
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
-                throw new MonitoringUuidAlreadyExistsException($record->uuid);
+                $this->logger?->error('PDO Integrity Constraint Violation in create()', [
+                    'exception_message' => $e->getMessage(),
+                    'sql_state'         => $e->getCode(),
+                    'uuid'              => $record->uuid,
+                    'user_id'           => $record->userId,
+                    'growing_area_code' => $record->growingAreaCode,
+                ]);
             }
 
             throw $e;
@@ -95,11 +88,10 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                 WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':reviewed_at', $record->getReviewedAtFormatted());
+        $stmt->bindValue(':uuid', Uuid::fromString($record->uuid)->getBytes(), PDO::PARAM_LOB);
 
-        return $stmt->execute([
-            'reviewed_at' => $record->getReviewedAtFormatted(),
-            'uuid'        => $this->uuidToBin($record->uuid),
-        ]);
+        return $stmt->execute();
     }
 
     public function findByUuid(string $uuid): array
@@ -120,7 +112,8 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['uuid' => $this->uuidToBin($uuid)]);
+        $stmt->bindValue(':uuid', Uuid::fromString($uuid)->getBytes(), PDO::PARAM_LOB);
+        $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -128,7 +121,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
             return [];
         }
 
-        $result['uuid'] = $this->binToUuid($result['uuid']);
+        $result['uuid'] = Uuid::fromBytes($this->extractBytes($result['uuid']))->toString();
 
         return $result;
     }
@@ -140,7 +133,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }
 
         $binaryUuids = array_map(
-            fn(string $uuid) => $this->uuidToBin($uuid),
+            fn(string $uuid) => Uuid::fromString($uuid)->getBytes(),
             $uuids
         );
 
@@ -153,13 +146,18 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                 WHERE uuid IN ({$placeholders})";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(array_values($binaryUuids));
+
+        foreach (array_values($binaryUuids) as $index => $binaryUuid) {
+            $stmt->bindValue($index + 1, $binaryUuid, PDO::PARAM_LOB);
+        }
+
+        $stmt->execute();
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $formattedRows = array_map(function (array $row) {
             return [
-                'uuid'       => $this->binToUuid($row['uuid']),
+                'uuid'       => Uuid::fromBytes($this->extractBytes($row['uuid']))->toString(),
                 'isReviewed' => (bool) $row['is_reviewed'],
             ];
         }, $rows ?: []);
@@ -194,7 +192,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map(function (array $row) {
-            $row['uuid'] = $this->binToUuid($row['uuid']);
+            $row['uuid'] = Uuid::fromBytes($this->extractBytes($row['uuid']))->toString();
             return $row;
         }, $rows);
     }
@@ -224,7 +222,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map(function (array $row) {
-            $row['uuid'] = $this->binToUuid($row['uuid']);
+            $row['uuid'] = Uuid::fromBytes($this->extractBytes($row['uuid']))->toString();
             return $row;
         }, $rows);
     }
@@ -261,16 +259,15 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                 WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':uuid', Uuid::fromString($uuid)->getBytes(), PDO::PARAM_LOB);
+        $stmt->bindValue(':growing_area_code', $growingAreaCode, PDO::PARAM_INT);
+        $stmt->bindValue(':location', $pointWkt);
+        $stmt->bindValue(':recorded_at', $recordedAt);
+        $stmt->bindValue(':gallery_count', (int) $data['galleryCount'], PDO::PARAM_INT);
+        $stmt->bindValue(':gps_accuracy', (float) $data['gpsAccuracy']);
+        $stmt->bindValue(':reviewed_at', $reviewedAt);
 
-        return $stmt->execute([
-            'uuid'              => $this->uuidToBin($uuid),
-            'growing_area_code' => $growingAreaCode,
-            'location'          => $pointWkt,
-            'recorded_at'       => $recordedAt,
-            'gallery_count'     => (int) $data['galleryCount'],
-            'gps_accuracy'      => (float) $data['gpsAccuracy'],
-            'reviewed_at'       => $reviewedAt,
-        ]);
+        return $stmt->execute();
     }
 
     public function delete(string $uuid): bool
@@ -278,8 +275,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         $sql = "DELETE FROM strategus_monitorings WHERE uuid = :uuid";
 
         $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':uuid', Uuid::fromString($uuid)->getBytes(), PDO::PARAM_LOB);
 
-        return $stmt->execute(['uuid' => $this->uuidToBin($uuid)]);
+        return $stmt->execute();
     }
 
     public function getExportableData(
@@ -380,7 +378,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         return array_map(function (array $row) {
             return [
-                'uuid'            => $this->binToUuid($row['uuid']),
+                'uuid'            => Uuid::fromBytes($this->extractBytes($row['uuid']))->toString(),
                 'latitude'        => (float) $row['latitude'],
                 'longitude'       => (float) $row['longitude'],
                 'isPlantReviewed' => (bool) $row['isPlantReviewed'],
@@ -401,16 +399,15 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'point'       => $record->getWktPoint(),
-            'recorded_at' => $record->getRecordedAtFormatted(),
-            'uuid'        => $this->uuidToBin($record->uuid),
-        ]);
+        $stmt->bindValue(':point', $record->getWktPoint());
+        $stmt->bindValue(':recorded_at', $record->getRecordedAtFormatted());
+        $stmt->bindValue(':uuid', Uuid::fromString($record->uuid)->getBytes(), PDO::PARAM_LOB);
+        $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($result) {
-            $result['uuid'] = $this->binToUuid($result['uuid']);
+            $result['uuid'] = Uuid::fromBytes($this->extractBytes($result['uuid']))->toString();
         }
 
         return SpatialMatchOutputDTO::fromDatabaseRow($result ?: null);
@@ -479,7 +476,7 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
 
         return array_map(function (array $row) {
             return [
-                'uuid'            => $this->binToUuid($row['uuid']),
+                'uuid'            => Uuid::fromBytes($this->extractBytes($row['uuid']))->toString(),
                 'latitude'        => (float) $row['latitude'],
                 'longitude'       => (float) $row['longitude'],
                 'recordedDate'    => (string) $row['recordedDate'],

@@ -15,12 +15,14 @@ use Throwable;
 final readonly class SyncPositionRecordsUseCase
 {
     private const CHUNK_SIZE = 200;
+    private ExistingRecordResolver $existingRecordResolver;
 
     public function __construct(
         private OilPalmGrowingAreaRepositoryInterface $growingAreaRepository,
         private StrategusMonitoringRepositoryInterface $monitoringRepository,
         private PDO $pdo
     ) {
+        $this->existingRecordResolver = new ExistingRecordResolver($monitoringRepository);
     }
 
     /**
@@ -39,28 +41,30 @@ final readonly class SyncPositionRecordsUseCase
         $spatialDuplicateCount = 0;
 
         foreach (array_chunk($dtoRecords, self::CHUNK_SIZE) as $chunk) {
-            $chunkUuids = array_map(fn(PositionRecordItemInputDTO $r) => $r->uuid, $chunk);
-            $existingDbRecords = $this->monitoringRepository->findExistingByUuids($chunkUuids);
+            // Clasifica el lote mediante el resolver por UUID exacto
+            $classified = $this->existingRecordResolver->resolve($chunk);
 
             $this->pdo->beginTransaction();
 
             try {
-                /** @var PositionRecordItemInputDTO $record */
-                foreach ($chunk as $record) {
-                    if (isset($existingDbRecords[$record->uuid])) {
-                        /** @var ExistingRecordByUuidsOutputDTO $existingDTO */
-                        $existingDTO = $existingDbRecords[$record->uuid];
+                // 1. Procesar registros que ya existen para actualizar su estado de revisión si aplica
+                foreach ($classified->toUpdate as $uuid => $existingDTO) {
+                    $record = current(array_filter(
+                        $chunk,
+                        fn(PositionRecordItemInputDTO $r) => $r->uuid === $uuid
+                    ));
 
-                        if (!$existingDTO->isReviewed && $record->isReviewedDateComplete()) {
-                            $this->monitoringRepository->updateReviewedAt($record);
-                            $updatedCount++;
-                            $updatedUuids[] = $record->uuid;
-                        }
-
-                        $deletedUuids[] = $record->uuid;
-                        continue;
+                    if ($record !== false && !$existingDTO->isReviewed && $record->isReviewedDateComplete()) {
+                        $this->monitoringRepository->updateReviewedAt($record);
+                        $updatedCount++;
+                        $updatedUuids[] = $record->uuid;
                     }
 
+                    $deletedUuids[] = $uuid;
+                }
+
+                // 2. Procesar registros nuevos o pendientes de validación geográfica/espacial
+                foreach ($classified->toCreate as $record) {
                     $growingAreaCode = $this->growingAreaRepository->findCodeByLocation(
                         latitude: $record->latitude,
                         longitude: $record->longitude
@@ -73,18 +77,25 @@ final readonly class SyncPositionRecordsUseCase
                     }
 
                     $incomingRecord = $record->withContext($userId, $growingAreaCode);
-
                     $spatialMatch = $this->monitoringRepository->findDuplicateInRadius($incomingRecord);
 
                     if ($spatialMatch->found) {
                         $spatialDuplicateCount++;
+                        $isSameUuid = ($spatialMatch->uuid === $incomingRecord->uuid);
 
                         if (!$spatialMatch->isReviewed && $incomingRecord->isReviewedDateComplete()) {
-                            $this->monitoringRepository->delete($spatialMatch->uuid);
-                            $backendDeletedUuids[] = $spatialMatch->uuid;
+                            if ($isSameUuid) {
+                                $this->monitoringRepository->updateReviewedAt($incomingRecord);
+                                $updatedCount++;
+                                $updatedUuids[] = $incomingRecord->uuid;
+                            } else {
+                                $this->monitoringRepository->delete($spatialMatch->uuid);
+                                $backendDeletedUuids[] = $spatialMatch->uuid;
 
-                            $this->monitoringRepository->create($incomingRecord);
-                            $insertedCount++;
+                                $this->monitoringRepository->create($incomingRecord);
+                                $insertedCount++;
+                            }
+
                             $this->categorizeUuidByCompleteness(
                                 $incomingRecord,
                                 $deletedUuids,
@@ -97,8 +108,10 @@ final readonly class SyncPositionRecordsUseCase
                         continue;
                     }
 
+                    // Inserción Estándar
                     $this->monitoringRepository->create($incomingRecord);
                     $insertedCount++;
+
                     $this->categorizeUuidByCompleteness(
                         $incomingRecord,
                         $deletedUuids,
@@ -111,7 +124,6 @@ final readonly class SyncPositionRecordsUseCase
                 if ($this->pdo->inTransaction()) {
                     $this->pdo->rollBack();
                 }
-
                 throw $e;
             }
         }
