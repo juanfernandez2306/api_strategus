@@ -41,13 +41,11 @@ final readonly class SyncPositionRecordsUseCase
         $spatialDuplicateCount = 0;
 
         foreach (array_chunk($dtoRecords, self::CHUNK_SIZE) as $chunk) {
-            // Clasifica el lote mediante el resolver por UUID exacto
             $classified = $this->existingRecordResolver->resolve($chunk);
 
             $this->pdo->beginTransaction();
 
             try {
-                // 1. Procesar registros que ya existen para actualizar su estado de revisión si aplica
                 foreach ($classified->toUpdate as $uuid => $existingDTO) {
                     $record = current(array_filter(
                         $chunk,
@@ -60,10 +58,17 @@ final readonly class SyncPositionRecordsUseCase
                         $updatedUuids[] = $record->uuid;
                     }
 
-                    $deletedUuids[] = $uuid;
+                    if ($record !== false) {
+                        $this->categorizeUuidByCompleteness(
+                            $record,
+                            $deletedUuids,
+                            $syncedIncompleteUuids
+                        );
+                    } else {
+                        $deletedUuids[] = $uuid;
+                    }
                 }
 
-                // 2. Procesar registros nuevos o pendientes de validación geográfica/espacial
                 foreach ($classified->toCreate as $record) {
                     $growingAreaCode = $this->growingAreaRepository->findCodeByLocation(
                         latitude: $record->latitude,
@@ -108,7 +113,7 @@ final readonly class SyncPositionRecordsUseCase
                         continue;
                     }
 
-                    // Inserción Estándar
+
                     $this->monitoringRepository->create($incomingRecord);
                     $insertedCount++;
 
