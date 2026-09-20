@@ -17,6 +17,7 @@ use Slim\Exception\HttpUnauthorizedException;
 use Slim\Handlers\ErrorHandler as SlimErrorHandler;
 use Throwable;
 use App\Shared\Exceptions\ValidationException;
+use App\Shared\Exceptions\StrategusMonitoringException;
 use InvalidArgumentException;
 
 class HttpErrorHandler extends SlimErrorHandler
@@ -32,6 +33,9 @@ class HttpErrorHandler extends SlimErrorHandler
             $statusCode = HttpStatus::UNPROCESSABLE_ENTITY;
             $message = $exception->getMessage();
             $errors = $exception->getErrors();
+        } elseif ($exception instanceof StrategusMonitoringException) {
+            $statusCode = HttpStatus::UNPROCESSABLE_ENTITY;
+            $message = $exception->getMessage();
         } elseif ($exception instanceof InvalidArgumentException) {
             $statusCode = HttpStatus::BAD_REQUEST;
             $message = $exception->getMessage();

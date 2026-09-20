@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Strategus\Repositories;
 
-use App\Shared\Exceptions\MonitoringUuidAlreadyExistsException;
+use App\Shared\Exceptions\StrategusMonitoringException;
 use App\Strategus\DTOs\Monitoring\ExistingRecordByUuidsOutputDTO;
 use App\Strategus\DTOs\Monitoring\PositionRecordItemInputDTO;
 use App\Strategus\DTOs\Monitoring\SpatialMatchOutputDTO;
@@ -68,14 +68,35 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
             return $stmt->execute();
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
-                $this->logger?->error('PDO Integrity Constraint Violation in create()', [
-                    'exception_message' => $e->getMessage(),
-                    'sql_state'         => $e->getCode(),
-                    'uuid'              => $record->uuid,
-                    'user_id'           => $record->userId,
-                    'growing_area_code' => $record->growingAreaCode,
-                ]);
+                $errorMessage = $e->getMessage();
+
+                if (str_contains($errorMessage, 'PRIMARY')) {
+                    throw StrategusMonitoringException::uuidAlreadyExists(
+                        $record->uuid,
+                        $e
+                    );
+                }
+
+                if (str_contains($errorMessage, 'fk_strategus_user')) {
+                    throw StrategusMonitoringException::userNotFound(
+                        $record->userId,
+                        $e
+                    );
+                }
+
+                if (str_contains($errorMessage, 'fk_strategus_growing_area')) {
+                    throw StrategusMonitoringException::growingAreaNotFound(
+                        $record->growingAreaCode,
+                        $e
+                    );
+                }
             }
+
+            $this->logger?->error('PDO Exception in create()', [
+                'exception_message' => $e->getMessage(),
+                'sql_state'         => $e->getCode(),
+                'uuid'              => $record->uuid,
+            ]);
 
             throw $e;
         }
