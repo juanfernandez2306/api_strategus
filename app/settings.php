@@ -32,6 +32,15 @@ return function (ContainerBuilder $containerBuilder) {
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                         PDO::ATTR_EMULATE_PREPARES   => false,
                     ]
+                ],
+
+                'cors' => [
+                    'allowed_origins' => array_map(
+                        'trim', 
+                        explode(',', $_ENV['CORS_ALLOWED_ORIGINS'])
+                    ),
+                    'allowed_headers' => 'X-Requested-With, Content-Type, Accept, Origin, Authorization',
+                    'allowed_methods' => 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
                 ]
 
 

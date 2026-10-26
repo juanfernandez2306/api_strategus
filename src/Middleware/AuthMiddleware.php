@@ -43,7 +43,6 @@ class AuthMiddleware implements MiddlewareInterface
         $plainToken = $matches[1];
         $tokenHashed = hash('sha256', $plainToken);
 
-        // 🔍 DEBUG 1: Consultar la BD
         $accessToken = $this->repository->getAccessToken($tokenHashed);
 
         if (empty($accessToken)) {
@@ -57,7 +56,6 @@ class AuthMiddleware implements MiddlewareInterface
             );
         }
 
-        // 🔍 DEBUG 2: Evaluar si role_id existe o viene nulo
         $roleId = $accessToken['role_id'] ?? null;
 
         if ($roleId === null) {
@@ -94,7 +92,6 @@ class AuthMiddleware implements MiddlewareInterface
             );
         }
 
-        // Asignación de atributos a la Request
         $request = $request->withAttribute('user_id', $accessToken['user_id']);
         $request = $request->withAttribute('role_id', $roleId);
 

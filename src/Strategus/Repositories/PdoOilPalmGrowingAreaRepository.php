@@ -9,7 +9,8 @@ use PDO;
 class PdoOilPalmGrowingAreaRepository implements OilPalmGrowingAreaRepositoryInterface
 {
     public function __construct(private PDO $pdo)
-    {}
+    {
+    }
 
     public function findCodeByLocation(float $latitude, float $longitude): ?int
     {
