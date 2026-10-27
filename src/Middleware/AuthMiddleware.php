@@ -24,23 +24,35 @@ class AuthMiddleware implements MiddlewareInterface
 
     public function process(Request $request, RequestHandler $handler): Response
     {
-        $authHeader = $request->getHeaderLine('Authorization');
+        $plainToken = null;
 
-        if (empty($authHeader)) {
-            return $this->unauthorizedResponse(
-                'Token de autenticación no proporcionado.',
-                ['auth_header' => 'vacio']
-            );
+        $cookies =$request->getCookieParams();
+
+        if (!empty($cookies['auth_token'])) {
+            $plainToken =$cookies['auth_token'];
         }
 
-        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return $this->unauthorizedResponse(
-                'Formato de autenticación inválido. Debe ser Bearer <token>.',
-                ['auth_header_received' => $authHeader]
-            );
+        if (empty($plainToken)) {
+            $authHeader =$request->getHeaderLine('Authorization');
+
+            if (empty($authHeader)) {
+                return $this->unauthorizedResponse(
+                    'Token de autenticación no proporcionado.',
+                    ['auth_header' => 'vacio']
+                );
+            }
+
+            if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                return $this->unauthorizedResponse(
+                    'Formato de autenticación inválido. Debe ser Bearer <token>.',
+                    ['auth_header_received' => $authHeader]
+                );
+            }
+
+            $plainToken = $matches[1];
+
         }
 
-        $plainToken = $matches[1];
         $tokenHashed = hash('sha256', $plainToken);
 
         $accessToken = $this->repository->getAccessToken($tokenHashed);
