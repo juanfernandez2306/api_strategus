@@ -23,13 +23,15 @@
 
 ## Desglose de Middlewares
 
-* [x] Autenticación / Autorización (`src/Middleware/AuthMiddleware.php` con validación de tokens en BD)
+* [x] **Autenticación / Autorización** 
+    (`src/Middleware/AuthMiddleware.php` con validación de tokens en BD)
 
 * [x] **CORS Middleware** (`app/settings.php`, `src/Middleware/CorsMiddleware.php`)
 
-* [ ] **Parseo de JSON / Validación**
+* [x] **Logs** (`app/settings.php` se genera una trazabilidad manual con Monolog)
 
-* [ ] **Logs y Trazabilidad** (`LoggingMiddleware`)
+* [/] Pruebas de Infraestructura y Middlewares
+  - [ ] AuthMiddlewareTest (Test de integración para validación de tokens, headers y base de datos)
 
 ## Progreso de Módulos / Funcionalidades (Features)
 
@@ -62,6 +64,8 @@
   * [x] `GET /v1/productos/{id}`
 
   * [ ] `POST /v1/productos`
+
+* [ ] **Parseo de JSON / Validación**
 
 * **Tareas Pendientes:**
 

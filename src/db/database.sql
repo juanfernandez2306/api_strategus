@@ -16,10 +16,11 @@ INSERT INTO roles (id, name, description) VALUES
 
 CREATE TABLE users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid BINARY(16) NOT NULL,
     role_id INT UNSIGNED NOT NULL DEFAULT 3,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL,
     password VARCHAR(255) NOT NULL,
     is_active TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
@@ -29,7 +30,9 @@ CREATE TABLE users (
     CONSTRAINT fk_users_role 
         FOREIGN KEY (role_id) REFERENCES roles(id) 
         ON DELETE RESTRICT ON UPDATE CASCADE,
-
+    
+    UNIQUE KEY uk_users_uuid (uuid),
+    UNIQUE KEY uk_users_email (email),
     INDEX idx_users_role (role_id),
     INDEX idx_users_status (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
