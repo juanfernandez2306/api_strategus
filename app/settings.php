@@ -41,6 +41,14 @@ return function (ContainerBuilder $containerBuilder) {
                     ),
                     'allowed_headers' => 'X-Requested-With, Content-Type, Accept, Origin, Authorization',
                     'allowed_methods' => 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+                ],
+
+                'cookie' => [
+                    'name'     => 'auth_token',
+                    'lifetime' => 60 * 60 * 24 * 7,
+                    'domain'   => $_ENV['COOKIE_DOMAIN'],
+                    'secure'   => filter_var($_ENV['COOKIE_SECURE'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'samesite' => 'Lax',
                 ]
 
 

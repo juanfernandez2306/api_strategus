@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Actions\Auth;
 
+use App\Application\Settings\SettingsInterface;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Users\Repositories\Auth\TokenRepositoryInterface;
@@ -23,19 +24,22 @@ class LoginAction
     private TokenRepositoryInterface $tokenRepo;
     private LoginValidator $validator;
     private LoggerInterface $logger;
+    private array $cookieSettings;
 
     public function __construct(
         PDO $pdo,
         UserRepositoryInterface $userRepo,
         TokenRepositoryInterface $tokenRepo,
         LoginValidator $validator,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        SettingsInterface $settings
     ) {
         $this->pdo = $pdo;
         $this->userRepo = $userRepo;
         $this->tokenRepo = $tokenRepo;
         $this->validator = $validator;
         $this->logger = $logger;
+        $this->cookieSettings = $settings->get('cookie');
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -104,6 +108,35 @@ class LoginAction
         $firstName = mb_convert_case($user['first_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
         $lastName  = mb_convert_case($user['last_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
         $userFullName = trim("{$firstName} {$lastName}");
+
+        $cookieName   = $this->cookieSettings['name'];
+        $cookieValue  = $tokenPlain;
+        $cookieExpire = time() + $this->cookieSettings['lifetime'];
+
+        $cookieParts = [
+            sprintf('%s=%s', $cookieName, $cookieValue),
+            'Expires=' . gmdate('D, d-M-Y H:i:s T', $cookieExpire),
+            'Path=/',
+        ];
+
+        $domain = $this->cookieSettings['domain'];
+
+        if (!empty($domain)) {
+            $cookieParts[] = 'Domain=' . $domain;
+        }
+
+        $isSecure = $this->cookieSettings['secure'] ?? false;
+
+        if (!empty($isSecure)) {
+            $cookieParts[] = 'Secure';
+        }
+
+        $cookieParts[] = 'HttpOnly';
+        $cookieParts[] = 'SameSite=' . ($this->cookieSettings['samesite'] ?? 'Lax');
+
+        $cookieHeaderValue = implode('; ', $cookieParts);
+
+        $response = $response->withAddedHeader('Set-Cookie', $cookieHeaderValue);
 
         return ApiResponse::json(
             response: $response,
