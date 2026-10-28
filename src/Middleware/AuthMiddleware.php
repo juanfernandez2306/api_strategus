@@ -26,14 +26,14 @@ class AuthMiddleware implements MiddlewareInterface
     {
         $plainToken = null;
 
-        $cookies =$request->getCookieParams();
+        $cookies = $request->getCookieParams();
 
         if (!empty($cookies['auth_token'])) {
-            $plainToken =$cookies['auth_token'];
+            $plainToken = $cookies['auth_token'];
         }
 
         if (empty($plainToken)) {
-            $authHeader =$request->getHeaderLine('Authorization');
+            $authHeader = $request->getHeaderLine('Authorization');
 
             if (empty($authHeader)) {
                 return $this->unauthorizedResponse(
@@ -50,7 +50,6 @@ class AuthMiddleware implements MiddlewareInterface
             }
 
             $plainToken = $matches[1];
-
         }
 
         $tokenHashed = hash('sha256', $plainToken);
