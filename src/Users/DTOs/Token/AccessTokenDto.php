@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Users\DTOs;
+namespace App\Users\DTOs\Token;
 
 use DateTimeImmutable;
 
-readonly class AccessTokenData
+readonly class AccessTokenDto
 {
     public function __construct(
         public int $userId,

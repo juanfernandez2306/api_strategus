@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Shared\DTOs\CookieConfigDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Users\Repositories\Auth\PdoTokenRepository;
@@ -16,20 +17,23 @@ use Slim\Psr7\Response as SlimResponse;
 class AuthMiddleware implements MiddlewareInterface
 {
     private PdoTokenRepository $repository;
+    private CookieConfigDTO $cookieConfig;
 
-    public function __construct(PdoTokenRepository $repository)
+    public function __construct(PdoTokenRepository $repository, ?CookieConfigDTO $cookieConfig = null)
     {
         $this->repository = $repository;
+        $this->cookieConfig = $cookieConfig ?? CookieConfigDTO::fromArray([]);
     }
 
     public function process(Request $request, RequestHandler $handler): Response
     {
         $plainToken = null;
+        $cookieName = $this->cookieConfig->name;
 
         $cookies = $request->getCookieParams();
 
-        if (!empty($cookies['auth_token'])) {
-            $plainToken = $cookies['auth_token'];
+        if (!empty($cookies[$cookieName])) {
+            $plainToken = $cookies[$cookieName];
         }
 
         if (empty($plainToken)) {
@@ -42,7 +46,7 @@ class AuthMiddleware implements MiddlewareInterface
                 );
             }
 
-            if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            if (!preg_match('/Bearer\s+(\S+)/', $authHeader, $matches)) {
                 return $this->unauthorizedResponse(
                     'Formato de autenticación inválido. Debe ser Bearer <token>.',
                     ['auth_header_received' => $authHeader]
@@ -53,58 +57,37 @@ class AuthMiddleware implements MiddlewareInterface
         }
 
         $tokenHashed = hash('sha256', $plainToken);
-
         $accessToken = $this->repository->getAccessToken($tokenHashed);
 
-        if (empty($accessToken)) {
+        if ($accessToken === null) {
             return $this->unauthorizedResponse(
                 'Token inválido o sesión expirada.',
                 [
-                    'plain_token_received' => $plainToken,
                     'token_hashed_searched' => $tokenHashed,
-                    'db_result' => 'Array vacío [] (no se encontró coincidencia en personal_access_tokens)'
+                    'db_result' => 'No se encontró coincidencia en personal_access_tokens'
                 ]
             );
         }
 
-        $roleId = $accessToken['role_id'] ?? null;
-
-        if ($roleId === null) {
+        if (!$accessToken->isValidUser()) {
             return $this->unauthorizedResponse(
-                'El token es válido, pero el campo role_id no está presente en la respuesta de la Base de Datos.',
+                'Acceso denegado: El usuario está inactivo o la sesión ha expirado.',
                 [
-                    'raw_db_row' => $accessToken,
-                    'keys_retrieved' => array_keys($accessToken)
+                    'is_active' => $accessToken->isActive,
+                    'expires_at' => $accessToken->expiresAt?->format('Y-m-d H:i:s')
                 ]
             );
         }
 
-        if ((int)$accessToken['is_active'] !== 1) {
-            return $this->unauthorizedResponse(
-                'Acceso denegado: El usuario se encuentra inactivo.',
-                ['is_active' => $accessToken['is_active'] ?? null]
-            );
-        }
-
-        if (empty($accessToken['email_verified_at'])) {
+        if ($accessToken->emailVerifiedAt === null) {
             return $this->unauthorizedResponse(
                 'Acceso denegado: Su dirección de correo electrónico no ha sido verificada.',
-                ['email_verified_at' => $accessToken['email_verified_at'] ?? null]
+                ['email_verified_at' => null]
             );
         }
 
-        if (strtotime($accessToken['expires_at']) < time()) {
-            return $this->unauthorizedResponse(
-                'La sesión ha expirado. Por favor, inicie sesión nuevamente.',
-                [
-                    'expires_at' => $accessToken['expires_at'] ?? null,
-                    'current_time' => date('Y-m-d H:i:s')
-                ]
-            );
-        }
-
-        $request = $request->withAttribute('user_id', $accessToken['user_id']);
-        $request = $request->withAttribute('role_id', $roleId);
+        $request = $request->withAttribute('user_id', $accessToken->userId);
+        $request = $request->withAttribute('role_id', $accessToken->roleId);
 
         return $handler->handle($request);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
+use App\Users\DTOs\Token\AccessTokenDto;
 use PDO;
 
 class PdoTokenRepository implements TokenRepositoryInterface
@@ -54,7 +55,7 @@ class PdoTokenRepository implements TokenRepositoryInterface
         return $stmt->execute(['user_id' => $userId]);
     }
 
-    public function getAccessToken(string $tokenHashed): array
+    public function getAccessToken(string $tokenHashed): ?AccessTokenDto
     {
         $sql = "SELECT 
                     ut.user_id, 
@@ -71,6 +72,10 @@ class PdoTokenRepository implements TokenRepositoryInterface
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $result ?: [];
+        if (!$result) {
+            return null;
+        }
+
+        return AccessTokenDto::fromArray($result);
     }
 }
