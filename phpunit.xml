@@ -13,6 +13,12 @@
   <php>
     <env name="APP_ENV" value="test"/>
     <env name="APP_URL" value="http://localhost"/>
-    <!-- Agrega esta línea -->
+    <env name="DB_NAME" value="test"/>
+    <env name="DB_HOST" value="localhost"/>
+    <env name="DB_USER" value="root"/>
+    <env name="DB_PASS" value=""/>
+    <env name="DB_CHARSET" value="utf8mb4"/>
+    <env name="CORS_ALLOWED_ORIGINS" value="*"/>
+    <env name="COOKIE_DOMAIN" value="localhost"/>
   </php>
 </phpunit>

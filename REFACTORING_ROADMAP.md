@@ -30,8 +30,15 @@
 
 * [x] **Logs** (`app/settings.php` se genera una trazabilidad manual con Monolog)
 
-* [/] Pruebas de Infraestructura y Middlewares
-  - [ ] AuthMiddlewareTest (Test de integración para validación de tokens, headers y base de datos)
+* [x] **DTOs y Objetos Inmutables** (`src/Shared/DTOs`)
+  - [x] CookieConfigDTO
+  - [x] AccessTokenDto
+
+## Pruebas y Calidad (QA)
+
+* [x] **Pruebas Unitarias (Unit Tests)**
+  - [x] CookieConfigDtoTest (`tests/Unit/Shared/DTOs/CookieConfigDtoTest.php`)
+  - [x] AccessTokenDtoTest (`tests/Unit/Shared/DTOs/AccessTokenDtoTest.php`)
 
 ## Progreso de Módulos / Funcionalidades (Features)
 

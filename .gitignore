@@ -70,3 +70,4 @@ var/
 tests/integration_ignored/
 src/Usuarios/
 public/assets/img/
+tests/Integration
