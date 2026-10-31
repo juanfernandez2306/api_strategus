@@ -35,10 +35,9 @@ return function (ContainerBuilder $containerBuilder) {
                 ],
 
                 'cors' => [
-                    'allowed_origins' => array_map(
-                        'trim', 
-                        explode(',', $_ENV['CORS_ALLOWED_ORIGINS'])
-                    ),
+                    'allowed_origins' => !empty($_ENV['CORS_ALLOWED_ORIGINS'])
+                        ? array_map('trim', explode(',', $_ENV['CORS_ALLOWED_ORIGINS']))
+                        : [],
                     'allowed_headers' => 'X-Requested-With, Content-Type, Accept, Origin, Authorization',
                     'allowed_methods' => 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
                 ],

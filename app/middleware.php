@@ -8,7 +8,7 @@ use Slim\App;
 use App\Middleware\RateLimitMiddleware;
 
 return function (App $app) {
+    $app->add(CorsMiddleware::class);
     $app->add(SessionMiddleware::class);
     $app->add(RateLimitMiddleware::class);
-    $app->add(CorsMiddleware::class);
 };

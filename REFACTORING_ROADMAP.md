@@ -40,66 +40,21 @@
   - [x] CookieConfigDtoTest (`tests/Unit/Shared/DTOs/CookieConfigDtoTest.php`)
   - [x] AccessTokenDtoTest (`tests/Unit/Shared/DTOs/AccessTokenDtoTest.php`)
 
+**Capa de Seguridad y Middleware de Control**
+[x] Implementación de pruebas con PHPUnit de middleware
+    (`tests/Integration/Middleware/ApiSecurityMiddlewareTest.php`).
+
 ## Progreso de Módulos / Funcionalidades (Features)
 
-### Módulo 1: [Nombre de la Feature 1, ej: Usuarios / Auth]
-
-* **Estado:** 🟡 Casi Listo
+### Módulo 1: Users
 
 * **Endpoints:**
-
-  * [x] `POST /v1/auth/login`
-
-  * [x] `POST /v1/auth/registro`
-
-  * [ ] `GET /v1/usuarios/perfil`
-
-* **Tareas Pendientes:**
-
-  * [ ] Agregar pruebas unitarias o de integración
-
-  * [ ] Estandarizar la respuesta JSON del controlador
-
-### Módulo 2: [Nombre de la Feature 2, ej: Productos / Pedidos]
-
-* **Estado:** 🟡 Casi Listo
-
-* **Endpoints:**
-
-  * [x] `GET /v1/productos`
-
-  * [x] `GET /v1/productos/{id}`
-
-  * [ ] `POST /v1/productos`
+  * [x] `POST /users/register`
+        [ ] DTOs
+  * [x] `POST /users/login`
+  * [ ] `POST /users/email/verify`
+  * [ ] `POST /users/email/resend`
+  * [ ] `POST /users/password/forgot`
+  * [ ] `POST /users/password/reset`
 
 * [ ] **Parseo de JSON / Validación**
-
-* **Tareas Pendientes:**
-
-  * [ ] Validar el cuerpo de las peticiones (Request Body)
-
-### Módulo 3: [Próximo Módulo]
-
-* **Estado:** 🔴 Pendiente
-
-* **Endpoints:**
-
-  * [ ] Por definir
-
-## 📋 Lista de Buenas Prácticas para Refactorizar
-
-* [ ] **Inyección de Dependencias**: Controladores y servicios se inyectan mediante el Contenedor PSR-11 (sin `new Clase()` dentro de los controladores).
-
-* [ ] **Responsabilidad Única (SRP)**: Los controladores solo manejan HTTP (Request/Response). La lógica de negocio vive en la capa de Servicios/Dominio.
-
-* [ ] **Respuestas Estandarizadas**: Uso del objeto `$response` (PSR-7) para responder siempre con una estructura uniforme (ej: `{ "data": ..., "error": ... }`).
-
-* [ ] **Variables de Entorno**: Datos sensibles cargados mediante archivo `.env` (`vlucas/phpdotenv` o similar).
-
-## 📝 Próximos Pasos Inmediatos
-
-1. Renombrar el Módulo 1 y Módulo 2 con las funcionalidades reales en las que estás trabajando.
-
-2. Terminar de revisar los middlewares que ya tienes implementados.
-
-3. Pasar el siguiente endpoint o módulo a estado `En Progreso`.
