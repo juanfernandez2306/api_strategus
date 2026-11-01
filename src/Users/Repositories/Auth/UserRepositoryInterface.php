@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
+use App\Users\DTOs\RegisterUserDTO;
+
 interface UserRepositoryInterface
 {
     public function existsByEmail(string $email): bool;
 
     public function countActiveUsers(): int;
 
-    public function create(array $data): int;
+    public function create(RegisterUserDTO $data): int;
 
     public function getAll(int $limit = 10, int $offset = 0): array;
 
@@ -27,4 +29,6 @@ interface UserRepositoryInterface
     public function findAdminEmails(): array;
 
     public function updatePassword(int $userId, string $newPassword): bool;
+
+    public function existsByDocument(string $dniType, string $dniNumber): bool;
 }

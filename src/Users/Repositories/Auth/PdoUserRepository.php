@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
+use App\Users\DTOs\RegisterUserDTO;
 use PDO;
 
 class PdoUserRepository implements UserRepositoryInterface
@@ -35,19 +36,25 @@ class PdoUserRepository implements UserRepositoryInterface
         return (int) $statement->fetchColumn();
     }
 
-    public function create(array $data): int
+    public function create(RegisterUserDTO $data): int
     {
         $sql = "INSERT INTO 
-                users (first_name, last_name, email, password) 
-                VALUES (:first_name, :last_name, :email, :password)";
+                users (first_name, last_name, email, password, 
+                birth_date, document_type, dni_number, phone_number) 
+                VALUES (:first_name, :last_name, :email, :password, 
+                :birth_date, :document_type, :dni_number, :phone_number)";
 
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute([
-            'first_name' => mb_strtolower($data['first_name']),
-            'last_name'  => mb_strtolower($data['last_name']),
-            'email'      => mb_strtolower($data['email']),
-            'password'   => password_hash($data['password'], PASSWORD_BCRYPT)
+            'first_name'    => mb_strtolower($data->firstName),
+            'last_name'     => mb_strtolower($data->lastName),
+            'email'         => mb_strtolower($data->email),
+            'password'      => password_hash($data->password, PASSWORD_BCRYPT),
+            'birth_date'    => $data->birthDate,
+            'document_type' => $data->dniType,
+            'dni_number'    => $data->dniNumber,
+            'phone_number'  => $data->phoneNumber
         ]);
 
         return (int) $this->pdo->lastInsertId();
@@ -182,5 +189,20 @@ class PdoUserRepository implements UserRepositoryInterface
             'user_id'  => $userId,
             'password' => password_hash($newPassword, PASSWORD_BCRYPT)
         ]);
+    }
+
+    public function existsByDocument(string $dniType, string $dniNumber): bool
+    {
+        $sql = "SELECT 1 FROM users 
+                WHERE document_type = :dni_type AND dni_number = :dni_number LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            'dni_type'   => $dniType,
+            'dni_number' => $dniNumber
+        ]);
+
+        return $stmt->fetch() !== false;
     }
 }

@@ -6,10 +6,11 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Users\DTOs\RegisterUserDTO;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserMailServiceInterface;
+use App\Users\Services\Mail\UserRegistrationEmailServiceInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
@@ -23,7 +24,7 @@ class RegisterAction
     private RegisterValidator $validator;
     private UserRepositoryInterface $userRepo;
     private PasswordResetRepositoryInterface $passwordResetRepo;
-    private UserMailServiceInterface $userMailService;
+    private UserRegistrationEmailServiceInterface $registrationEmailService;
     private LoggerInterface $logger;
 
     public function __construct(
@@ -31,14 +32,14 @@ class RegisterAction
         RegisterValidator $validator,
         UserRepositoryInterface $userRepo,
         PasswordResetRepositoryInterface $passwordResetRepo,
-        UserMailServiceInterface $userMailService,
+        UserRegistrationEmailServiceInterface $registrationEmailService,
         LoggerInterface $logger
     ) {
         $this->pdo = $pdo;
         $this->validator = $validator;
         $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
-        $this->userMailService = $userMailService;
+        $this->registrationEmailService = $registrationEmailService;
         $this->logger = $logger;
     }
 
@@ -48,10 +49,12 @@ class RegisterAction
 
         $validatedData = $this->validator->validate($data);
 
+        $userDto = RegisterUserDTO::fromValidated($validatedData);
+
         $this->pdo->beginTransaction();
 
         try {
-            $userId = $this->userRepo->create($validatedData);
+            $userId = $this->userRepo->create($userDto);
 
             ($userId <= 0) && throw new RuntimeException(
                 "No se pudo obtener el ID del usuario recién creado."
@@ -71,7 +74,7 @@ class RegisterAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al registrar el nuevo usuario', [
-                'email' => $validatedData['email'] ?? null,
+                'email' => $userDto->email,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -79,40 +82,18 @@ class RegisterAction
             throw $e;
         }
 
-        $fullName = ucfirst($validatedData['first_name'])
-                    . ' ' . ucfirst($validatedData['last_name']);
-
-
-        $frontendUrl = $_ENV['FRONTEND_URL'] ?? '';
-
-        if (empty($frontendUrl)) {
-            $msg = "La variable de entorno 'FRONTEND_URL' no está definida o está vacía.";
-            $this->logger->critical($msg);
-            throw new RuntimeException($msg);
-        }
-
-        $verificationUrl = sprintf(
-            '%s/verify/email?email=%s&token=%s',
-            rtrim($frontendUrl, '/'),
-            urlencode($validatedData['email']),
-            urlencode($tokenPlain)
+        $this->registrationEmailService->sendVerification(
+            userId: $userId,
+            userDto: $userDto,
+            tokenPlain: $tokenPlain
         );
 
-        $this->userMailService->send([
-            'toEmail'      => $validatedData['email'],
-            'userFullName' => $fullName,
-            'subject'      => 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
-            'viewTemplate' => 'Emails.VerifyEmail',
-            'actionUrl'    => $verificationUrl,
-        ]);
+        $msg = "Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.";
 
         return ApiResponse::json(
-            $response,
-            HttpStatus::CREATED,
-            'Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.',
-            [
-                'user_id' => $userId
-            ]
+            response: $response,
+            statusCode: HttpStatus::CREATED,
+            message: $msg
         );
     }
 }

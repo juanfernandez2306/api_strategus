@@ -20,6 +20,10 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL,
+    phone_number VARCHAR(20) NULL,
+    birth_date DATE NULL,
+    dni_type VARCHAR(4) NULL,
+    dni_number VARCHAR(50) NULL,
     password VARCHAR(255) NOT NULL,
     is_active TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
     email_verified_at TIMESTAMP NULL DEFAULT NULL,
@@ -30,6 +34,7 @@ CREATE TABLE users (
         FOREIGN KEY (role_id) REFERENCES roles(id) 
         ON DELETE RESTRICT ON UPDATE CASCADE,
     
+    CONSTRAINT uk_users_document UNIQUE KEY (dni_type, dni_number),
     UNIQUE KEY uk_users_uuid (uuid),
     UNIQUE KEY uk_users_email (email),
     INDEX idx_users_role (role_id),
