@@ -28,7 +28,7 @@
         "monolog/monolog": "^3.10",
         "php-di/php-di": "^6.4",
         "phpmailer/phpmailer": "^7.1",
-        "phpoffice/phpspreadsheet": "^5.8",
+        "phpoffice/phpspreadsheet": "^5.10",
         "psr/simple-cache": "3.0",
         "rakit/validation": "^1.4",
         "ramsey/uuid": "^4.9",
