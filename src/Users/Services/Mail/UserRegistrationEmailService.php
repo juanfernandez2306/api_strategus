@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Users\Services\Mail;
 
-use App\Users\DTOs\RegisterUserDTO;
+use App\Users\DTOs\Auth\RegisterUserDTO;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
-class UserRegistrationEmailService
+class UserRegistrationEmailService implements UserRegistrationEmailServiceInterface
 {
     private UserMailServiceInterface $userMailService;
     private LoggerInterface $logger;
