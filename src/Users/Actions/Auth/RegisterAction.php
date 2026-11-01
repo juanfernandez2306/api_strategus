@@ -6,7 +6,7 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
-use App\Users\DTOs\RegisterUserDTO;
+use App\Users\DTOs\Auth\RegisterUserDTO;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;

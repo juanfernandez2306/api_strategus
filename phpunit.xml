@@ -6,8 +6,9 @@
     </include>
   </coverage>
   <testsuites>
-    <testsuite name="Test Suite">
-      <directory>./tests/</directory>
+    <testsuite name="Integration">
+        <directory>tests/Integration</directory>
+        <exclude>tests/integration_ignored</exclude>
     </testsuite>
   </testsuites>
   <php>

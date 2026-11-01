@@ -40,9 +40,9 @@ class PdoUserRepository implements UserRepositoryInterface
     {
         $sql = "INSERT INTO 
                 users (first_name, last_name, email, password, 
-                birth_date, document_type, dni_number, phone_number) 
+                birth_date, dni_type, dni_number, phone_number) 
                 VALUES (:first_name, :last_name, :email, :password, 
-                :birth_date, :document_type, :dni_number, :phone_number)";
+                :birth_date, :dni_type, :dni_number, :phone_number)";
 
         $stmt = $this->pdo->prepare($sql);
 
@@ -52,7 +52,7 @@ class PdoUserRepository implements UserRepositoryInterface
             'email'         => mb_strtolower($data->email),
             'password'      => password_hash($data->password, PASSWORD_BCRYPT),
             'birth_date'    => $data->birthDate,
-            'document_type' => $data->dniType,
+            'dni_type'      => mb_strtolower($data->dniType),
             'dni_number'    => $data->dniNumber,
             'phone_number'  => $data->phoneNumber
         ]);
@@ -194,7 +194,7 @@ class PdoUserRepository implements UserRepositoryInterface
     public function existsByDocument(string $dniType, string $dniNumber): bool
     {
         $sql = "SELECT 1 FROM users 
-                WHERE document_type = :dni_type AND dni_number = :dni_number LIMIT 1";
+                WHERE dni_type = :dni_type AND dni_number = :dni_number LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
 

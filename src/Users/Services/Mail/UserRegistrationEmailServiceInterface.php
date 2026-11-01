@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Services\Mail;
 
-use App\Users\DTOs\RegisterUserDTO;
+use App\Users\DTOs\Auth\RegisterUserDTO;
 
 interface UserRegistrationEmailServiceInterface
 {

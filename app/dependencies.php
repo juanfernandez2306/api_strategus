@@ -17,6 +17,8 @@ use App\Users\Repositories\Auth\TokenRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Services\Mail\UserMailService;
 use App\Users\Services\Mail\UserMailServiceInterface;
+use App\Users\Services\Mail\UserRegistrationEmailService;
+use App\Users\Services\Mail\UserRegistrationEmailServiceInterface;
 use DI\ContainerBuilder;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -89,6 +91,8 @@ return function (ContainerBuilder $containerBuilder) {
         UserRepositoryInterface::class  => autowire(PdoUserRepository::class),
         OilPalmGrowingAreaRepositoryInterface::class => autowire(PdoOilPalmGrowingAreaRepository::class),
         StrategusMonitoringRepositoryInterface::class => autowire(PdoStrategusMonitoringRepository::class),
+
+        UserRegistrationEmailServiceInterface::class => autowire(UserRegistrationEmailService::class),
 
     ]);
 };

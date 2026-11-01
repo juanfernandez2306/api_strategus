@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Users\Validators\Rules;
 
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use InvalidArgumentException;
 use Rakit\Validation\Rule;
+use Rakit\Validation\Validation;
 
 /**
  * @property array $parameters
- * @property array $data
+ * @property Validation $validation
  */
 class UniqueDocumentRule extends Rule
 {
@@ -31,29 +31,18 @@ class UniqueDocumentRule extends Rule
 
         $dniNumber = $value;
 
-        if (!isset($this->parameters[0])) {
-            throw new InvalidArgumentException(
-                "La regla 'unique_document' requiere que se " .
-                "especifique el campo de tipo de documento. "
-            );
-        }
+        $dniTypeField = $this->parameters[0] ?? 'dni_type';
 
-        $dniTypeField = $this->parameters[0];
-
-        if (!isset($this->data[$dniTypeField])) {
-            return false;
-        }
-
-        $dniType = $this->data[$dniTypeField];
-
+        // Obtenemos de forma segura el valor del campo hermano mediante la instancia de validación
+        $dniType = $this->validation->getValue($dniTypeField) ?? $this->validation->getValue('dni_type');
 
         if (!is_string($dniType) || empty($dniType)) {
             return false;
         }
 
         return !$this->userRepository->existsByDocument(
-            dniType: $dniType,
-            dniNumber: $dniNumber
+            $dniType,
+            $dniNumber
         );
     }
 }

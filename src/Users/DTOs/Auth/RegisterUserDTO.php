@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Users\DTOs;
+namespace App\Users\DTOs\Auth;
 
 class RegisterUserDTO
 {

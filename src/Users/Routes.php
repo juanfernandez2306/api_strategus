@@ -16,7 +16,7 @@ return function (RouteCollectorProxy $group) {
     $cacheRepo = $container->get(RateLimitCacheRepository::class);
 
 
-    $authLimiter = new RateLimitMiddleware($cacheRepo, limit: 5, windowSeconds: 60);
+    $authLimiter = new RateLimitMiddleware($cacheRepo, limit: 20, windowSeconds: 60);
     $mailLimiter = new RateLimitMiddleware($cacheRepo, limit: 3, windowSeconds: 300);
 
 

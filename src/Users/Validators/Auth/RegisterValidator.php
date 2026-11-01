@@ -50,7 +50,8 @@ class RegisterValidator extends BaseValidator
             'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.',
             'birth_date:before'          => 'El usuario debe ser mayor de 18 años',
             'dni_type'                   => 'Verifica el tipo de documento V, E, CC',
-            'dni_number'                 => 'El número de cédula debe contener entre 6 y 12 dígitos numéricos.',
+            'dni_number:regex'           => 'El número de cédula debe contener entre 6 y 12 dígitos numéricos.',
+            'dni_number:unique_document' => 'El tipo y número de cédula ya se encuentran registrados.',
             'phone_number'               => 'El teléfono debe tener formato internacional válido'
         ]);
     }
@@ -79,7 +80,7 @@ class RegisterValidator extends BaseValidator
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password',
             'birth_date'            => 'required|date|before:' . $this->eighteenYearsAgo,
-            'dni_type'              => 'required|in:P,V,E,CC',
+            'dni_type'              => 'required|in:p,v,e,cc',
             'dni_number'            => 'required|numeric|regex:' . self::DNI_REGEX . '|unique_document:dni_type',
             'phone_number'          => 'required|regex:' . self::PHONE_REGEX
         ];
