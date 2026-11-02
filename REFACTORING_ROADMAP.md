@@ -48,6 +48,37 @@
 
 ### Módulo 1: Users
 
+## Módulo de Usuario (User Feature)
+
+### Endpoints
+- [x] **`POST /users/register`**
+  - **Acción / Controller:** `App\Users\Actions\Auth\RegisterAction` 
+  (`src/Users/Actions/Auth/RegisterAction.php`)
+  - **Servicio de Negocio:** `App\Users\Services\Auth\RegisterUserService` 
+  (`src/Users/Services/Auth/RegisterUserService.php`)
+  - **Repositorio de Persistencia:** `App\Users\Repositories\Auth\PdoUserRepository` 
+  (`src/Users/Repositories/Auth/PdoUserRepository.php`)
+  - **Validación de Entradas:** `App\Users\Validators\RegisterValidator` 
+  (`src/Users/Validators/RegisterValidator.php`)
+  - **Manejo de Errores y Transacciones:** Captura de conflictos por duplicidad en correo o documento (`BINARY(16)` UUID v7) y emisión estandarizada vía 
+  `ApiResponse` (`409 Conflict` / `422 Unprocessable Entity`).
+
+### DTOs y Objetos Inmutables
+- [x] **`RegisterUserDTO`** (`src/Users/DTOs/Auth/RegisterUserDTO.php`)
+  - Transfiere los datos inmutables del registro 
+  (`first_name`, `last_name`, `email`, `password`, 
+  `birth_date`, `dni_type`, `dni_number`, `phone_number`).
+
+### Pruebas e Integración (QA)
+- [x] **Pruebas de Integración (Integration Tests)**
+  - [x] `RegisterActionIntegrationTest` 
+  (`tests/Integration/Users/RegisterActionIntegrationTest.php`)
+    - Pruebas cubiertas:
+      1. Registro exitoso de usuario con envío de correo de verificación simulado 
+      (`201 Created`).
+      2. Validación de fallos ante intentos de registro duplicado por `email` o `dni_number`.
+      3. Verificación del contrato JSON uniforme a través de `ApiResponse` y `HttpErrorHandler`.
+
 * **Endpoints:**
   * [x] `POST /users/register`
         [ ] DTOs

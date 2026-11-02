@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Users\Repositories\Auth;
 
 use App\Users\DTOs\Auth\RegisterUserDTO;
+use Ramsey\Uuid\Uuid;
 use PDO;
 
 class PdoUserRepository implements UserRepositoryInterface
@@ -38,15 +39,18 @@ class PdoUserRepository implements UserRepositoryInterface
 
     public function create(RegisterUserDTO $data): int
     {
+        $uuidBinary = Uuid::uuid7()->getBytes();
+
         $sql = "INSERT INTO 
-                users (first_name, last_name, email, password, 
+                users (uuid, first_name, last_name, email, password, 
                 birth_date, dni_type, dni_number, phone_number) 
-                VALUES (:first_name, :last_name, :email, :password, 
+                VALUES (:uuid, :first_name, :last_name, :email, :password, 
                 :birth_date, :dni_type, :dni_number, :phone_number)";
 
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute([
+            'uuid'          => $uuidBinary,
             'first_name'    => mb_strtolower($data->firstName),
             'last_name'     => mb_strtolower($data->lastName),
             'email'         => mb_strtolower($data->email),
