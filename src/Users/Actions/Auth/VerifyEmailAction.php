@@ -55,7 +55,7 @@ class VerifyEmailAction
 
         $resetRecord = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
-        if (!$resetRecord) {
+        if ($resetRecord == null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::NOT_FOUND,
@@ -149,7 +149,7 @@ class VerifyEmailAction
                     'name'    => $registeredUserName,
                 ]
             );
-            
+
             return false;
         }
 
