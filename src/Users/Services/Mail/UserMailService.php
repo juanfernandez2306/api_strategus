@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Services\Mail;
 
+use App\Shared\DTOs\MailDTO;
 use App\Shared\Services\Mail\MailServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -50,12 +51,16 @@ class UserMailService implements UserMailServiceInterface
 
             $htmlBody = view($emailContext['viewTemplate'], $templateContext);
 
-            return $this->mailService->send(
-                $emailContext['toEmail'],
-                $emailContext['userFullName'],
-                $emailContext['subject'],
-                $htmlBody
+            // Creamos el DTO con los datos mapeados del arreglo de contexto
+            $mailDTO = new MailDTO(
+                toEmail: $emailContext['toEmail'],
+                toName: $emailContext['userFullName'],
+                subject: $emailContext['subject'],
+                bodyHTML: $htmlBody
             );
+
+            // Enviamos utilizando el DTO hacia la capa compartida
+            return $this->mailService->send($mailDTO);
         } catch (RuntimeException $e) {
             $this->logger->error(sprintf(
                 "Error al enviar correo '%s' para %s: %s",

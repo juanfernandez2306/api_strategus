@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Users\Actions\Auth;
 
+use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Users\DTOs\Auth\RegisterUserDTO;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserRegistrationEmailServiceInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
@@ -24,23 +25,24 @@ class RegisterAction
     private RegisterValidator $validator;
     private UserRepositoryInterface $userRepo;
     private PasswordResetRepositoryInterface $passwordResetRepo;
-    private UserRegistrationEmailServiceInterface $registrationEmailService;
     private LoggerInterface $logger;
+
+    private TemplatedMailServiceInterface $templatedMailService;
 
     public function __construct(
         PDO $pdo,
         RegisterValidator $validator,
         UserRepositoryInterface $userRepo,
         PasswordResetRepositoryInterface $passwordResetRepo,
-        UserRegistrationEmailServiceInterface $registrationEmailService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        TemplatedMailServiceInterface $templatedMailService
     ) {
         $this->pdo = $pdo;
         $this->validator = $validator;
         $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
-        $this->registrationEmailService = $registrationEmailService;
         $this->logger = $logger;
+        $this->templatedMailService = $templatedMailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -82,18 +84,45 @@ class RegisterAction
             throw $e;
         }
 
-        $this->registrationEmailService->sendVerification(
-            userId: $userId,
-            userDto: $userDto,
-            tokenPlain: $tokenPlain
+        $verificationUrl = $this->buildVerificationUrl($userDto, $tokenPlain);
+
+        $isEmailSent = $this->templatedMailService->send(new SendTemplatedMailDTO(
+            toEmail: $userDto->email,
+            toName: $userDto->getFullName(),
+            subject: 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
+            viewTemplate: 'Emails.VerifyEmail',
+            viewData: [
+                'userFullName' => $userDto->getFullName(),
+                'actionUrl'    => $verificationUrl,
+            ]
+        ));
+
+        $msg = "Usuario registrado exitosamente." . (
+            $isEmailSent
+                ? " Se ha enviado un correo para verificar la cuenta."
+                : " Hubo un problema al enviar el correo de verificación. Solicítalo más tarde."
         );
 
-        $msg = "Usuario registrado exitosamente. Se ha enviado un correo para verificar la cuenta.";
 
         return ApiResponse::json(
             response: $response,
             statusCode: HttpStatus::CREATED,
             message: $msg
+        );
+    }
+
+    private function buildVerificationUrl(
+        RegisterUserDTO $userDto,
+        string $tokenPlain
+    ): string {
+        $frontendUrl = $_ENV['FRONTEND_URL'] ??
+            throw new RuntimeException("La variable 'FRONTEND_URL' no está definida.");
+
+        return sprintf(
+            '%s/verify/email?email=%s&token=%s',
+            rtrim($frontendUrl, '/'),
+            urlencode($userDto->email),
+            urlencode($tokenPlain)
         );
     }
 }

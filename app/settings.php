@@ -14,8 +14,8 @@ return function (ContainerBuilder $containerBuilder) {
         SettingsInterface::class => function () {
             return new Settings([
                 'displayErrorDetails' => true, // Should be set to false in production
-                'logError'            => false,
-                'logErrorDetails'     => false,
+                'logError'            => true,
+                'logErrorDetails'     => true,
                 'logger' => [
                     'name' => 'slim-app',
                     'path' => isset($_ENV['docker']) ? 'php://stdout' : __DIR__ . '/../logs/app.log',
@@ -48,8 +48,20 @@ return function (ContainerBuilder $containerBuilder) {
                     'domain'   => $_ENV['COOKIE_DOMAIN'],
                     'secure'   => filter_var($_ENV['COOKIE_SECURE'] ?? false, FILTER_VALIDATE_BOOLEAN),
                     'samesite' => 'Lax',
-                ]
+                ],
 
+                'mail' => [
+                    'host'       => $_ENV['MAIL_HOST'],
+                    'port'       => (int) ($_ENV['MAIL_PORT']),
+                    'username'   => $_ENV['MAIL_USER'],
+                    'password'   => $_ENV['MAIL_PASSWORD'],
+                    'from'       => $_ENV['MAIL_FROM_ADDRESS'],
+                    'from_name'  => $_ENV['MAIL_FROM_NAME'],
+                    'encryption' => $_ENV['MAIL_ENCRYPTION'],
+                    'logoUrl' => ($_ENV['APP_URL'] === 'http://localhost/api-gepad') 
+                        ? 'https://api.juanfgeo.com/assets/img/logo_sigepad.png' 
+                        : rtrim($_ENV['APP_URL'] ?? '', '/') . '/assets/img/logo_sigepad.png',
+                ],
 
             ]);
         }

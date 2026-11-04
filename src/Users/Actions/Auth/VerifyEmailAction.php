@@ -6,9 +6,10 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Shared\DTOs\SendTemplatedMailDTO;
+use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\VerifyEmailValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -16,6 +17,7 @@ use PDO;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use App\Users\DTOs\Auth\VerifyEmailDTO;
 
 class VerifyEmailAction
 {
@@ -24,7 +26,7 @@ class VerifyEmailAction
     private UserRepositoryInterface $userRepo;
     private VerifyEmailValidator $validator;
     private LoggerInterface $logger;
-    private UserMailServiceInterface $userMailService;
+    private TemplatedMailServiceInterface $templatedMailService;
 
     public function __construct(
         PDO $pdo,
@@ -32,23 +34,24 @@ class VerifyEmailAction
         UserRepositoryInterface $userRepo,
         VerifyEmailValidator $validator,
         LoggerInterface $logger,
-        UserMailServiceInterface $userMailService,
+        TemplatedMailServiceInterface $templatedMailService,
     ) {
         $this->pdo = $pdo;
         $this->passwordResetRepo = $passwordResetRepo;
         $this->userRepo = $userRepo;
         $this->validator = $validator;
         $this->logger = $logger;
-        $this->userMailService = $userMailService;
+        $this->templatedMailService = $templatedMailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
     {
         $data = (array) ($request->getQueryParams());
         $validatedData = $this->validator->validate($data);
+        $dataDTO = VerifyEmailDTO::fromArray($validatedData);
 
-        $email = $validatedData['email'];
-        $tokenPlain = $validatedData['token'];
+        $email = $dataDTO->email;
+        $tokenPlain = $dataDTO->token;
 
         $resetRecord = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
@@ -60,7 +63,7 @@ class VerifyEmailAction
             );
         }
 
-        if ($resetRecord['email_verified_at'] !== null) {
+        if ($resetRecord->emailVerifiedAt !== null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -68,7 +71,7 @@ class VerifyEmailAction
             );
         }
 
-        if ($resetRecord['expires_at'] < date('Y-m-d H:i:s')) {
+        if ($resetRecord->expiresAt < date('Y-m-d H:i:s')) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
@@ -78,8 +81,8 @@ class VerifyEmailAction
 
         $this->pdo->beginTransaction();
         try {
-            $updated = $this->userRepo->markEmailAsVerified((int) $resetRecord['user_id']);
-            $deleted = $this->passwordResetRepo->deleteByUserId((int) $resetRecord['user_id']);
+            $updated = $this->userRepo->markEmailAsVerified((int) $resetRecord->userId);
+            $deleted = $this->passwordResetRepo->deleteByUserId((int) $resetRecord->userId);
 
             (!$updated || !$deleted) && throw new RuntimeException('Error al procesar la verificación.');
 
@@ -88,7 +91,7 @@ class VerifyEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al procesar la verificación de correo electrónico', [
-                'user_id' => (int) $resetRecord['user_id'],
+                'user_id' => $resetRecord->userId,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -96,37 +99,71 @@ class VerifyEmailAction
             throw $e;
         }
 
-        $user = $this->userRepo->findById((int) $resetRecord['user_id']);
+        $fullName = $resetRecord->getFullName();
 
-        $firstName = mb_convert_case($user['first_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
-        $lastName  = mb_convert_case($user['last_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
-        $fullName  = trim("{$firstName} {$lastName}");
+        $isMailSent = $this->notifyAdminsAboutNewUser(
+            $resetRecord->userId,
+            $fullName, 
+            $email
+        );
 
-        $this->notifyAdminsAboutNewUser($fullName, $email);
+        if (!$isMailSent) {
+            $this->logger->warning(
+                'El correo electrónico se verificó con éxito, pero falló el envío ' . 
+                'de la notificación a los administradores.', 
+                [
+                    'user_id' => $resetRecord->userId,
+                    'email'   => $email,
+                    'name'    => $fullName,
+                ]
+            );
+        }
+
+        $message = 'Correo electrónico verificado con éxito.' . 
+            ($isMailSent 
+                ? ' Se ha notificado a los administradores.'
+                : ' No se pudo enviar la notificación por correo a los administradores.'
+            );
 
         return ApiResponse::json(
             $response,
             HttpStatus::OK,
-            'Correo electrónico verificado con éxito.'
+            $message
         );
     }
 
-    private function notifyAdminsAboutNewUser(string $registeredUserName, string $registeredUserEmail): void
+    private function notifyAdminsAboutNewUser(
+        int $userId,
+        string $registeredUserName, 
+        string $registeredUserEmail): bool
     {
         $adminEmails = $this->userRepo->findAdminEmails();
 
         if (empty($adminEmails)) {
-            $this->logger->warning('No se encontraron usuarios administradores activos para notificar.');
-            return;
+            $this->logger->warning(
+                'No se encontraron usuarios administradores activos '. 
+                'para notificar sobre el nuevo usuario registrado.', 
+                [
+                    'user_id' => $userId,
+                    'email'   => $registeredUserEmail,
+                    'name'    => $registeredUserName,
+                ]
+            );
+            
+            return false;
         }
 
-        $this->userMailService->send([
-            'toEmail'             => $adminEmails,
-            'userFullName'        => 'Administrador',
-            'subject'             => 'Nuevo Usuario Registrado y Verificado',
-            'viewTemplate'        => 'Emails.NewUserAdminNotification',
-            'registeredUserName'  => $registeredUserName,
-            'registeredUserEmail' => $registeredUserEmail,
-        ]);
+        $mailDTO = new SendTemplatedMailDTO(
+            toEmail: $adminEmails,
+            subject: 'Nuevo Usuario Registrado y Verificado',
+            viewTemplate: 'Emails.NewUserAdminNotification',
+            viewData: [
+                'registeredUserName'  => $registeredUserName,
+                'registeredUserEmail' => $registeredUserEmail,
+            ],
+            toName: 'Administrador'
+        );
+
+        return $this->templatedMailService->send($mailDTO);
     }
 }

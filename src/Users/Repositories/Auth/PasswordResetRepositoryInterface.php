@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
+use App\Users\DTOs\Auth\FindByEmailAndTokenDTO;
+
 interface PasswordResetRepositoryInterface
 {
     public function save(int $userId, string $tokenPlain, string $expiresAt): bool;
 
-    public function findByEmailAndToken(string $email, string $tokenPlain): array;
+    public function findByEmailAndToken(string $email, string $tokenPlain): FindByEmailAndTokenDTO;
 
     public function deleteByUserId(int $userId): bool;
 

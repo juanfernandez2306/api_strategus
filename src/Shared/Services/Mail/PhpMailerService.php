@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Services\Mail;
 
+use App\Shared\DTOs\MailDTO;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use Psr\Log\LoggerInterface;
@@ -17,50 +18,25 @@ class PhpMailerService implements MailServiceInterface
     public function __construct(LoggerInterface $logger, ?array $config = null)
     {
         $this->logger = $logger;
-        $this->config = $config ?? $this->loadEnvironmentConfig();
+        $this->config = $config;
+
+        $this->validateConfig();
     }
 
-    private function loadEnvironmentConfig(): array
+    private function validateConfig(): void
     {
-        $requiredKeys = [
-            'MAIL_HOST',
-            'MAIL_PORT',
-            'MAIL_USER',
-            'MAIL_PASSWORD',
-            'MAIL_FROM_ADDRESS',
-            'MAIL_FROM_NAME'
-        ];
-
+        $requiredKeys = ['host', 'port', 'username', 'password', 'from', 'from_name'];
         foreach ($requiredKeys as $key) {
-            if (!isset($_ENV[$key]) || $_ENV[$key] === '') {
-                $errorMessage = sprintf(
-                    "Error de configuración: La variable de entorno '%s' no está definida o está vacía.",
-                    $key
-                );
-
-                $this->logger->critical($errorMessage);
-
-                throw new RuntimeException($errorMessage);
+            if (empty($this->config[$key])) {
+                $msg = sprintf("Error de configuración de correo: La clave '%s' está vacía.", $key);
+                $this->logger->critical($msg);
+                throw new RuntimeException($msg);
             }
         }
-
-        return [
-            'host'       => $_ENV['MAIL_HOST'],
-            'port'       => (int) $_ENV['MAIL_PORT'],
-            'username'   => $_ENV['MAIL_USER'],
-            'password'   => $_ENV['MAIL_PASSWORD'],
-            'from'       => $_ENV['MAIL_FROM_ADDRESS'],
-            'from_name'  => $_ENV['MAIL_FROM_NAME'],
-            'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? PHPMailer::ENCRYPTION_STARTTLS
-        ];
     }
 
-    public function send(
-        string|array $toEmail,
-        string|array $toName,
-        string $subject,
-        string $bodyHTML
-    ): bool {
+    public function send(MailDTO $mailDTO): bool
+    {
         $mail = new PHPMailer(true);
 
         try {
@@ -78,28 +54,32 @@ class PhpMailerService implements MailServiceInterface
 
             $mail->setFrom($this->config['from'], $this->config['from_name']);
 
-            // Cast a array para uniformar el tratamiento de recipient(s)
-            $emails = (array) $toEmail;
-            $names  = (array) $toName;
+            $emails = (array) $mailDTO->toEmail;
+            $names  = (array) $mailDTO->toName;
 
             foreach ($emails as $index => $email) {
-                $name = $names[$index] ?? '';
+                $name = $names[$index];
                 $mail->addAddress($email, $name);
             }
 
             $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body    = $bodyHTML;
+            $mail->Subject = $mailDTO->subject;
+            $mail->Body    = $mailDTO->bodyHTML;
 
             return $mail->send();
         } catch (PHPMailerException $e) {
-            $recipientsLog = is_array($toEmail) ? implode(', ', $toEmail) : $toEmail;
+            $recipientsLog = is_array($mailDTO->toEmail) ?
+                implode(', ', $mailDTO->toEmail) :
+                $mailDTO->toEmail;
 
-            $this->logger->error("Error al enviar email a {$recipientsLog}: " . $e->getMessage(), [
-                'recipients' => $toEmail,
-                'subject'    => $subject,
-                'exception'  => $e
-            ]);
+            $this->logger->error(
+                "Error al enviar email a {$recipientsLog}: " . $e->getMessage(),
+                [
+                    'recipients' => $mailDTO->toEmail,
+                    'subject'    => $mailDTO->subject,
+                    'exception'  => $e
+                    ]
+            );
 
             return false;
         }

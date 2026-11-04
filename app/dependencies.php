@@ -6,6 +6,8 @@ use App\Application\Settings\SettingsInterface;
 use App\Middleware\RateLimitMiddleware;
 use App\Shared\Services\Mail\MailServiceInterface;
 use App\Shared\Services\Mail\PhpMailerService;
+use App\Shared\Services\Mail\TemplatedMailService;
+use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Strategus\Repositories\OilPalmGrowingAreaRepositoryInterface;
 use App\Strategus\Repositories\PdoOilPalmGrowingAreaRepository;
 use App\Strategus\Repositories\PdoStrategusMonitoringRepository;
@@ -34,8 +36,28 @@ use function DI\autowire;
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
 
-        MailServiceInterface::class      => autowire(PhpMailerService::class),
+        MailServiceInterface::class => function (ContainerInterface $c) {
+            $settings = $c->get(SettingsInterface::class);
+            $mailSettings = $settings->get('mail');
+            $logger = $c->get(LoggerInterface::class);
+
+            return new PhpMailerService($logger, $mailSettings);
+        },
+
         UserMailServiceInterface::class  => autowire(UserMailService::class),
+
+        TemplatedMailServiceInterface::class => function (ContainerInterface $container) {
+            $settings = $container->get(SettingsInterface::class);
+            $mailSettings = $settings->get('mail');
+
+            return new TemplatedMailService(
+                mailService: $container->get(MailServiceInterface::class),
+                logger: $container->get(LoggerInterface::class),
+                globalContext: [
+                    'logoUrl' => $mailSettings['logoUrl']
+                ]
+            );
+        },
 
         PDO::class => function (ContainerInterface $c) {
             $settingsInstance = $c->get(SettingsInterface::class);
@@ -68,7 +90,12 @@ return function (ContainerBuilder $containerBuilder) {
             $logger = new Logger($loggerSettings['name']);
 
             $logger->pushProcessor(new UidProcessor());
-            $logger->pushHandler(new StreamHandler($loggerSettings['path'], $loggerSettings['level']));
+            $logger->pushHandler(
+                new StreamHandler(
+                    $loggerSettings['path'], 
+                    $loggerSettings['level']
+                )
+            );
 
             return $logger;
         },
@@ -88,11 +115,20 @@ return function (ContainerBuilder $containerBuilder) {
         },
 
         TokenRepositoryInterface::class => autowire(PdoTokenRepository::class),
-        UserRepositoryInterface::class  => autowire(PdoUserRepository::class),
-        OilPalmGrowingAreaRepositoryInterface::class => autowire(PdoOilPalmGrowingAreaRepository::class),
-        StrategusMonitoringRepositoryInterface::class => autowire(PdoStrategusMonitoringRepository::class),
 
-        UserRegistrationEmailServiceInterface::class => autowire(UserRegistrationEmailService::class),
+        UserRepositoryInterface::class  => autowire(PdoUserRepository::class),
+
+        OilPalmGrowingAreaRepositoryInterface::class => autowire(
+            PdoOilPalmGrowingAreaRepository::class
+        ),
+
+        StrategusMonitoringRepositoryInterface::class => autowire(
+            PdoStrategusMonitoringRepository::class
+        ),
+
+        UserRegistrationEmailServiceInterface::class => autowire(
+            UserRegistrationEmailService::class
+        ),
 
     ]);
 };
