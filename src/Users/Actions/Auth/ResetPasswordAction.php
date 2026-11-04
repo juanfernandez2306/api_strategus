@@ -49,7 +49,7 @@ class ResetPasswordAction
 
         $resetRecord = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
-        if (!$resetRecord) {
+        if ($resetRecord == null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::NOT_FOUND,
@@ -57,7 +57,7 @@ class ResetPasswordAction
             );
         }
 
-        if ($resetRecord['expires_at'] < date('Y-m-d H:i:s')) {
+        if ($resetRecord->expiresAt < date('Y-m-d H:i:s')) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
@@ -65,7 +65,7 @@ class ResetPasswordAction
             );
         }
 
-        $userId = (int) $resetRecord['user_id'];
+        $userId = (int) $resetRecord->userId;
 
         $this->pdo->beginTransaction();
         try {
