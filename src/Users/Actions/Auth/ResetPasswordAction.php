@@ -10,6 +10,7 @@ use App\Users\DTOs\Auth\UserDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\Auth\ResetPasswordValidator;
+use DateTimeImmutable;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
@@ -46,18 +47,11 @@ class ResetPasswordAction
 
         $email = mb_strtolower($validatedData['email']);
         $tokenPlain = $validatedData['token'];
+        $newPassword = $validatedData['password'];
         
-        $extraData = [
-            'email'       => $email,
-            'tokenPlain'  => $tokenPlain,
-            'newPassword' => $validatedData['password']
-        ];
-
         $UserData = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
-        $combinedData = !empty($UserData) ? array_merge($UserData, $extraData) : [];
-
-        $resetRecord = UserDTO::fromArray($combinedData);
+        $resetRecord = UserDTO::fromArray($UserData);
 
         if ($resetRecord == null) {
             return ApiResponse::json(
@@ -67,7 +61,7 @@ class ResetPasswordAction
             );
         }
 
-        if ($resetRecord->expiresAt < date('Y-m-d H:i:s')) {
+        if ($resetRecord->expiresAt < new DateTimeImmutable()) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
@@ -77,7 +71,7 @@ class ResetPasswordAction
 
         $this->pdo->beginTransaction();
         try {
-            $updated = $this->userRepo->updatePassword($resetRecord->userId, $resetRecord->newPassword);
+            $updated = $this->userRepo->updatePassword($resetRecord->userId, $newPassword);
             $deleted = $this->passwordResetRepo->deleteByUserId($resetRecord->userId);
 
             (!$updated || !$deleted) && throw new RuntimeException('Error al actualizar la contraseña.');
@@ -88,7 +82,7 @@ class ResetPasswordAction
 
             $this->logger->error('Error al restablecer la contraseña del usuario', [
                 'user_id' => $resetRecord->userId,
-                'email'   => $resetRecord->email,
+                'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
             ]);

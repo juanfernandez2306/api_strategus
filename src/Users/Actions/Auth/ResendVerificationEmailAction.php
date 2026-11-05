@@ -72,7 +72,7 @@ class ResendVerificationEmailAction
         $this->pdo->beginTransaction();
         try {
             $saved = $this->passwordResetRepo->save(
-                $userDTO->id,
+                $userDTO->userId,
                 $tokenPlain,
                 $expiresAt
             );
@@ -86,7 +86,7 @@ class ResendVerificationEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al registrar el token de verificación de correo', [
-                'user_id' => $userDTO->id,
+                'user_id' => $userDTO->userId,
                 'email'   => $userDTO->email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()

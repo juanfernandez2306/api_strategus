@@ -7,6 +7,7 @@ namespace App\Users\Actions\Auth;
 use App\Application\Settings\SettingsInterface;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Users\DTOs\Auth\UserDTO;
 use App\Users\Repositories\Auth\TokenRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\Auth\LoginValidator;
@@ -50,9 +51,10 @@ class LoginAction
         $email = mb_strtolower(trim($validatedData['email']));
         $password = $validatedData['password'];
 
-        $user = $this->userRepo->findByEmail($email);
+        $userData = $this->userRepo->findByEmail($email);
+        $userDTO = UserDTO::fromArray($userData);
 
-        if (empty($user) || !password_verify($password, $user['password'])) {
+        if ($userDTO === null || !password_verify($password, $userDTO->password)) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::UNAUTHORIZED,
@@ -60,7 +62,7 @@ class LoginAction
             );
         }
 
-        if ((int) $user['is_active'] !== 1) {
+        if ((int) $userDTO->userIsActive !== 1) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::FORBIDDEN,
@@ -68,7 +70,7 @@ class LoginAction
             );
         }
 
-        if ($user['email_verified_at'] === null) {
+        if ($userDTO->emailVerifiedAt === null) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::FORBIDDEN,
@@ -82,7 +84,7 @@ class LoginAction
         $this->pdo->beginTransaction();
         try {
             $saved = $this->tokenRepo->save(
-                (int) $user['id'],
+                $userDTO->userId,
                 $tokenName,
                 $tokenPlain
             );
@@ -96,7 +98,7 @@ class LoginAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error durante el inicio de sesión del usuario', [
-                'user_id' => $user['id'],
+                'user_id' => $userDTO->userId,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -104,11 +106,7 @@ class LoginAction
 
             throw $e;
         }
-
-        $firstName = mb_convert_case($user['first_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
-        $lastName  = mb_convert_case($user['last_name'] ?? '', MB_CASE_TITLE, 'UTF-8');
-        $userFullName = trim("{$firstName} {$lastName}");
-
+        
         $cookieName   = $this->cookieSettings['name'];
         $cookieValue  = $tokenPlain;
         $cookieExpire = time() + $this->cookieSettings['lifetime'];
@@ -144,8 +142,8 @@ class LoginAction
             message: 'Inicio de sesión exitoso.',
             data: [
                 'token'          => $tokenPlain,
-                'user_full_name' => $userFullName,
-                'role_id'        => (int) $user['role_id']
+                'user_full_name' => $userDTO->getFullName(),
+                'role_id'        => (int) $userDTO->userRoleId
             ]
         );
     }

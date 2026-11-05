@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Users\Actions\Auth;
 
+use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Shared\Services\Mail\TemplatedMailServiceInterface;
+use App\Users\DTOs\Auth\UserDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\EmailRequestValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -25,24 +27,24 @@ class SendPasswordResetEmailAction
     private PDO $pdo;
     private UserRepositoryInterface $userRepo;
     private PasswordResetRepositoryInterface $passwordResetRepo;
-    private UserMailServiceInterface $userMailService;
     private EmailRequestValidator $validator;
     private LoggerInterface $logger;
+    private TemplatedMailServiceInterface $templatedMailService;
 
     public function __construct(
         PDO $pdo,
         UserRepositoryInterface $userRepo,
         PasswordResetRepositoryInterface $passwordResetRepo,
-        UserMailServiceInterface $userMailService,
         EmailRequestValidator $validator,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        TemplatedMailServiceInterface $templatedMailService
     ) {
         $this->pdo = $pdo;
         $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
-        $this->userMailService = $userMailService;
         $this->validator = $validator;
         $this->logger = $logger;
+        $this->templatedMailService = $templatedMailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -52,9 +54,11 @@ class SendPasswordResetEmailAction
 
         $email = mb_strtolower($validatedData['email']);
 
-        $user = $this->userRepo->findByEmail($email);
+        $userData = $this->userRepo->findByEmail($email);
 
-        if (empty($user)) {
+        $userDTO = UserDTO::fromArray($userData);
+
+        if ($userDTO === null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -68,7 +72,7 @@ class SendPasswordResetEmailAction
         $this->pdo->beginTransaction();
         try {
             $saved = $this->passwordResetRepo->save(
-                (int) $user['id'],
+                $userDTO->userId,
                 $tokenPlain,
                 $expiresAt
             );
@@ -82,7 +86,7 @@ class SendPasswordResetEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al solicitar restablecimiento de contraseña', [
-                'user_id' => $user['id'],
+                'user_id' => $userDTO->userId,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -104,15 +108,19 @@ class SendPasswordResetEmailAction
             urlencode($tokenPlain)
         );
 
-        $fullName = trim(ucfirst($user['first_name'] ?? '') . ' ' . ucfirst($user['last_name'] ?? ''));
+        
+        $mailDTO = new SendTemplatedMailDTO(
+            toEmail: $email,
+            toName: $userDTO->getFullName(),
+            subject: 'Restablecer contraseña - GESTIÓN PALMA DIGITAL',
+            viewTemplate: 'Emails.ResetPassword',
+            viewData: [
+                'userFullName' => $userDTO->getFullName(),
+                'actionUrl'    => $resetUrl,
+            ]
+        );
 
-        $this->userMailService->send([
-            'toEmail'      => $email,
-            'userFullName' => $fullName,
-            'subject'      => 'Restablecer contraseña - GESTIÓN PALMA DIGITAL',
-            'viewTemplate' => 'Emails.ResetPassword',
-            'actionUrl'    => $resetUrl,
-        ]);
+        $this->templatedMailService->send($mailDTO);
 
         return ApiResponse::json(
             $response,

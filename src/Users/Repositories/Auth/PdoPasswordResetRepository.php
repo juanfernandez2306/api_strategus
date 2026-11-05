@@ -54,7 +54,7 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $result;
+        return $result !== false ? $result : [];
     }
 
     public function deleteByUserId(int $userId): bool
