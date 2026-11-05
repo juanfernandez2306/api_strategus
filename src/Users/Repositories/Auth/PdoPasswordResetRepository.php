@@ -32,6 +32,9 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function findByEmailAndToken(string $email, string $tokenPlain): array
     {
         $sql = "SELECT 

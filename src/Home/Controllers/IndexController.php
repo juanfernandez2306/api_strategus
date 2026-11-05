@@ -28,7 +28,7 @@ class IndexController
     }
 
     /**
-     * Función auxiliar para estructurar respuestas JSON limpias
+     * @param array<string, mixed> $data
      */
     private function jsonResponse(Response $response, array $data, int $statusCode = 200): Response
     {

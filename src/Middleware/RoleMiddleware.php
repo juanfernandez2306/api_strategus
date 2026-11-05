@@ -12,8 +12,12 @@ use Slim\Psr7\Response as SlimResponse;
 
 class RoleMiddleware implements MiddlewareInterface
 {
+    /** @var array<int, int> */
     private array $allowedRoles;
 
+    /**
+     * @param array<int, int> $allowedRoles
+     */
     public function __construct(array $allowedRoles)
     {
         $this->allowedRoles = $allowedRoles;

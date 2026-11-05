@@ -41,6 +41,9 @@ class UpdateUserAction
         $this->templatedMailService = $templatedMailService;
     }
 
+    /**
+     * @param array<string, mixed> $args
+     */
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $data = array_merge(

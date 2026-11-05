@@ -30,6 +30,9 @@ class DeleteUserAction
         $this->validator = $validator;
     }
 
+    /**
+     * @param array<string, mixed> $args
+     */
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $validatedData = $this->validator->validate([

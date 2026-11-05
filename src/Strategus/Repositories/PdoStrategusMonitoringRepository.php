@@ -115,6 +115,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         return $stmt->execute();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function findByUuid(string $uuid): array
     {
         $sql = "SELECT 
@@ -186,6 +189,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         return ExistingRecordByUuidsOutputDTO::fromCollection($formattedRows);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getByGrowingArea(int $growingAreaCode, int $limit = 50, int $offset = 0): array
     {
         $sql = "SELECT 
@@ -218,6 +224,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }, $rows);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getAll(int $limit = 50, int $offset = 0): array
     {
         $sql = "SELECT 
@@ -248,6 +257,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }, $rows);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function update(string $uuid, array $data, ?int $growingAreaCode): bool
     {
         $recordedAt = sprintf(
@@ -301,6 +313,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         return $stmt->execute();
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getExportableData(
         string $startDate,
         string $endDate,
@@ -347,6 +362,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }, $results);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getDailySummaryByArea(?string $date = null): array
     {
         $sql = "SELECT 
@@ -380,6 +398,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         }, $results);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getRecentMapMarkers(int $days = 30): array
     {
         $sql = "SELECT 
@@ -434,6 +455,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         return SpatialMatchOutputDTO::fromDatabaseRow($result ?: null);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getWeeklyChartData(): array
     {
         $sql = "SELECT 
@@ -470,6 +494,9 @@ class PdoStrategusMonitoringRepository implements StrategusMonitoringRepositoryI
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @return array<array<string, mixed>>
+     */
     public function getPendingPlants(int $days = 20): array
     {
         $sql = "SELECT 

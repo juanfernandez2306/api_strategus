@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\User\UserRepository;
-use App\Infrastructure\Persistence\User\InMemoryUserRepository;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Repositories\Auth\PdoPasswordResetRepository;
@@ -17,7 +15,6 @@ use function DI\autowire;
 
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
-        UserRepository::class                    => autowire(InMemoryUserRepository::class),
         UserRepositoryInterface::class           => autowire(PdoUserRepository::class),
         PasswordResetRepositoryInterface::class => autowire(PdoPasswordResetRepository::class),
 

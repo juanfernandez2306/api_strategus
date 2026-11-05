@@ -17,6 +17,7 @@ class LoginValidator extends BaseValidator
         ]);
     }
 
+    /** @return array<string, string> */
     protected function customAttributes(): array
     {
         return [
@@ -25,6 +26,7 @@ class LoginValidator extends BaseValidator
         ];
     }
 
+    /** @return array<string, string> */
     protected function rules(): array
     {
         return [

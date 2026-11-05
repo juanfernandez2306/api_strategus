@@ -12,6 +12,9 @@ final readonly class ExistingRecordByUuidsOutputDTO
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $row
+     */
     public static function fromDatabaseRow(array $row): self
     {
         return new self(
@@ -20,6 +23,10 @@ final readonly class ExistingRecordByUuidsOutputDTO
         );
     }
 
+    /**
+     * @param array<array<string, mixed>>|null $rows
+     * @return array<string, self>
+     */
     public static function fromCollection(?array $rows): array
     {
         if (empty($rows)) {

@@ -17,6 +17,7 @@ class EmailRequestValidator extends BaseValidator
         ]);
     }
 
+    /** @return array<string, string> */
     protected function customAttributes(): array
     {
         return [
@@ -24,6 +25,7 @@ class EmailRequestValidator extends BaseValidator
         ];
     }
 
+    /** @return array<string, string> */
     protected function rules(): array
     {
         return [

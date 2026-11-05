@@ -18,6 +18,9 @@ class FindByUuidMonitoringAction
         $this->repository = $repository;
     }
 
+    /**
+     * @param array<string, mixed> $args
+     */
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         // 1. Extraer el UUID de los parámetros de la ruta (/api/monitoring/{uuid})

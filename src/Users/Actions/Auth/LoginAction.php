@@ -25,6 +25,8 @@ class LoginAction
     private TokenRepositoryInterface $tokenRepo;
     private LoginValidator $validator;
     private LoggerInterface $logger;
+
+    /** @var array<string, mixed> */
     private array $cookieSettings;
 
     public function __construct(

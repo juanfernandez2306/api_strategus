@@ -22,6 +22,9 @@ class TwigTemplateRenderer
         ]);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function render(string $view, array $data = []): string
     {
         $normalizedView = str_replace('.', '/', $view);

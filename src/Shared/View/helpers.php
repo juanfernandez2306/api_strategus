@@ -3,6 +3,10 @@
 use App\Shared\View\TwigTemplateRenderer;
 
 if (!function_exists('view')) {
+
+    /**
+     * @param array<string, mixed> $data
+     */
     function view(string $view, array $data = []): string
     {
         static $renderer = null;

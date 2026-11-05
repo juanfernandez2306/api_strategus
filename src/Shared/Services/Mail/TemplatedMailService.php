@@ -11,6 +11,9 @@ use RuntimeException;
 
 class TemplatedMailService implements TemplatedMailServiceInterface
 {
+    /**
+     * @param array<string, mixed> $globalContext
+     */
     public function __construct(
         private readonly MailServiceInterface $mailService,
         private readonly LoggerInterface $logger,

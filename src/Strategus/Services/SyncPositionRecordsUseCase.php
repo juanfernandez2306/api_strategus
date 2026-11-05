@@ -145,6 +145,10 @@ final readonly class SyncPositionRecordsUseCase
         );
     }
 
+    /**
+     * @param array<array<string, mixed>> $deletedUuids
+     * @param array<array<string, mixed>> $syncedIncompleteUuids
+     */
     private function categorizeUuidByCompleteness(
         PositionRecordItemInputDTO $record,
         array &$deletedUuids,

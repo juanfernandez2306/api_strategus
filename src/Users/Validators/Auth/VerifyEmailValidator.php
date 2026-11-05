@@ -20,6 +20,7 @@ class VerifyEmailValidator extends BaseValidator
         ]);
     }
 
+    /** @return array<string, string> */
     protected function customAttributes(): array
     {
         return [
@@ -28,6 +29,7 @@ class VerifyEmailValidator extends BaseValidator
         ];
     }
 
+    /** @return array<string, string> */
     protected function rules(): array
     {
         return [

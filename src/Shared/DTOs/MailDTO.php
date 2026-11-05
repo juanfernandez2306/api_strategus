@@ -19,7 +19,7 @@ class MailDTO
     }
 
     /**
-     * @param array{toEmail: string|array, toName: string|array, subject: string, bodyHTML: string} $data
+     * @param array<string, mixed> $data
      */
     public function fromArray(array $data): self
     {

@@ -13,6 +13,7 @@ use Slim\Psr7\Response as SlimResponse;
 
 class CorsMiddleware implements MiddlewareInterface
 {
+    /** @var array<string, mixed> */
     private array $corsSettings;
 
     public function __construct(SettingsInterface $settings)

@@ -16,6 +16,9 @@ class OilPalmGrowingAreaValidator extends BaseValidator
         $this->validator->addValidator('wkt_polygon', new ValidWktPolygonRule());
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function customAttributes(): array
     {
         return [
@@ -26,6 +29,9 @@ class OilPalmGrowingAreaValidator extends BaseValidator
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function rules(): array
     {
         return [

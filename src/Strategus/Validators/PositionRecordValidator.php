@@ -27,6 +27,9 @@ class PositionRecordValidator extends BaseValidator
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function customAttributes(): array
     {
         return [
@@ -44,6 +47,9 @@ class PositionRecordValidator extends BaseValidator
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function rules(): array
     {
         return [
@@ -61,6 +67,10 @@ class PositionRecordValidator extends BaseValidator
         ];
     }
 
+    /**
+     * @param array<array<string, mixed>> $records
+     * @return array<array<string, mixed>>
+     */
     public function validateBulk(array $records): array
     {
         $validatedRecords = [];

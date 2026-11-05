@@ -65,6 +65,9 @@ class PdoUserRepository implements UserRepositoryInterface
         return (int) $this->pdo->lastInsertId();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getAll(int $limit = 30, int $offset = 0): array
     {
         $sql = "SELECT 
@@ -83,6 +86,9 @@ class PdoUserRepository implements UserRepositoryInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function update(array $data): bool
     {
         $sql = "UPDATE users SET 
@@ -120,6 +126,9 @@ class PdoUserRepository implements UserRepositoryInterface
         return $stmt->execute(['user_id' => $userId]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function findByEmail(string $email): array
     {
         $sql = "SELECT 
@@ -145,6 +154,9 @@ class PdoUserRepository implements UserRepositoryInterface
         return $user ?: [];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function findById(int $id): array
     {
         $sql = "SELECT 
@@ -170,6 +182,9 @@ class PdoUserRepository implements UserRepositoryInterface
         return $user ?: [];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function findAdminEmails(): array
     {
         $sql = "SELECT u.email 

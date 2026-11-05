@@ -15,7 +15,9 @@ readonly class CookieConfigDTO
     ) {
     }
 
-
+    /**
+     * @param array<string, mixed> $config
+     */
     public static function fromArray(array $config): self
     {
         return new self(
@@ -27,7 +29,9 @@ readonly class CookieConfigDTO
         );
     }
 
-
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

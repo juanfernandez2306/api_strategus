@@ -92,6 +92,9 @@ class AuthMiddleware implements MiddlewareInterface
         return $handler->handle($request);
     }
 
+    /**
+     * @param array<string, mixed> $debugInfo
+     */
     private function unauthorizedResponse(string $message, array $debugInfo = []): Response
     {
         return ApiResponse::json(

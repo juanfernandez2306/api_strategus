@@ -6,6 +6,12 @@ namespace App\Strategus\DTOs\Monitoring;
 
 final readonly class BulkSyncOutputDTO
 {
+    /**
+     * @param array<string> $deletedUuids
+     * @param array<string> $syncedIncompleteUuids
+     * @param array<string> $updatedUuids
+     * @param array<string> $backendDeletedUuids
+     */
     public function __construct(
         public array $deletedUuids,
         public array $syncedIncompleteUuids,
@@ -18,6 +24,9 @@ final readonly class BulkSyncOutputDTO
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

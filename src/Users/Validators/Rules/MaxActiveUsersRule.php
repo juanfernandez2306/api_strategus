@@ -11,6 +11,7 @@ class MaxActiveUsersRule extends Rule
 {
     protected $message = "Se ha alcanzado el límite máximo de usuarios activos permitidos.";
 
+    /** @var array<string> */
     protected $fillableParams = ['max'];
 
     private UserRepositoryInterface $userRepository;

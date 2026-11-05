@@ -10,9 +10,14 @@ final class CompressedPayloadTransformer
 {
     /**
      * Claves comunes que suelen envolver el listado de registros.
+     * @var array<int, string>
      */
     private const WRAPPER_KEYS = ['records', 'data', 'items', 'payload'];
-
+    
+    /**
+     * @param array<array-key, mixed> $rawPayload
+     * @return array<array-key, mixed>
+     */
     public static function unpack(array $rawPayload): array
     {
         if (empty($rawPayload)) {
@@ -54,15 +59,16 @@ final class CompressedPayloadTransformer
 
     /**
      * Detecta y desenrolla el payload si está dentro de una propiedad contenedora.
+     * 
+     * @param array<array-key, mixed> $payload
+     * @return array<array-key, mixed>
      */
     private static function unwrapPayload(array $payload): array
     {
-        // Si ya es una lista indexada (array secuencial), no necesita desenrollar
         if (array_is_list($payload)) {
             return $payload;
         }
 
-        // Buscar si los registros vienen en alguna de las claves contenedoras estándar
         foreach (self::WRAPPER_KEYS as $key) {
             if (isset($payload[$key]) && is_array($payload[$key])) {
                 return $payload[$key];

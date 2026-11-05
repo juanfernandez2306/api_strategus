@@ -23,6 +23,9 @@ final readonly class PositionRecordItemInputDTO
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $rawAttributesValidated
+     */
     public static function fromArray(
         array $rawAttributesValidated
     ): self {

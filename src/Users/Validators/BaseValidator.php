@@ -24,13 +24,20 @@ abstract class BaseValidator
         ]);
     }
 
+    /** @return array<string, string> */
     abstract protected function rules(): array;
 
+    /** @return array<string, string> */
     protected function customAttributes(): array
     {
         return [];
     }
 
+    /**
+     * @param array<string, string> $data
+     * @param array<string, string> $customMessages
+     * @return array<string, string>
+     */
     public function validate(array $data, array $customMessages = []): array
     {
         $validation = $this->validator->make($data, $this->rules(), $customMessages);

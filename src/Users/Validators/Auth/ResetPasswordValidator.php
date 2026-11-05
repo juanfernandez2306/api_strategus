@@ -28,6 +28,7 @@ class ResetPasswordValidator extends BaseValidator
         ]);
     }
 
+    /** @return array<string, string> */
     protected function customAttributes(): array
     {
         return [
@@ -38,6 +39,7 @@ class ResetPasswordValidator extends BaseValidator
         ];
     }
 
+    /** @return array<string, string> */
     protected function rules(): array
     {
         return [

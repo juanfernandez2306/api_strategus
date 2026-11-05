@@ -155,6 +155,9 @@ class VerifyEmailAction
             return false;
         }
 
+        /** @var array<int, string> $adminEmails */
+        $adminEmails = array_column($adminEmails, 'email');
+        
         $mailDTO = new SendTemplatedMailDTO(
             toEmail: $adminEmails,
             subject: 'Nuevo Usuario Registrado y Verificado',

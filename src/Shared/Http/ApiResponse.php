@@ -9,6 +9,9 @@ use Throwable;
 
 class ApiResponse
 {
+    /**
+     * @param array<string, mixed>|null $errors
+     */
     public static function json(
         Response $response,
         int $statusCode,

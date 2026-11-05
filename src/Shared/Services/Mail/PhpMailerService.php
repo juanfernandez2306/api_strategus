@@ -12,9 +12,13 @@ use RuntimeException;
 
 class PhpMailerService implements MailServiceInterface
 {
+    /** @var array<string, mixed> */
     private array $config;
     private LoggerInterface $logger;
 
+    /**
+     * @param array<string, mixed>|null $config
+     */
     public function __construct(LoggerInterface $logger, ?array $config = null)
     {
         $this->logger = $logger;
