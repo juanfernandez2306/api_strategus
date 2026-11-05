@@ -55,6 +55,8 @@ class VerifyEmailAction
 
         $resetRecord = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
+        $resetRecord = UserDTO::fromArray($resetRecord);
+
         if ($resetRecord == null) {
             return ApiResponse::json(
                 $response,

@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
-
-use App\Users\DTOs\Auth\FindByEmailAndTokenDTO;
 use PDO;
 
 class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
@@ -34,7 +32,7 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
         ]);
     }
 
-    public function findByEmailAndToken(string $email, string $tokenPlain): FindByEmailAndTokenDTO
+    public function findByEmailAndToken(string $email, string $tokenPlain): array
     {
         $sql = "SELECT 
                     pr.id, 
@@ -56,7 +54,7 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return FindByEmailAndTokenDTO::fromArray($result !== false ? $result : []);
+        return $result;
     }
 
     public function deleteByUserId(int $userId): bool
