@@ -19,6 +19,7 @@ abstract class Action
 
     protected Response $response;
 
+    /** @var array<string, mixed> */
     protected array $args;
 
     public function __construct(LoggerInterface $logger)
@@ -27,6 +28,7 @@ abstract class Action
     }
 
     /**
+     * @param array<string, mixed> $args
      * @throws HttpNotFoundException
      * @throws HttpBadRequestException
      */
@@ -50,7 +52,7 @@ abstract class Action
     abstract protected function action(): Response;
 
     /**
-     * @return array|object
+     * @return array<string, mixed>|object|null
      */
     protected function getFormData()
     {
@@ -71,7 +73,7 @@ abstract class Action
     }
 
     /**
-     * @param array|object|null $data
+     * @param array<string, mixed>|object|null $data
      */
     protected function respondWithData($data = null, int $statusCode = 200): Response
     {
