@@ -22,7 +22,8 @@ class UserDTO
         public readonly ?string $dniType = null,
         public readonly ?string $dniNumber = null,
         public readonly ?string $phoneNumber = null,
-        public readonly ?string $token = null
+        public readonly ?string $token = null,
+        public readonly ?string $tokenPlain = null
     ) {
     }
 
@@ -48,7 +49,8 @@ class UserDTO
             dniType: $data['dni_type'] ?? null,
             dniNumber: $data['dni_number'] ?? null,
             phoneNumber: $data['phone_number'] ?? null,
-            token: isset($data['token']) ? trim($data['token']) : null
+            token: isset($data['token']) ? trim($data['token']) : null,
+            tokenPlain: isset($data['tokenPlain']) ? trim($data['tokenPlain']) : null
         );
     }
 
