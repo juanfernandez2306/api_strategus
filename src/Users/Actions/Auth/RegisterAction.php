@@ -8,7 +8,7 @@ use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Shared\Services\Mail\TemplatedMailServiceInterface;
-use App\Users\DTOs\Auth\RegisterUserDTO;
+use App\Users\DTOs\Auth\UserDTO;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
@@ -51,7 +51,7 @@ class RegisterAction
 
         $validatedData = $this->validator->validate($data);
 
-        $userDto = RegisterUserDTO::fromValidated($validatedData);
+        $userDto = UserDTO::fromArray($validatedData);
 
         $this->pdo->beginTransaction();
 
@@ -112,7 +112,7 @@ class RegisterAction
     }
 
     private function buildVerificationUrl(
-        RegisterUserDTO $userDto,
+        UserDTO $userDto,
         string $tokenPlain
     ): string {
         $frontendUrl = $_ENV['FRONTEND_URL'] ??

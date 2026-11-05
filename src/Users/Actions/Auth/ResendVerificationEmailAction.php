@@ -6,9 +6,10 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
+use App\Shared\DTOs\SendTemplatedMailDTO;
+use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserMailServiceInterface;
 use App\Users\Validators\Auth\EmailRequestValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -16,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use PDO;
 use Exception;
 use RuntimeException;
+use App\Users\DTOs\Auth\UserDTO;
 
 class ResendVerificationEmailAction
 {
@@ -25,7 +27,7 @@ class ResendVerificationEmailAction
     private PDO $pdo;
     private UserRepositoryInterface $userRepo;
     private PasswordResetRepositoryInterface $passwordResetRepo;
-    private UserMailServiceInterface $userMailService;
+    private TemplatedMailServiceInterface $templatedMailService;
     private EmailRequestValidator $validator;
     private LoggerInterface $logger;
 
@@ -33,16 +35,16 @@ class ResendVerificationEmailAction
         PDO $pdo,
         UserRepositoryInterface $userRepo,
         PasswordResetRepositoryInterface $passwordResetRepo,
-        UserMailServiceInterface $userMailService,
         EmailRequestValidator $validator,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        TemplatedMailServiceInterface $templatedMailService
     ) {
         $this->pdo = $pdo;
         $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
-        $this->userMailService = $userMailService;
         $this->validator = $validator;
         $this->logger = $logger;
+        $this->templatedMailService = $templatedMailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -54,7 +56,9 @@ class ResendVerificationEmailAction
 
         $user = $this->userRepo->findByEmail($email);
 
-        if (empty($user) || $user['email_verified_at'] !== null) {
+        $userDTO = UserDTO::fromArray($user);
+
+        if (empty($userDTO) || $userDTO->emailVerifiedAt !== null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -68,7 +72,7 @@ class ResendVerificationEmailAction
         $this->pdo->beginTransaction();
         try {
             $saved = $this->passwordResetRepo->save(
-                (int) $user['id'],
+                $userDTO->id,
                 $tokenPlain,
                 $expiresAt
             );
@@ -82,8 +86,8 @@ class ResendVerificationEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al registrar el token de verificación de correo', [
-                'user_id' => $user['id'],
-                'email'   => $email,
+                'user_id' => $userDTO->id,
+                'email'   => $userDTO->email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
             ]);
@@ -91,7 +95,19 @@ class ResendVerificationEmailAction
             throw $e;
         }
 
-        $frontendUrl = $_ENV['FRONTEND_URL'] ?? '';
+        $this->resendEmail(userDTO: $userDTO, tokenPlain: $tokenPlain);
+
+        
+        return ApiResponse::json(
+            $response,
+            HttpStatus::OK,
+            self::GENERIC_SUCCESS_MESSAGE
+        );
+    }
+
+    public function resendEmail(UserDTO $userDTO, string $tokenPlain): bool{
+
+        $frontendUrl = $_ENV['FRONTEND_URL'];
 
         (empty($frontendUrl)) && throw new RuntimeException(
             "La variable de entorno 'FRONTEND_URL' no está definida o está vacía."
@@ -100,24 +116,23 @@ class ResendVerificationEmailAction
         $verificationUrl = sprintf(
             '%s/verify/email?email=%s&token=%s',
             rtrim($frontendUrl, '/'),
-            urlencode($email),
+            urlencode($userDTO->email),
             urlencode($tokenPlain)
         );
 
-        $fullName = trim(ucfirst($user['first_name'] ?? '') . ' ' . ucfirst($user['last_name'] ?? ''));
+        
 
-        $this->userMailService->send([
-            'toEmail'      => $email,
-            'userFullName' => $fullName,
-            'subject'      => 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
-            'viewTemplate' => 'Emails.VerifyEmail',
-            'actionUrl'    => $verificationUrl,
-        ]);
-
-        return ApiResponse::json(
-            $response,
-            HttpStatus::OK,
-            self::GENERIC_SUCCESS_MESSAGE
+        $mailDTO = new SendTemplatedMailDTO(
+            toEmail: $userDTO->email,
+            toName: $userDTO->getFullName(),
+            subject: 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
+            viewTemplate: 'Emails.VerifyEmail',
+            viewData: [
+                'userFullName' => $userDTO->getFullName(),
+                'actionUrl'    => $verificationUrl,
+            ]
         );
+
+        return $this->templatedMailService->send($mailDTO);
     }
 }

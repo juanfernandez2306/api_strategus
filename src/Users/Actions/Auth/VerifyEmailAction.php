@@ -17,7 +17,7 @@ use PDO;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use App\Users\DTOs\Auth\VerifyEmailDTO;
+use App\Users\DTOs\Auth\UserDTO;
 
 class VerifyEmailAction
 {
@@ -48,7 +48,7 @@ class VerifyEmailAction
     {
         $data = (array) ($request->getQueryParams());
         $validatedData = $this->validator->validate($data);
-        $dataDTO = VerifyEmailDTO::fromArray($validatedData);
+        $dataDTO = UserDTO::fromArray($validatedData);
 
         $email = $dataDTO->email;
         $tokenPlain = $dataDTO->token;
@@ -103,14 +103,14 @@ class VerifyEmailAction
 
         $isMailSent = $this->notifyAdminsAboutNewUser(
             $resetRecord->userId,
-            $fullName, 
+            $fullName,
             $email
         );
 
         if (!$isMailSent) {
             $this->logger->warning(
-                'El correo electrónico se verificó con éxito, pero falló el envío ' . 
-                'de la notificación a los administradores.', 
+                'El correo electrónico se verificó con éxito, pero falló el envío ' .
+                'de la notificación a los administradores.',
                 [
                     'user_id' => $resetRecord->userId,
                     'email'   => $email,
@@ -119,8 +119,8 @@ class VerifyEmailAction
             );
         }
 
-        $message = 'Correo electrónico verificado con éxito.' . 
-            ($isMailSent 
+        $message = 'Correo electrónico verificado con éxito.' .
+            ($isMailSent
                 ? ' Se ha notificado a los administradores.'
                 : ' No se pudo enviar la notificación por correo a los administradores.'
             );
@@ -134,15 +134,15 @@ class VerifyEmailAction
 
     private function notifyAdminsAboutNewUser(
         int $userId,
-        string $registeredUserName, 
-        string $registeredUserEmail): bool
-    {
+        string $registeredUserName,
+        string $registeredUserEmail
+    ): bool {
         $adminEmails = $this->userRepo->findAdminEmails();
 
         if (empty($adminEmails)) {
             $this->logger->warning(
-                'No se encontraron usuarios administradores activos '. 
-                'para notificar sobre el nuevo usuario registrado.', 
+                'No se encontraron usuarios administradores activos ' .
+                'para notificar sobre el nuevo usuario registrado.',
                 [
                     'user_id' => $userId,
                     'email'   => $registeredUserEmail,
