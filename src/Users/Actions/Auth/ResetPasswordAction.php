@@ -48,7 +48,7 @@ class ResetPasswordAction
         $email = mb_strtolower($validatedData['email']);
         $tokenPlain = $validatedData['token'];
         $newPassword = $validatedData['password'];
-        
+
         $UserData = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
 
         $resetRecord = UserDTO::fromArray($UserData);

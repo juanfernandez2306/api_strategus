@@ -97,7 +97,7 @@ class ResendVerificationEmailAction
 
         $this->resendEmail(userDTO: $userDTO, tokenPlain: $tokenPlain);
 
-        
+
         return ApiResponse::json(
             $response,
             HttpStatus::OK,
@@ -105,7 +105,8 @@ class ResendVerificationEmailAction
         );
     }
 
-    public function resendEmail(UserDTO $userDTO, string $tokenPlain): bool{
+    public function resendEmail(UserDTO $userDTO, string $tokenPlain): bool
+    {
 
         $frontendUrl = $_ENV['FRONTEND_URL'];
 
@@ -120,7 +121,7 @@ class ResendVerificationEmailAction
             urlencode($tokenPlain)
         );
 
-        
+
 
         $mailDTO = new SendTemplatedMailDTO(
             toEmail: $userDTO->email,

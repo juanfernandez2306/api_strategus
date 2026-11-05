@@ -14,7 +14,7 @@ class ActionPayload implements JsonSerializable
     private $data;
 
     private ?ActionError $error;
-    
+
     /**
      * @param mixed $data
      */

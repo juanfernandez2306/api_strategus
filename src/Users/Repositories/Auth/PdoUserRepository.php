@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
-
 use App\Users\DTOs\Auth\UserDTO;
 use Ramsey\Uuid\Uuid;
 use PDO;

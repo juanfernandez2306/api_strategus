@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
+
 use PDO;
 
 class PdoPasswordResetRepository implements PasswordResetRepositoryInterface

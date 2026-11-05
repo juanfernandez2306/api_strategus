@@ -108,7 +108,7 @@ class LoginAction
 
             throw $e;
         }
-        
+
         $cookieName   = $this->cookieSettings['name'];
         $cookieValue  = $tokenPlain;
         $cookieExpire = time() + $this->cookieSettings['lifetime'];

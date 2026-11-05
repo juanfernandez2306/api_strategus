@@ -108,7 +108,7 @@ class SendPasswordResetEmailAction
             urlencode($tokenPlain)
         );
 
-        
+
         $mailDTO = new SendTemplatedMailDTO(
             toEmail: $email,
             toName: $userDTO->getFullName(),

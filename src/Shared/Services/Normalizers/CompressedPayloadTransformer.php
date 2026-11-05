@@ -13,7 +13,7 @@ final class CompressedPayloadTransformer
      * @var array<int, string>
      */
     private const WRAPPER_KEYS = ['records', 'data', 'items', 'payload'];
-    
+
     /**
      * @param array<array-key, mixed> $rawPayload
      * @return array<array-key, mixed>
@@ -59,7 +59,7 @@ final class CompressedPayloadTransformer
 
     /**
      * Detecta y desenrolla el payload si está dentro de una propiedad contenedora.
-     * 
+     *
      * @param array<array-key, mixed> $payload
      * @return array<array-key, mixed>
      */

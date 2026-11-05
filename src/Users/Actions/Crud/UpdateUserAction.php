@@ -88,7 +88,6 @@ class UpdateUserAction
         }
 
         if ($oldUserIsActive !== $newUserIsActive) {
-            
             $subject = $newUserIsActive
                 ? 'Tu cuenta ha sido reactivada - GESTIÓN PALMA DIGITAL'
                 : 'Aviso: Tu cuenta ha sido desactivada - GESTIÓN PALMA DIGITAL';
@@ -102,8 +101,6 @@ class UpdateUserAction
                     'isActive' => $newUserIsActive,
                 ]
             ));
-
-            
         }
 
         return ApiResponse::json(
