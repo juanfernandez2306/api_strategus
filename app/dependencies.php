@@ -31,7 +31,13 @@ use function DI\autowire;
 
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
+        MailServiceInterface::class => function (ContainerInterface $container) {
+            $logger = $container->get(LoggerInterface::class);
+            $settings = $container->get(SettingsInterface::class);
+            $config = $settings->get('mail');
 
+            return new PhpMailerService($logger, $config);
+        },
         
         TemplatedMailServiceInterface::class => function (ContainerInterface $container) {
             $settings = $container->get(SettingsInterface::class);
