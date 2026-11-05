@@ -17,10 +17,6 @@ use App\Users\Repositories\Auth\PdoUserRepository;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
 use App\Users\Repositories\Auth\TokenRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Services\Mail\UserMailService;
-use App\Users\Services\Mail\UserMailServiceInterface;
-use App\Users\Services\Mail\UserRegistrationEmailService;
-use App\Users\Services\Mail\UserRegistrationEmailServiceInterface;
 use DI\ContainerBuilder;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -36,16 +32,7 @@ use function DI\autowire;
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
 
-        MailServiceInterface::class => function (ContainerInterface $c) {
-            $settings = $c->get(SettingsInterface::class);
-            $mailSettings = $settings->get('mail');
-            $logger = $c->get(LoggerInterface::class);
-
-            return new PhpMailerService($logger, $mailSettings);
-        },
-
-        UserMailServiceInterface::class  => autowire(UserMailService::class),
-
+        
         TemplatedMailServiceInterface::class => function (ContainerInterface $container) {
             $settings = $container->get(SettingsInterface::class);
             $mailSettings = $settings->get('mail');
@@ -124,10 +111,6 @@ return function (ContainerBuilder $containerBuilder) {
 
         StrategusMonitoringRepositoryInterface::class => autowire(
             PdoStrategusMonitoringRepository::class
-        ),
-
-        UserRegistrationEmailServiceInterface::class => autowire(
-            UserRegistrationEmailService::class
         ),
 
     ]);
