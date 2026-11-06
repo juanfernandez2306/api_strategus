@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
-use App\Users\DTOs\Auth\UserDTO;
+use App\Users\DTOs\Auth\UserRegisterDTO;
 
 interface UserRepositoryInterface
 {
@@ -12,7 +12,7 @@ interface UserRepositoryInterface
 
     public function countActiveUsers(): int;
 
-    public function create(UserDTO $data): int;
+    public function create(UserRegisterDTO $data): int;
 
     /** @return array<string, mixed> */
     public function getAll(int $limit = 10, int $offset = 0): array;

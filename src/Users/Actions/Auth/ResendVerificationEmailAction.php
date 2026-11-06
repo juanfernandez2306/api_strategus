@@ -18,6 +18,7 @@ use PDO;
 use Exception;
 use RuntimeException;
 use App\Users\DTOs\Auth\UserDTO;
+use Ramsey\Uuid\Uuid;
 
 class ResendVerificationEmailAction
 {
@@ -54,11 +55,9 @@ class ResendVerificationEmailAction
 
         $email = mb_strtolower($validatedData['email']);
 
-        $user = $this->userRepo->findByEmail($email);
+        $userData = $this->userRepo->findByEmail($email);
 
-        $userDTO = UserDTO::fromArray($user);
-
-        if (empty($userDTO) || $userDTO->emailVerifiedAt !== null) {
+        if (empty($userData)) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -66,19 +65,31 @@ class ResendVerificationEmailAction
             );
         }
 
-        $tokenPlain = bin2hex(random_bytes(32));
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
+        $userDTO = UserDTO::fromArray($userData);
+
+        if (!$userDTO->isEmailVerified()) {
+            return ApiResponse::json(
+                $response,
+                HttpStatus::OK,
+                self::GENERIC_SUCCESS_MESSAGE
+            );
+        }
+
+        $tokenPlain = Uuid::uuid7()->toString();
+        $tokenExpiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
 
         $this->pdo->beginTransaction();
         try {
             $saved = $this->passwordResetRepo->save(
-                $userDTO->userId,
+                $userDTO->id,
                 $tokenPlain,
-                $expiresAt
+                $tokenExpiresAt
             );
 
             if (!$saved) {
-                throw new RuntimeException('Error al registrar el nuevo token de verificación.');
+                throw new RuntimeException(
+                    'Error al registrar el nuevo token de verificación.'
+                );
             }
 
             $this->pdo->commit();
@@ -86,7 +97,7 @@ class ResendVerificationEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al registrar el token de verificación de correo', [
-                'user_id' => $userDTO->userId,
+                'user_id' => $userDTO->id,
                 'email'   => $userDTO->email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -95,7 +106,11 @@ class ResendVerificationEmailAction
             throw $e;
         }
 
-        $this->resendEmail(userDTO: $userDTO, tokenPlain: $tokenPlain);
+        $this->resendEmail(
+            email: $email,
+            fullNameUser: $userDTO->getFullName(),
+            tokenPlain: $tokenPlain
+        );
 
 
         return ApiResponse::json(
@@ -105,7 +120,7 @@ class ResendVerificationEmailAction
         );
     }
 
-    public function resendEmail(UserDTO $userDTO, string $tokenPlain): bool
+    public function resendEmail(string $email, string $fullNameUser, string $tokenPlain): bool
     {
 
         $frontendUrl = $_ENV['FRONTEND_URL'];
@@ -115,21 +130,20 @@ class ResendVerificationEmailAction
         );
 
         $verificationUrl = sprintf(
-            '%s/verify/email?email=%s&token=%s',
+            '%s/email/verify?token=%s',
             rtrim($frontendUrl, '/'),
-            urlencode($userDTO->email),
             urlencode($tokenPlain)
         );
 
 
 
         $mailDTO = new SendTemplatedMailDTO(
-            toEmail: $userDTO->email,
-            toName: $userDTO->getFullName(),
+            toEmail: $email,
+            toName: $fullNameUser,
             subject: 'Verifica tu cuenta - GESTIÓN PALMA DIGITAL',
             viewTemplate: 'Emails.VerifyEmail',
             viewData: [
-                'userFullName' => $userDTO->getFullName(),
+                'userFullName' => $fullNameUser,
                 'actionUrl'    => $verificationUrl,
             ]
         );

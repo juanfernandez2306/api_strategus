@@ -8,7 +8,7 @@ use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Shared\Services\Mail\TemplatedMailServiceInterface;
-use App\Users\DTOs\Auth\UserDTO;
+use App\Users\DTOs\Auth\UserRegisterDTO;
 use App\Users\Validators\Auth\RegisterValidator;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
@@ -16,6 +16,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
 use Exception;
+use phpDocumentor\Reflection\Types\This;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Ramsey\Uuid\Uuid;
@@ -52,7 +53,10 @@ class RegisterAction
 
         $validatedData = $this->validator->validate($data);
 
-        $userDto = UserDTO::fromArray($validatedData);
+        $userDto = UserRegisterDTO::fromArray($validatedData);
+
+        $tokenPlain = Uuid::uuid7()->toString();
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
 
         $this->pdo->beginTransaction();
 
@@ -63,10 +67,11 @@ class RegisterAction
                 "No se pudo obtener el ID del usuario recién creado."
             );
 
-            $tokenBinary = Uuid::uuid7()->getBytes();
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
-
-            $savedToken = $this->passwordResetRepo->save($userId, $tokenPlain, $expiresAt);
+            $savedToken = $this->passwordResetRepo->save(
+                userId: $userId,
+                tokenPlain: $tokenPlain,
+                expiresAt: $expiresAt
+            );
 
             (!$savedToken) && throw new RuntimeException(
                 "Error al registrar el token de verificación del usuario."
@@ -85,7 +90,36 @@ class RegisterAction
             throw $e;
         }
 
-        $verificationUrl = $this->buildVerificationUrl($userDto, $tokenPlain);
+        $isEmailSent = $this->dispatchBackgroundEmail($userDto, $tokenPlain);
+
+        $msg = "Usuario registrado exitosamente." . (
+            $isEmailSent
+            ? " Se ha enviado un correo para verificar la cuenta."
+            : " Solicite nuevamente una verificacion del Email"
+        );
+
+        $apiResponse =  ApiResponse::json(
+            response: $response,
+            statusCode: HttpStatus::CREATED,
+            message: $msg
+        );
+
+        return $apiResponse;
+    }
+
+    private function dispatchBackgroundEmail(
+        UserRegisterDTO $userDto,
+        string $tokenPlain
+    ): bool {
+
+        $frontendUrl = $_ENV['FRONTEND_URL'] ??
+            throw new RuntimeException("La variable 'FRONTEND_URL' no está definida.");
+
+        $verificationUrl = sprintf(
+            '%s/email/verify?token=%s',
+            rtrim($frontendUrl, '/'),
+            urlencode($tokenPlain)
+        );
 
         $isEmailSent = $this->templatedMailService->send(new SendTemplatedMailDTO(
             toEmail: $userDto->email,
@@ -98,32 +132,6 @@ class RegisterAction
             ]
         ));
 
-        $msg = "Usuario registrado exitosamente." . (
-            $isEmailSent
-                ? " Se ha enviado un correo para verificar la cuenta."
-                : " Hubo un problema al enviar el correo de verificación. Solicítalo más tarde."
-        );
-
-
-        return ApiResponse::json(
-            response: $response,
-            statusCode: HttpStatus::CREATED,
-            message: $msg
-        );
-    }
-
-    private function buildVerificationUrl(
-        UserDTO $userDto,
-        string $tokenPlain
-    ): string {
-        $frontendUrl = $_ENV['FRONTEND_URL'] ??
-            throw new RuntimeException("La variable 'FRONTEND_URL' no está definida.");
-
-        return sprintf(
-            '%s/verify/email?email=%s&token=%s',
-            rtrim($frontendUrl, '/'),
-            urlencode($userDto->email),
-            urlencode($tokenPlain)
-        );
+        return $isEmailSent;
     }
 }

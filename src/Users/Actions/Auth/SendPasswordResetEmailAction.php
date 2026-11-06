@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use PDO;
 use Exception;
 use RuntimeException;
+use Ramsey\Uuid\Uuid;
 
 class SendPasswordResetEmailAction
 {
@@ -56,9 +57,7 @@ class SendPasswordResetEmailAction
 
         $userData = $this->userRepo->findByEmail($email);
 
-        $userDTO = UserDTO::fromArray($userData);
-
-        if ($userDTO === null) {
+        if (empty($userData)) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
@@ -66,19 +65,23 @@ class SendPasswordResetEmailAction
             );
         }
 
-        $tokenPlain = bin2hex(random_bytes(32));
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
+        $userDTO = UserDTO::fromArray($userData);
+
+        $tokenPlain = Uuid::uuid7()->toString();
+        $tokenExpiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
 
         $this->pdo->beginTransaction();
         try {
             $saved = $this->passwordResetRepo->save(
-                $userDTO->userId,
-                $tokenPlain,
-                $expiresAt
+                userId: $userDTO->id,
+                tokenPlain: $tokenPlain,
+                expiresAt: $tokenExpiresAt
             );
 
             if (!$saved) {
-                throw new RuntimeException('Error al guardar el token de restablecimiento de contraseña.');
+                throw new RuntimeException(
+                    'Error al guardar el token de restablecimiento de contraseña.'
+                );
             }
 
             $this->pdo->commit();
@@ -86,7 +89,7 @@ class SendPasswordResetEmailAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error al solicitar restablecimiento de contraseña', [
-                'user_id' => $userDTO->userId,
+                'user_id' => $userDTO->id,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -102,9 +105,8 @@ class SendPasswordResetEmailAction
         );
 
         $resetUrl = sprintf(
-            '%s/reset/password?email=%s&token=%s',
+            '%s/reset/password?token=%s',
             rtrim($frontendUrl, '/'),
-            urlencode($email),
             urlencode($tokenPlain)
         );
 

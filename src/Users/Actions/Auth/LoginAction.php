@@ -56,7 +56,7 @@ class LoginAction
         $userData = $this->userRepo->findByEmail($email);
         $userDTO = UserDTO::fromArray($userData);
 
-        if ($userDTO === null || !password_verify($password, $userDTO->password)) {
+        if (empty($userData) || !password_verify($password, $userDTO->password)) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::UNAUTHORIZED,
@@ -64,7 +64,7 @@ class LoginAction
             );
         }
 
-        if ((int) $userDTO->userIsActive !== 1) {
+        if ((int) $userDTO->isActive !== 1) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::FORBIDDEN,
@@ -86,7 +86,7 @@ class LoginAction
         $this->pdo->beginTransaction();
         try {
             $saved = $this->tokenRepo->save(
-                $userDTO->userId,
+                $userDTO->id,
                 $tokenName,
                 $tokenPlain
             );
@@ -100,7 +100,7 @@ class LoginAction
             $this->pdo->rollBack();
 
             $this->logger->error('Error durante el inicio de sesión del usuario', [
-                'user_id' => $userDTO->userId,
+                'user_id' => $userDTO->id,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
@@ -145,7 +145,7 @@ class LoginAction
             data: [
                 'token'          => $tokenPlain,
                 'user_full_name' => $userDTO->getFullName(),
-                'role_id'        => (int) $userDTO->userRoleId
+                'role_id'        => (int) $userDTO->roleId
             ]
         );
     }

@@ -6,23 +6,32 @@ namespace App\Users\Validators\Auth;
 
 use App\Users\Validators\BaseValidator;
 use App\Users\Validators\Auth\RegisterValidator;
-use App\Users\Validators\Auth\VerifyEmailValidator;
+use Ramsey\Uuid\Uuid;
+use Rakit\Validation\Rule;
 
 class ResetPasswordValidator extends BaseValidator
 {
-    public const TOKEN_REGEX = VerifyEmailValidator::TOKEN_REGEX;
     public const PASSWORD_REGEX = RegisterValidator::PASSWORD_REGEX;
 
     public function __construct()
     {
         parent::__construct();
 
+        $this->validator->addValidator('ramsey_uuid', new class extends Rule {
+            protected $message = "El campo :attribute no tiene un formato UUID válido.";
+
+            public function check(mixed $value): bool
+            {
+                return is_string($value) && Uuid::isValid($value);
+            }
+        });
+
         $msgRegexPassword = "La contraseña debe tener al menos 6 caracteres, "
                           . "incluir letras, números y al menos un carácter especial.";
 
         $this->validator->setMessages([
             'email:email'                => 'El correo electrónico debe tener un formato válido.',
-            'token:regex'                => 'El token de verificación no cumple con el formato requerido.',
+            'token:ramsey_uuid'          => 'El token de verificación no cumple con el formato requerido.',
             'password:regex'             => $msgRegexPassword,
             'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.'
         ]);
@@ -44,7 +53,7 @@ class ResetPasswordValidator extends BaseValidator
     {
         return [
             'email'                 => 'required|email|max:150',
-            'token'                 => 'required|regex:' . self::TOKEN_REGEX,
+            'token'                 => 'required|ramsey_uuid',
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password'
         ];

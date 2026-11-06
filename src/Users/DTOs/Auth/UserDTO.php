@@ -6,64 +6,50 @@ namespace App\Users\DTOs\Auth;
 
 use DateTimeImmutable;
 
-class UserDTO
+readonly class UserDTO
 {
     public function __construct(
-        public readonly ?int $userId = null,
-        public readonly ?int $userIsActive = null,
-        public readonly ?int $userRoleId = null,
-        public readonly ?DateTimeImmutable $expiresAt = null,
-        public readonly ?DateTimeImmutable $emailVerifiedAt = null,
-        public readonly ?string $firstName = null,
-        public readonly ?string $lastName = null,
-        public readonly ?string $email = null,
-        public readonly ?string $password = null,
-        public readonly ?string $birthDate = null,
-        public readonly ?string $dniType = null,
-        public readonly ?string $dniNumber = null,
-        public readonly ?string $phoneNumber = null,
-        public readonly ?string $token = null
+        public int $id,
+        public int $roleId,
+        public string $firstName,
+        public string $lastName,
+        public string $email,
+        public string $password,
+        public bool $isActive,
+        public ?DateTimeImmutable $emailVerifiedAt = null
     ) {
     }
 
     /**
      * @param array<string, mixed> $data
      */
-    public static function fromArray(array $data): ?self
+    public static function fromArray(array $data): self
     {
-        if (empty($data)) {
-            return null;
-        }
-
         return new self(
-            userId: isset($data['user_id']) ? (int) $data['user_id'] : null,
-            userIsActive: isset($data['is_active']) ? (int) $data['is_active'] : null,
-            userRoleId: isset($data['role_id']) ? (int) $data['role_id'] : null,
-            expiresAt: isset($data['expires_at']) ? new DateTimeImmutable($data['expires_at']) : null,
+            id: (int) $data['id'],
+            roleId: (int) $data['role_id'],
+            firstName: (string) $data['first_name'],
+            lastName: (string) $data['last_name'],
+            email: (string) $data['email'],
+            password: (string) $data['password'],
+            isActive: (bool) $data['is_active'],
             emailVerifiedAt: !empty($data['email_verified_at'])
-                ? new DateTimeImmutable($data['email_verified_at'])
-                : null,
-            firstName: $data['first_name'] ?? null,
-            lastName: $data['last_name'] ?? null,
-            email: isset($data['email']) ? mb_strtolower(trim($data['email'])) : null,
-            password: $data['password'] ?? null,
-            birthDate: $data['birth_date'] ?? null,
-            dniType: $data['dni_type'] ?? null,
-            dniNumber: $data['dni_number'] ?? null,
-            phoneNumber: $data['phone_number'] ?? null,
-            token: isset($data['token']) ? trim($data['token']) : null
+                ? new DateTimeImmutable((string) $data['email_verified_at'])
+                : null
         );
     }
 
-    public function getFullName(): ?string
+
+    public function getFullName(): string
     {
-        if ($this->firstName === null && $this->lastName === null) {
-            return null;
-        }
+        $firstName = mb_convert_case(trim($this->firstName), MB_CASE_TITLE, 'UTF-8');
+        $lastName  = mb_convert_case(trim($this->lastName), MB_CASE_TITLE, 'UTF-8');
 
-        $firstName = $this->firstName ? mb_convert_case($this->firstName, MB_CASE_TITLE, 'UTF-8') : '';
-        $lastName  = $this->lastName ? mb_convert_case($this->lastName, MB_CASE_TITLE, 'UTF-8') : '';
+        return "{$firstName} {$lastName}";
+    }
 
-        return trim("{$firstName} {$lastName}");
+    public function isEmailVerified(): bool
+    {
+        return $this->emailVerifiedAt !== null;
     }
 }

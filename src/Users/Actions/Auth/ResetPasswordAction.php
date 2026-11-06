@@ -6,11 +6,10 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
-use App\Users\DTOs\Auth\UserDTO;
+use App\Users\DTOs\Auth\PasswordResetTokenDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\Auth\ResetPasswordValidator;
-use DateTimeImmutable;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
@@ -49,11 +48,9 @@ class ResetPasswordAction
         $tokenPlain = $validatedData['token'];
         $newPassword = $validatedData['password'];
 
-        $UserData = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
+        $resetTokenData = $this->passwordResetRepo->findByToken($tokenPlain);
 
-        $resetRecord = UserDTO::fromArray($UserData);
-
-        if ($resetRecord == null) {
+        if (empty($resetTokenData)) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::NOT_FOUND,
@@ -61,7 +58,9 @@ class ResetPasswordAction
             );
         }
 
-        if ($resetRecord->expiresAt < new DateTimeImmutable()) {
+        $resetTokenDTO = PasswordResetTokenDTO::fromArray($resetTokenData);
+
+        if ($resetTokenDTO->isTokenExpired()) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
@@ -71,17 +70,25 @@ class ResetPasswordAction
 
         $this->pdo->beginTransaction();
         try {
-            $updated = $this->userRepo->updatePassword($resetRecord->userId, $newPassword);
-            $deleted = $this->passwordResetRepo->deleteByUserId($resetRecord->userId);
+            $updated = $this->userRepo->updatePassword(
+                userId: $resetTokenDTO->userId,
+                newPassword: $newPassword
+            );
 
-            (!$updated || !$deleted) && throw new RuntimeException('Error al actualizar la contraseña.');
+            $deleted = $this->passwordResetRepo->deleteByUserId(
+                userId: $resetTokenDTO->userId
+            );
+
+            (!$updated || !$deleted) && throw new RuntimeException(
+                'Error al actualizar la contraseña.'
+            );
 
             $this->pdo->commit();
         } catch (Exception $e) {
             $this->pdo->rollBack();
 
             $this->logger->error('Error al restablecer la contraseña del usuario', [
-                'user_id' => $resetRecord->userId,
+                'user_id' => $resetTokenDTO->userId,
                 'email'   => $email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()

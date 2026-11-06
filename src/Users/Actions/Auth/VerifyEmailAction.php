@@ -8,6 +8,7 @@ use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
 use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Services\Mail\TemplatedMailServiceInterface;
+use App\Users\DTOs\Auth\PasswordResetTokenDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
 use App\Users\Validators\Auth\VerifyEmailValidator;
@@ -17,8 +18,6 @@ use PDO;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use App\Users\DTOs\Auth\UserDTO;
-use DateTimeImmutable;
 
 class VerifyEmailAction
 {
@@ -49,16 +48,12 @@ class VerifyEmailAction
     {
         $data = (array) ($request->getQueryParams());
         $validatedData = $this->validator->validate($data);
-        $dataDTO = UserDTO::fromArray($validatedData);
 
-        $email = $dataDTO->email;
-        $tokenPlain = $dataDTO->token;
+        $tokenPlain = $validatedData["token"];
 
-        $resetRecord = $this->passwordResetRepo->findByEmailAndToken($email, $tokenPlain);
+        $resetTokenData = $this->passwordResetRepo->findByToken($tokenPlain);
 
-        $resetRecord = UserDTO::fromArray($resetRecord);
-
-        if ($resetRecord == null) {
+        if (empty($resetTokenData)) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::NOT_FOUND,
@@ -66,15 +61,17 @@ class VerifyEmailAction
             );
         }
 
-        if ($resetRecord->emailVerifiedAt !== null) {
+        $resetTokenDTO = PasswordResetTokenDTO::fromArray($resetTokenData);
+
+        if ($resetTokenDTO->emailVerifiedAt !== null) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::OK,
-                'El correo electrónico ya ha sido verificado anteriormente.'
+                'El correo electrónico ya ha sido verificado.'
             );
         }
 
-        if ($resetRecord->expiresAt < new DateTimeImmutable()) {
+        if ($resetTokenDTO->isTokenExpired()) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
@@ -84,30 +81,30 @@ class VerifyEmailAction
 
         $this->pdo->beginTransaction();
         try {
-            $updated = $this->userRepo->markEmailAsVerified((int) $resetRecord->userId);
-            $deleted = $this->passwordResetRepo->deleteByUserId((int) $resetRecord->userId);
+            $updated = $this->userRepo->markEmailAsVerified(userId: $resetTokenDTO->userId);
+            $deleted = $this->passwordResetRepo->deleteByUserId(userId: $resetTokenDTO->userId);
 
-            (!$updated || !$deleted) && throw new RuntimeException('Error al procesar la verificación.');
+            (!$updated || !$deleted) && throw new RuntimeException(
+                'Error al procesar la verificación.'
+            );
 
             $this->pdo->commit();
         } catch (Exception $e) {
             $this->pdo->rollBack();
 
             $this->logger->error('Error al procesar la verificación de correo electrónico', [
-                'user_id' => $resetRecord->userId,
-                'email'   => $email,
+                'user_id' => $resetTokenDTO->userId,
+                'email'   => $resetTokenDTO->email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
             ]);
             throw $e;
         }
 
-        $fullName = $resetRecord->getFullName();
-
         $isMailSent = $this->notifyAdminsAboutNewUser(
-            $resetRecord->userId,
-            $fullName,
-            $email
+            $resetTokenDTO->userId,
+            $resetTokenDTO->getFullName(),
+            $resetTokenDTO->email
         );
 
         if (!$isMailSent) {
@@ -115,9 +112,9 @@ class VerifyEmailAction
                 'El correo electrónico se verificó con éxito, pero falló el envío ' .
                 'de la notificación a los administradores.',
                 [
-                    'user_id' => $resetRecord->userId,
-                    'email'   => $email,
-                    'name'    => $fullName,
+                    'user_id' => $resetTokenDTO->userId,
+                    'email'   => $resetTokenDTO->email,
+                    'name'    => $resetTokenDTO->getFullName(),
                 ]
             );
         }

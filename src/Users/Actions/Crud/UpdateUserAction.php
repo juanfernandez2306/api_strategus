@@ -58,7 +58,7 @@ class UpdateUserAction
 
         $currentUser = UserDTO::fromArray($userData);
 
-        if ($currentUser === null) {
+        if (empty($userData)) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::NOT_FOUND,
@@ -66,7 +66,7 @@ class UpdateUserAction
             );
         }
 
-        $oldUserIsActive = (bool) $currentUser->userIsActive;
+        $oldUserIsActive = (bool) $currentUser->isActive;
         $newUserIsActive = (bool) $validatedData['is_active'];
 
         $this->pdo->beginTransaction();

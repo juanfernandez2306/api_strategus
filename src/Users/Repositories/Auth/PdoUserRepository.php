@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Repositories\Auth;
 
-use App\Users\DTOs\Auth\UserDTO;
+use App\Users\DTOs\Auth\UserRegisterDTO;
 use Ramsey\Uuid\Uuid;
 use PDO;
 
@@ -37,7 +37,7 @@ class PdoUserRepository implements UserRepositoryInterface
         return (int) $statement->fetchColumn();
     }
 
-    public function create(UserDTO $data): int
+    public function create(UserRegisterDTO $data): int
     {
         $uuidBinary = Uuid::uuid7()->getBytes();
 
@@ -55,7 +55,7 @@ class PdoUserRepository implements UserRepositoryInterface
             'last_name'     => mb_strtolower($data->lastName),
             'email'         => mb_strtolower($data->email),
             'password'      => password_hash($data->password, PASSWORD_BCRYPT),
-            'birth_date'    => $data->birthDate,
+            'birth_date'    => $data->birthDate->format('Y-m-d'),
             'dni_type'      => mb_strtolower($data->dniType),
             'dni_number'    => $data->dniNumber,
             'phone_number'  => $data->phoneNumber

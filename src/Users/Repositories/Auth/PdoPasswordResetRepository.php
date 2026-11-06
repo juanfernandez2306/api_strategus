@@ -26,7 +26,7 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
 
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([
+        return (bool) $stmt->execute([
             ':user_id'    => $userId,
             ':token'      => hash('sha256', $tokenPlain),
             ':expires_at' => $expiresAt
@@ -36,24 +36,24 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
     /**
      * @return array<string, mixed>
      */
-    public function findByEmailAndToken(string $email, string $tokenPlain): array
+    public function findByToken(string $tokenPlain): array
     {
         $sql = "SELECT 
                     pr.id, 
                     pr.user_id, 
-                    pr.expires_at, 
+                    pr.expires_at,
+                    u.email, 
                     u.email_verified_at,
                     u.first_name,
                     u.last_name
                 FROM password_resets pr
                 INNER JOIN users u ON u.id = pr.user_id
-                WHERE u.email = :email AND pr.token = :token
+                WHERE pr.token = :token
                 LIMIT 1";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'email' => mb_strtolower($email),
-            'token' => hash('sha256', $tokenPlain)
+            ':token' => hash('sha256', $tokenPlain)
         ]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -71,12 +71,12 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
         return $stmt->execute([':user_id' => $userId]);
     }
 
-    public function deleteByToken(string $hashedToken): bool
+    public function deleteByToken(string $tokenPlain): bool
     {
         $sql = "DELETE FROM password_resets WHERE token = :token";
 
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute([':token' => $hashedToken]);
+        return $stmt->execute([':token' => hash('sha256', $tokenPlain)]);
     }
 }

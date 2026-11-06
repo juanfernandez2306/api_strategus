@@ -11,7 +11,7 @@ interface PasswordResetRepositoryInterface
     /**
      * @return array<string, mixed>
      */
-    public function findByEmailAndToken(string $email, string $tokenPlain): array;
+    public function findByToken(string $tokenPlain): array;
 
     public function deleteByUserId(int $userId): bool;
 
