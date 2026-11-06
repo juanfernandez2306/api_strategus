@@ -18,6 +18,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use App\Users\DTOs\Auth\UserDTO;
+use DateTimeImmutable;
 
 class VerifyEmailAction
 {
@@ -73,7 +74,7 @@ class VerifyEmailAction
             );
         }
 
-        if ($resetRecord->expiresAt < date('Y-m-d H:i:s')) {
+        if ($resetRecord->expiresAt < new DateTimeImmutable()) {
             return ApiResponse::json(
                 $response,
                 HttpStatus::BAD_REQUEST,
