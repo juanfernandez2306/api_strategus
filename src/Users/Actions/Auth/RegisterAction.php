@@ -16,7 +16,6 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
 use Exception;
-use phpDocumentor\Reflection\Types\This;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Ramsey\Uuid\Uuid;
