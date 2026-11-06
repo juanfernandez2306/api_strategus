@@ -18,6 +18,7 @@ use PDO;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Ramsey\Uuid\Uuid;
 
 class RegisterAction
 {
@@ -62,7 +63,7 @@ class RegisterAction
                 "No se pudo obtener el ID del usuario recién creado."
             );
 
-            $tokenPlain = bin2hex(random_bytes(32));
+            $tokenBinary = Uuid::uuid7()->getBytes();
             $expiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
 
             $savedToken = $this->passwordResetRepo->save($userId, $tokenPlain, $expiresAt);

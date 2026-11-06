@@ -46,7 +46,7 @@ CREATE TABLE personal_access_tokens (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
     name VARCHAR(100) NOT NULL,
-    token BINARY(16) NOT NULL UNIQUE,
+    token VARCHAR(64) NOT NULL UNIQUE,
     last_used_at TIMESTAMP NULL DEFAULT NULL,
     expires_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -59,7 +59,7 @@ CREATE TABLE personal_access_tokens (
 CREATE TABLE password_resets (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NOT NULL,
-    token BINARY(16) NOT NULL,
+    token VARCHAR(64) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_password_resets_token (token),
