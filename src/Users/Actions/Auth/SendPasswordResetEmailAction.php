@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Users\Actions\Auth;
 
-use App\Shared\DTOs\SendTemplatedMailDTO;
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
-use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Users\DTOs\Auth\UserDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
+use App\Users\Services\AuthEmailService;
 use App\Users\Validators\Auth\EmailRequestValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -30,7 +29,7 @@ class SendPasswordResetEmailAction
     private PasswordResetRepositoryInterface $passwordResetRepo;
     private EmailRequestValidator $validator;
     private LoggerInterface $logger;
-    private TemplatedMailServiceInterface $templatedMailService;
+    private AuthEmailService $authEmailService;
 
     public function __construct(
         PDO $pdo,
@@ -38,14 +37,14 @@ class SendPasswordResetEmailAction
         PasswordResetRepositoryInterface $passwordResetRepo,
         EmailRequestValidator $validator,
         LoggerInterface $logger,
-        TemplatedMailServiceInterface $templatedMailService
+        AuthEmailService $authEmailService
     ) {
         $this->pdo = $pdo;
         $this->userRepo = $userRepo;
         $this->passwordResetRepo = $passwordResetRepo;
         $this->validator = $validator;
         $this->logger = $logger;
-        $this->templatedMailService = $templatedMailService;
+        $this->authEmailService = $authEmailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -66,6 +65,14 @@ class SendPasswordResetEmailAction
         }
 
         $userDTO = UserDTO::fromArray($userData);
+
+        if ($this->passwordResetRepo->hasRecentToken($userDTO->id)) {
+            return ApiResponse::json(
+                $response,
+                HttpStatus::OK,
+                self::GENERIC_SUCCESS_MESSAGE
+            );
+        }
 
         $tokenPlain = Uuid::uuid7()->toString();
         $tokenExpiresAt = date('Y-m-d H:i:s', strtotime('+12 hours'));
@@ -98,20 +105,12 @@ class SendPasswordResetEmailAction
             throw $e;
         }
 
-        $frontendUrl = $_ENV['FRONTEND_URL'] ?? '';
-
-        (empty($frontendUrl)) && throw new RuntimeException(
-            "La variable de entorno 'FRONTEND_URL' no está definida o está vacía."
+        $resetUrl = AuthEmailService::generateUrl(
+            path: 'users/password/forgot',
+            tokenPlain: $tokenPlain
         );
 
-        $resetUrl = sprintf(
-            '%s/reset/password?token=%s',
-            rtrim($frontendUrl, '/'),
-            urlencode($tokenPlain)
-        );
-
-
-        $mailDTO = new SendTemplatedMailDTO(
+        $this->authEmailService->sendGenericEmail(
             toEmail: $email,
             toName: $userDTO->getFullName(),
             subject: 'Restablecer contraseña - GESTIÓN PALMA DIGITAL',
@@ -121,8 +120,6 @@ class SendPasswordResetEmailAction
                 'actionUrl'    => $resetUrl,
             ]
         );
-
-        $this->templatedMailService->send($mailDTO);
 
         return ApiResponse::json(
             $response,

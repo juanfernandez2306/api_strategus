@@ -79,4 +79,23 @@ class PdoPasswordResetRepository implements PasswordResetRepositoryInterface
 
         return $stmt->execute([':token' => hash('sha256', $tokenPlain)]);
     }
+
+    public function hasRecentToken(int $userId, int $cooldownMinutes = 30): bool
+    {
+        $tokenDurationMinutes = 720;
+
+        $sql = "SELECT 1 FROM password_resets 
+                WHERE user_id = :user_id 
+                  AND expires_at > DATE_ADD(NOW(), INTERVAL (:token_duration - :cooldown) MINUTE)
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':user_id'  => $userId,
+            ':token_duration' => $tokenDurationMinutes,
+            ':cooldown' => $cooldownMinutes
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
 }

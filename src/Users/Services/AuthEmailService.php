@@ -12,7 +12,8 @@ class AuthEmailService
 {
     public function __construct(
         private TemplatedMailServiceInterface $templatedMailService
-    ) {}
+    ) {
+    }
 
     /**
      * @param string|array<int, string> $toEmail

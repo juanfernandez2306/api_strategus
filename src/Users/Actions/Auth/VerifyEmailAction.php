@@ -155,7 +155,7 @@ class VerifyEmailAction
         /** @var array<int, string> $adminEmails */
         $adminEmails = array_column($adminEmails, 'email');
 
-        
+
         return $this->authEmailService->sendGenericEmail(
             toEmail: $adminEmails,
             toName: 'Administrador',

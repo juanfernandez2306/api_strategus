@@ -16,4 +16,6 @@ interface PasswordResetRepositoryInterface
     public function deleteByUserId(int $userId): bool;
 
     public function deleteByToken(string $hashedToken): bool;
+
+    public function hasRecentToken(int $userId, int $cooldownMinutes = 30): bool;
 }
