@@ -12,14 +12,14 @@ class AuthEmailService
 {
     public function __construct(
         private TemplatedMailServiceInterface $templatedMailService
-    ) {
-    }
+    ) {}
 
     /**
+     * @param string|array<int, string> $toEmail
      * @param array<string, mixed> $viewData
      */
     public function sendGenericEmail(
-        string $toEmail,
+        string|array $toEmail,
         string $toName,
         string $subject,
         string $viewTemplate,

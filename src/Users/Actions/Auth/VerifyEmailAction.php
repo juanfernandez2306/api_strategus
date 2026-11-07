@@ -6,11 +6,10 @@ namespace App\Users\Actions\Auth;
 
 use App\Shared\Http\ApiResponse;
 use App\Shared\Http\HttpStatus;
-use App\Shared\DTOs\SendTemplatedMailDTO;
-use App\Shared\Services\Mail\TemplatedMailServiceInterface;
 use App\Users\DTOs\Auth\PasswordResetTokenDTO;
 use App\Users\Repositories\Auth\PasswordResetRepositoryInterface;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
+use App\Users\Services\AuthEmailService;
 use App\Users\Validators\Auth\VerifyEmailValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -26,7 +25,7 @@ class VerifyEmailAction
     private UserRepositoryInterface $userRepo;
     private VerifyEmailValidator $validator;
     private LoggerInterface $logger;
-    private TemplatedMailServiceInterface $templatedMailService;
+    private AuthEmailService $authEmailService;
 
     public function __construct(
         PDO $pdo,
@@ -34,14 +33,14 @@ class VerifyEmailAction
         UserRepositoryInterface $userRepo,
         VerifyEmailValidator $validator,
         LoggerInterface $logger,
-        TemplatedMailServiceInterface $templatedMailService,
+        AuthEmailService $authEmailService
     ) {
         $this->pdo = $pdo;
         $this->passwordResetRepo = $passwordResetRepo;
         $this->userRepo = $userRepo;
         $this->validator = $validator;
         $this->logger = $logger;
-        $this->templatedMailService = $templatedMailService;
+        $this->authEmailService = $authEmailService;
     }
 
     public function __invoke(Request $request, Response $response): Response
@@ -156,17 +155,16 @@ class VerifyEmailAction
         /** @var array<int, string> $adminEmails */
         $adminEmails = array_column($adminEmails, 'email');
 
-        $mailDTO = new SendTemplatedMailDTO(
+        
+        return $this->authEmailService->sendGenericEmail(
             toEmail: $adminEmails,
+            toName: 'Administrador',
             subject: 'Nuevo Usuario Registrado y Verificado',
             viewTemplate: 'Emails.NewUserAdminNotification',
             viewData: [
                 'registeredUserName'  => $registeredUserName,
                 'registeredUserEmail' => $registeredUserEmail,
-            ],
-            toName: 'Administrador'
+            ]
         );
-
-        return $this->templatedMailService->send($mailDTO);
     }
 }
