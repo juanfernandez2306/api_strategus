@@ -9,6 +9,7 @@ use App\Users\Validators\BaseValidator;
 use App\Users\Validators\Rules\UniqueEmailRule;
 use App\Users\Validators\Rules\MaxActiveUsersRule;
 use App\Users\Validators\Rules\UniqueDocumentRule;
+use App\Users\Validators\Rules\ValidBirthDateRule;
 
 class RegisterValidator extends BaseValidator
 {
@@ -17,10 +18,9 @@ class RegisterValidator extends BaseValidator
     public const DNI_REGEX = '/^[0-9]{6,12}$/';
     public const PHONE_REGEX = '/^\+[1-9]\d{1,14}$/';
 
-    private string $eighteenYearsAgo;
-
     public function __construct(UserRepositoryInterface $userRepository)
     {
+
         parent::__construct();
 
         $this->validator->addValidator(
@@ -38,7 +38,10 @@ class RegisterValidator extends BaseValidator
             new UniqueDocumentRule($userRepository)
         );
 
-        $this->eighteenYearsAgo = date('Y-m-d', strtotime('-18 years'));
+        $this->validator->addValidator(
+            'valid_birth_date',
+            new ValidBirthDateRule()
+        );
 
         $msgRegexPassword = "La contraseña debe tener al menos 6 caracteres,"
                             . " incluir letras, números y al menos un carácter especial.";
@@ -48,7 +51,7 @@ class RegisterValidator extends BaseValidator
             'last_name:regex'            => 'El apellido solo debe contener letras, sin tíldes ni espacios.',
             'password:regex'             => $msgRegexPassword,
             'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.',
-            'birth_date:before'          => 'El usuario debe ser mayor de 18 años',
+            'birth_date:valid_birth_date' => 'La fecha de nacimiento no es válida o el usuario debe ser mayor de 18 años.',
             'dni_type'                   => 'Verifica el tipo de documento V, E, CC',
             'dni_number:regex'           => 'El número de cédula debe contener entre 6 y 12 dígitos numéricos.',
             'dni_number:unique_document' => 'El tipo y número de cédula ya se encuentran registrados.',
@@ -75,13 +78,14 @@ class RegisterValidator extends BaseValidator
     /** @return array<string, string> */
     protected function rules(): array
     {
+
         return [
             'first_name'            => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
             'last_name'             => 'required|min:3|max:50|regex:' . self::PERSON_NAME_REGEX,
             'email'                 => 'required|email|max:150|unique_email|max_active_users:30',
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password',
-            'birth_date'            => 'required|date|before:' . $this->eighteenYearsAgo,
+            'birth_date'            => 'required|valid_birth_date',
             'dni_type'              => 'required|in:p,v,e,cc',
             'dni_number'            => 'required|numeric|regex:' . self::DNI_REGEX . '|unique_document:dni_type',
             'phone_number'          => 'required|regex:' . self::PHONE_REGEX
