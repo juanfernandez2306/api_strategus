@@ -51,7 +51,7 @@ class RegisterValidator extends BaseValidator
             'last_name:regex'            => 'El apellido solo debe contener letras, sin tíldes ni espacios.',
             'password:regex'             => $msgRegexPassword,
             'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.',
-            'birth_date:valid_birth_date' => 'La fecha de nacimiento no es válida o el usuario debe ser mayor de 18 años.',
+            'birth_date:valid_birth_date' => 'La fecha de nacimiento no es válida o el usuario menor de edad.',
             'dni_type'                   => 'Verifica el tipo de documento V, E, CC',
             'dni_number:regex'           => 'El número de cédula debe contener entre 6 y 12 dígitos numéricos.',
             'dni_number:unique_document' => 'El tipo y número de cédula ya se encuentran registrados.',
