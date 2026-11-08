@@ -4,47 +4,61 @@ declare(strict_types=1);
 
 namespace App\Strategus\DTOs\Monitoring;
 
+use DateTimeImmutable;
+use Exception;
+
 final readonly class PositionRecordItemInputDTO
 {
     public function __construct(
-        public string $uuid,
-        public float $latitude,
-        public float $longitude,
-        public string $recordedDate,
-        public string $recordedTime,
-        public int $galleryCount,
-        public float $gpsAccuracy,
-        public bool $isPlantReviewed,
-        public bool $isSynced,
-        public ?string $reviewedDate = null,
-        public ?string $reviewedTime = null,
-        public ?int $userId = null,
-        public ?int $growingAreaCode = null
+        public readonly string $uuid,
+        public readonly float $latitude,
+        public readonly float $longitude,
+        public readonly DateTimeImmutable $recordedAt,
+        public readonly int $galleryCount,
+        public readonly float $gpsAccuracy,
+        public readonly bool $isPlantReviewed,
+        public readonly bool $isSynced,
+        public readonly ?DateTimeImmutable $reviewedAt = null,
+        public readonly ?int $userId = null,
+        public readonly ?int $growingAreaCode = null
     ) {
     }
 
     /**
-     * @param array<string, mixed> $rawAttributesValidated
+     * @param array<string, mixed> $rawData
+     * @throws Exception
      */
-    public static function fromArray(
-        array $rawAttributesValidated
-    ): self {
+    public static function fromArray(array $rawData): self
+    {
+        $recordedAtStr = sprintf(
+            '%s %s',
+            (string) $rawData['recordedDate'],
+            (string) $rawData['recordedTime']
+        );
+
+        $reviewedAt = null;
+        if (
+            !empty($rawData['reviewedDate']) &&
+            !empty($rawData['reviewedTime'])
+        ) {
+            $reviewedAtStr = sprintf(
+                '%s %s',
+                (string) $rawData['reviewedDate'],
+                (string) $rawData['reviewedTime']
+            );
+            $reviewedAt = new DateTimeImmutable($reviewedAtStr);
+        }
+
         return new self(
-            uuid: (string) $rawAttributesValidated['uuid'],
-            latitude: (float) $rawAttributesValidated['latitude'],
-            longitude: (float) $rawAttributesValidated['longitude'],
-            recordedDate: (string) $rawAttributesValidated['recordedDate'],
-            recordedTime: (string) $rawAttributesValidated['recordedTime'],
-            galleryCount: (int) $rawAttributesValidated['galleryCount'],
-            gpsAccuracy: (float) $rawAttributesValidated['gpsAccuracy'],
-            isPlantReviewed: (bool) $rawAttributesValidated['isPlantReviewed'],
-            isSynced: (bool) $rawAttributesValidated['isSynced'],
-            reviewedDate: isset($rawAttributesValidated['reviewedDate'])
-                        ? (string) $rawAttributesValidated['reviewedDate']
-                        : null,
-            reviewedTime: isset($rawAttributesValidated['reviewedTime'])
-                        ? (string) $rawAttributesValidated['reviewedTime']
-                        : null
+            uuid: (string) $rawData['uuid'],
+            latitude: (float) $rawData['latitude'],
+            longitude: (float) $rawData['longitude'],
+            recordedAt: new DateTimeImmutable($recordedAtStr),
+            galleryCount: (int) $rawData['galleryCount'],
+            gpsAccuracy: (float) $rawData['gpsAccuracy'],
+            isPlantReviewed: (bool) $rawData['isPlantReviewed'],
+            isSynced: (bool) $rawData['isSynced'],
+            reviewedAt: $reviewedAt
         );
     }
 
@@ -54,14 +68,12 @@ final readonly class PositionRecordItemInputDTO
             uuid: $this->uuid,
             latitude: $this->latitude,
             longitude: $this->longitude,
-            recordedDate: $this->recordedDate,
-            recordedTime: $this->recordedTime,
+            recordedAt: $this->recordedAt,
             galleryCount: $this->galleryCount,
             gpsAccuracy: $this->gpsAccuracy,
             isPlantReviewed: $this->isPlantReviewed,
             isSynced: $this->isSynced,
-            reviewedDate: $this->reviewedDate,
-            reviewedTime: $this->reviewedTime,
+            reviewedAt: $this->reviewedAt,
             userId: $userId,
             growingAreaCode: $growingAreaCode,
         );
@@ -69,19 +81,17 @@ final readonly class PositionRecordItemInputDTO
 
     public function isReviewedDateComplete(): bool
     {
-        return !empty($this->reviewedDate) && !empty($this->reviewedTime);
+        return $this->reviewedAt !== null;
     }
 
     public function getRecordedAtFormatted(): string
     {
-        return sprintf('%s %s', $this->recordedDate, $this->recordedTime);
+        return $this->recordedAt->format('Y-m-d H:i:s');
     }
 
     public function getReviewedAtFormatted(): ?string
     {
-        return $this->isReviewedDateComplete()
-            ? sprintf('%s %s', $this->reviewedDate, $this->reviewedTime)
-            : null;
+        return $this->reviewedAt?->format('Y-m-d H:i:s');
     }
 
     public function getWktPoint(): string
