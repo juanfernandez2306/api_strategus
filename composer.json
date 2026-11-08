@@ -35,7 +35,7 @@
         "ramsey/uuid": "^4.9",
         "slim/psr7": "^1.5",
         "slim/slim": "^4.10",
-        "symfony/cache": "^7.0",
+        "symfony/cache": "^8.1",
         "twig/twig": "^3.28",
         "vlucas/phpdotenv": "^5.6"
     },
