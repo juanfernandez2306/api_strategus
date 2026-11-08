@@ -35,7 +35,7 @@ class OilPalmGrowingAreaValidator extends BaseValidator
     protected function rules(): array
     {
         return [
-            'uuid'              => 'required|regex:' . PositionRecordValidator::UUID_V7_REGEX,
+            'uuid'              => 'required|ramsey_uuid',
             'growing_area_code' => 'required|integer|min:1',
             'palm_count'        => 'required|integer|min:0',
             'boundary_wkt'      => 'required|wkt_polygon',
