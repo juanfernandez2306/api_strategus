@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Crud;
 
-use App\Users\Validators\BaseValidator;
+use App\Shared\Validator\BaseValidator;
 use App\Users\Validators\Auth\RegisterValidator;
 
 class UpdateUserValidator extends BaseValidator

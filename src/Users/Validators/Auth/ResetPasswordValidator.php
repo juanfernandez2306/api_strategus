@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
-use App\Users\Validators\BaseValidator;
+use App\Shared\Validator\BaseValidator;
 use App\Users\Validators\Auth\RegisterValidator;
 use Ramsey\Uuid\Uuid;
 use Rakit\Validation\Rule;

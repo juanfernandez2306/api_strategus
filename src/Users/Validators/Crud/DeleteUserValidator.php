@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Crud;
 
-use App\Users\Validators\BaseValidator;
+use App\Shared\Validator\BaseValidator;
 
 class DeleteUserValidator extends BaseValidator
 {

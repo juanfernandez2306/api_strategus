@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Users\Validators\Auth;
 
+use App\Shared\Validator\BaseValidator;
 use App\Users\Repositories\Auth\UserRepositoryInterface;
-use App\Users\Validators\BaseValidator;
 use App\Users\Validators\Rules\UniqueEmailRule;
 use App\Users\Validators\Rules\MaxActiveUsersRule;
 use App\Users\Validators\Rules\UniqueDocumentRule;

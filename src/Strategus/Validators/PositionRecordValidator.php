@@ -6,7 +6,7 @@ namespace App\Strategus\Validators;
 
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Http\HttpStatus;
-use App\Users\Validators\BaseValidator;
+use App\Shared\Validator\BaseValidator;
 
 class PositionRecordValidator extends BaseValidator
 {
@@ -33,7 +33,7 @@ class PositionRecordValidator extends BaseValidator
     protected function customAttributes(): array
     {
         return [
-            'uuid'            => 'identificador único (UUID v7)',
+            'uuid'            => 'identificador único',
             'latitude'        => 'latitud',
             'longitude'       => 'longitud',
             'recordedDate'    => 'fecha de registro',
@@ -58,7 +58,7 @@ class PositionRecordValidator extends BaseValidator
             'longitude'       => 'required|numeric',
             'recordedDate'    => ['required', 'regex:' . self::DATE_REGEX],
             'recordedTime'    => ['required', 'regex:' . self::TIME_REGEX],
-            'galleryCount'    => 'required|integer|min:0',
+            'galleryCount'    => 'required|integer|min:0|max:15',
             'gpsAccuracy'     => 'required|numeric|min:0|max:20',
             'isPlantReviewed' => 'required|boolean',
             'isSynced'        => 'required|boolean',

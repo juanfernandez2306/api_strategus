@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Users\Validators;
+namespace App\Shared\Validator;
 
 use App\Shared\Exceptions\ValidationException;
 use Rakit\Validation\Validator;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Strategus\Validators;
 
+use App\Shared\Validator\BaseValidator;
 use App\Strategus\Validators\Rules\ValidWktPolygonRule;
-use App\Users\Validators\BaseValidator;
 
 class OilPalmGrowingAreaValidator extends BaseValidator
 {
