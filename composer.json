@@ -27,7 +27,7 @@
         "brick/date-time": "^0.10.4",
         "brick/geo": "^0.13.1",
         "monolog/monolog": "^3.10",
-        "php-di/php-di": "^6.4",
+        "php-di/php-di": "^7.1",
         "phpmailer/phpmailer": "^7.1",
         "phpoffice/phpspreadsheet": "^5.8",
         "psr/simple-cache": "3.0",
