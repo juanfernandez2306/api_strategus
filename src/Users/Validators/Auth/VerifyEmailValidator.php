@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Users\Validators\Auth;
 
 use App\Shared\Validator\BaseValidator;
-use Ramsey\Uuid\Uuid;
-use Rakit\Validation\Rule;
 
 class VerifyEmailValidator extends BaseValidator
 {

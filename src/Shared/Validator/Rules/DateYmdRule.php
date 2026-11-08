@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shared\Validators\Rules;
+namespace App\Shared\Validator\Rules;
 
 use DateTimeImmutable;
 use Rakit\Validation\Rule;

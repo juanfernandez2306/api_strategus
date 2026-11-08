@@ -6,8 +6,8 @@ namespace App\Shared\Validator;
 
 use App\Shared\Exceptions\ValidationException;
 use App\Shared\Validator\Rules\RamseyUuidRule;
-use App\Shared\Validators\Rules\DateYmdRule;
-use App\Shared\Validators\Rules\TimeHmsRule;
+use App\Shared\Validator\Rules\DateYmdRule;
+use App\Shared\Validator\Rules\TimeHmsRule;
 use Rakit\Validation\Validator;
 
 abstract class BaseValidator
