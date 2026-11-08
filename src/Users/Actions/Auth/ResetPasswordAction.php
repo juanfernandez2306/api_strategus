@@ -44,7 +44,6 @@ class ResetPasswordAction
         $data = (array) ($request->getParsedBody() ?? []);
         $validatedData = $this->validator->validate($data);
 
-        $email = mb_strtolower($validatedData['email']);
         $tokenPlain = $validatedData['token'];
         $newPassword = $validatedData['password'];
 
@@ -89,7 +88,7 @@ class ResetPasswordAction
 
             $this->logger->error('Error al restablecer la contraseña del usuario', [
                 'user_id' => $resetTokenDTO->userId,
-                'email'   => $email,
+                'email'   => $resetTokenDTO->email,
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString()
             ]);

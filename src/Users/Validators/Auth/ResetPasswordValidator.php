@@ -30,7 +30,6 @@ class ResetPasswordValidator extends BaseValidator
                           . "incluir letras, números y al menos un carácter especial.";
 
         $this->validator->setMessages([
-            'email:email'                => 'El correo electrónico debe tener un formato válido.',
             'token:ramsey_uuid'          => 'El token de verificación no cumple con el formato requerido.',
             'password:regex'             => $msgRegexPassword,
             'password_confirmation:same' => 'El campo confirmación de contraseña debe coincidir con la contraseña.'
@@ -41,7 +40,6 @@ class ResetPasswordValidator extends BaseValidator
     protected function customAttributes(): array
     {
         return [
-            'email'                 => 'correo electrónico',
             'token'                 => 'token de verificación',
             'password'              => 'contraseña',
             'password_confirmation' => 'confirmación de contraseña',
@@ -52,7 +50,6 @@ class ResetPasswordValidator extends BaseValidator
     protected function rules(): array
     {
         return [
-            'email'                 => 'required|email|max:150',
             'token'                 => 'required|ramsey_uuid',
             'password'              => 'required|regex:' . self::PASSWORD_REGEX,
             'password_confirmation' => 'required|same:password'

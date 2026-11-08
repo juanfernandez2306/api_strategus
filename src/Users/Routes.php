@@ -5,6 +5,7 @@ use App\Middleware\RateLimitMiddleware;
 use App\Users\Repositories\Auth\RateLimitCacheRepository;
 use App\Users\Actions\Auth\RegisterAction;
 use App\Users\Actions\Auth\LoginAction;
+use App\Users\Actions\Auth\LogoutAction;
 use App\Users\Actions\Auth\VerifyEmailAction;
 use App\Users\Actions\Auth\ResendVerificationEmailAction;
 use App\Users\Actions\Auth\SendPasswordResetEmailAction;
@@ -22,6 +23,7 @@ return function (RouteCollectorProxy $group) {
 
     $group->post('/register', RegisterAction::class)->add($authLimiter);
     $group->post('/login', LoginAction::class)->add($authLimiter);
+    $group->post('/logout', LogoutAction::class)->add($authLimiter);
 
     $group->group('/email', function (RouteCollectorProxy $emailGroup) use ($cacheRepo) {
         $emailGroup->get('/verify', VerifyEmailAction::class)

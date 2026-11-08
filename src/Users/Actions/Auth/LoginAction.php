@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use PDO;
 use Exception;
 use RuntimeException;
+use Ramsey\Uuid\Uuid;
 
 class LoginAction
 {
@@ -54,9 +55,20 @@ class LoginAction
         $password = $validatedData['password'];
 
         $userData = $this->userRepo->findByEmail($email);
+
+        // 1. Validar primero si el usuario existe antes de mapear al DTO
+        if (empty($userData)) {
+            return ApiResponse::json(
+                response: $response,
+                statusCode: HttpStatus::UNAUTHORIZED,
+                message: 'Las credenciales ingresadas son incorrectas.'
+            );
+        }
+
         $userDTO = UserDTO::fromArray($userData);
 
-        if (empty($userData) || !password_verify($password, $userDTO->password)) {
+        // 2. Validar contraseña
+        if (!password_verify($password, $userDTO->password)) {
             return ApiResponse::json(
                 response: $response,
                 statusCode: HttpStatus::UNAUTHORIZED,
@@ -80,15 +92,15 @@ class LoginAction
             );
         }
 
-        $tokenPlain = bin2hex(random_bytes(32));
+        $tokenPlain = Uuid::uuid7()->toString();
         $tokenName = 'auth_token';
 
         $this->pdo->beginTransaction();
         try {
             $saved = $this->tokenRepo->save(
-                $userDTO->id,
-                $tokenName,
-                $tokenPlain
+                userId: $userDTO->id,
+                tokenName: $tokenName,
+                tokenPlain: $tokenPlain
             );
 
             if (!$saved) {

@@ -36,13 +36,15 @@ class PdoTokenRepository implements TokenRepositoryInterface
         ]);
     }
 
-    public function delete(string $hashedToken): bool
+    public function delete(string $tokenPlain): bool
     {
         $sql = "DELETE FROM personal_access_tokens WHERE token = :token";
 
         $stmt = $this->pdo->prepare($sql);
 
-        return $stmt->execute(['token' => $hashedToken]);
+        return $stmt->execute([
+        'token' => hash('sha256', $tokenPlain)
+        ]);
     }
 
     public function deleteAllByUserId(int $userId): bool
